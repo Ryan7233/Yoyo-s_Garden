@@ -115,6 +115,12 @@ const ART: Record<string, ReactNode> = {
   ),
   'floor-wood': <rect x={4} y={4} width={56} height={56} rx={12} fill="#E3B98C" stroke="#B98A5E" strokeWidth={3} />,
   'floor-tile': <rect x={4} y={4} width={56} height={56} rx={12} fill="#F5F1EC" stroke="#D9D3DC" strokeWidth={3} />,
+  'wall-default': (
+    <g>
+      <rect x={4} y={4} width={56} height={56} rx={12} fill="#FFE6EF" stroke="#FF9EC0" strokeWidth={3} />
+      <path d="M20 8 V56 M32 8 V56 M44 8 V56" stroke="#FFC4D8" strokeWidth={3} />
+    </g>
+  ),
   'wall-pink': <rect x={4} y={4} width={56} height={56} rx={12} fill="#FFE6EF" stroke="#FF9EC0" strokeWidth={3} />,
   'wall-green': <rect x={4} y={4} width={56} height={56} rx={12} fill="#E3F7EF" stroke="#7ED7B5" strokeWidth={3} />,
   'wall-stars': (

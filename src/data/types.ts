@@ -8,6 +8,9 @@ export interface Child {
   theme: ThemeName
   mascotName: string
   createdAt: string
+  /** 当前墙纸和地板（墙纸地板物品 id） */
+  wallStyle?: string
+  floorStyle?: string
 }
 export type ThemeName = 'sakura' | 'lavender' | 'mint'
 
@@ -127,6 +130,8 @@ export interface PlacedItem {
   x: number
   y: number
   flipped: boolean
+  /** 花瓶里插的鲜花（收获物 id） */
+  content?: string
 }
 export interface PlantInstance {
   id: string

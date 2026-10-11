@@ -182,3 +182,6 @@
 .water-dots { display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; font-size: 24px; }
 .water-dots span { opacity: 0.25; filter: grayscale(1); }
 .water-dots span.on { opacity: 1; filter: none; }
+
+/* 场景里的物品：平时不挡点击，装扮模式下由 .tappable 打开 */
+.placed { pointer-events: none; }

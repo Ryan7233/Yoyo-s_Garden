@@ -9,7 +9,8 @@ import { Bag } from '../features/shop/Bag'
 import { Shop } from '../features/shop/Shop'
 import { Codex } from '../features/codex/Codex'
 import { ToastHost } from '../ui/Toast'
-import { ComingSoon } from './ComingSoon'
+import { DecorateTray } from '../features/decorate/DecorateTray'
+import { useDecorate } from '../features/decorate/useDecorate'
 import { RewardNotices } from './RewardNotices'
 import { isStandalone } from './standalone'
 import { THEMES } from './themes'
@@ -22,15 +23,13 @@ const NAV: { page: Page; icon: string; label: string }[] = [
   { page: 'shop', icon: '🛍️', label: '商店' },
   { page: 'bag', icon: '🎒', label: '背包' },
   { page: 'codex', icon: '📖', label: '图鉴' },
-  { page: 'decorate', icon: '🎨', label: '装扮' },
 ]
 
 export function Layout() {
-  const { child, balance, page, go, parentOpen, setParentOpen } = useStore()
+  const { child, balance, page, go, scene, setScene, decorating, setDecorating, parentOpen, setParentOpen } = useStore()
   const [palette, setPalette] = useState(false)
   if (!child) return null
-  const scene = page === 'house' ? 'house' : 'garden'
-  const sheet = page !== 'garden' && page !== 'house' ? page : null
+  const sheet = page
 
   return (
     <div className="layout">
@@ -40,43 +39,50 @@ export function Layout() {
       <header className="topbar">
         <div className="topbar-left">
           {scene === 'house' && (
-            <button className="btn btn-ghost icon-btn" onClick={() => go('garden')} aria-label="回到花园">←</button>
+            <button className="btn btn-ghost icon-btn" onClick={() => { useDecorate.getState().reset(); setScene('garden') }} aria-label="回到花园">←</button>
           )}
           <h1 className="garden-name">{scene === 'house' ? `${child.name}的小屋` : child.gardenName}</h1>
         </div>
         <BalanceBar balance={balance} />
         <div className="topbar-right">
-          <button className="btn btn-ghost icon-btn" onClick={() => setPalette(true)} aria-label="换颜色">🎨</button>
+          <button className="btn btn-ghost icon-btn" onClick={() => setPalette(true)} aria-label="换颜色">🖍️</button>
           <button className="btn btn-ghost icon-btn" onClick={() => setParentOpen(true)} aria-label="家长模式">⚙️</button>
         </div>
       </header>
 
       <main className="scene-wrap">
-        {scene === 'garden' ? <GardenScene onEnterHouse={() => go('house')} /> : <HouseScene />}
+        {scene === 'garden' ? <GardenScene onEnterHouse={() => { useDecorate.getState().reset(); setScene('house') }} /> : <HouseScene />}
       </main>
 
-      <nav className="bottom-nav">
-        {NAV.map((n) => (
-          <button
-            key={n.page}
-            className={`nav-btn${page === n.page ? ' active' : ''}`}
-            onClick={() => go(page === n.page ? scene : n.page)}
-          >
-            <span className="nav-icon">{n.icon}</span>
-            <span className="nav-label">{n.label}</span>
+      {decorating ? (
+        <DecorateTray />
+      ) : (
+        <nav className="bottom-nav">
+          {NAV.map((n) => (
+            <button
+              key={n.page}
+              className={`nav-btn${page === n.page ? ' active' : ''}`}
+              onClick={() => go(page === n.page ? null : n.page)}
+            >
+              <span className="nav-icon">{n.icon}</span>
+              <span className="nav-label">{n.label}</span>
+            </button>
+          ))}
+          <button className="nav-btn" onClick={() => setDecorating(true)}>
+            <span className="nav-icon">🎨</span>
+            <span className="nav-label">装扮</span>
           </button>
-        ))}
-      </nav>
+        </nav>
+      )}
 
       {sheet && (
-        <div className="sheet-backdrop" onClick={() => go(scene)}>
+        <div className="sheet-backdrop" onClick={() => go(null)}>
           <section className="sheet card pop" onClick={(e) => e.stopPropagation()}>
-            <button className="btn btn-ghost icon-btn sheet-close" onClick={() => go(scene)} aria-label="关闭">✕</button>
+            <button className="btn btn-ghost icon-btn sheet-close" onClick={() => go(null)} aria-label="关闭">✕</button>
             {sheet === 'tasks' && <TodayTasks />}
             {sheet === 'bag' && <Bag />}
             {sheet === 'shop' && <Shop />}
             {sheet === 'codex' && <Codex />}
-            {sheet === 'decorate' && <ComingSoon title="装扮" text="很快就可以自己摆放花园和小屋啦！" />}
           </section>
         </div>
       )}

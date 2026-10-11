@@ -6,7 +6,8 @@ import type {
 import { balanceOf, type Balance } from '../engine/ledger'
 import { toTaskDay } from '../engine/taskDay'
 
-export type Page = 'garden' | 'house' | 'tasks' | 'shop' | 'bag' | 'codex' | 'decorate'
+export type Page = 'tasks' | 'shop' | 'bag' | 'codex'
+export type SceneName = 'garden' | 'house'
 
 interface State {
   loaded: boolean
@@ -23,11 +24,16 @@ interface State {
   balance: Balance
   today: string
 
-  page: Page
+  /** 打开的面板（null 表示只看场景） */
+  page: Page | null
+  scene: SceneName
+  decorating: boolean
   parentOpen: boolean
 
   load: () => Promise<void>
-  go: (page: Page) => void
+  go: (page: Page | null) => void
+  setScene: (scene: SceneName) => void
+  setDecorating: (on: boolean) => void
   setParentOpen: (open: boolean) => void
   tick: () => void
 }
@@ -46,7 +52,9 @@ export const useStore = create<State>((set, get) => ({
   unlocks: [],
   balance: { coin: 0, drop: 0 },
   today: toTaskDay(new Date()),
-  page: 'garden',
+  page: null,
+  scene: 'garden',
+  decorating: false,
   parentOpen: false,
 
   async load() {
@@ -76,6 +84,12 @@ export const useStore = create<State>((set, get) => ({
 
   go(page) {
     set({ page })
+  },
+  setScene(scene) {
+    set({ scene })
+  },
+  setDecorating(on) {
+    set({ decorating: on, page: null })
   },
   setParentOpen(open) {
     set({ parentOpen: open })

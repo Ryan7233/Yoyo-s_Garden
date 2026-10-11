@@ -1,0 +1,38 @@
+import { useStore, act } from '../../app/store'
+import { getCatalogItem } from '../../data/catalog'
+import { flip, storeBack } from '../../db/decorate'
+import { useDecorate } from './useDecorate'
+
+/** 点已摆放物品弹出的浮动菜单：移动、左右翻转、收回背包 */
+export function ItemMenu() {
+  const { placed, plants } = useStore()
+  const { menuId, openMenu, hold } = useDecorate()
+  if (!menuId) return null
+  const p = placed.find((q) => q.id === menuId)
+  const plant = p ? undefined : plants.find((q) => q.id === menuId)
+  const catalogId = p?.catalogId ?? plant?.catalogId
+  const item = catalogId ? getCatalogItem(catalogId) : undefined
+  if (!item || !catalogId) return null
+
+  return (
+    <div className="item-menu pop">
+      <span className="title item-menu-name">{item.name}</span>
+      <button className="btn" onClick={() => hold({ kind: 'move', id: menuId, catalogId })}>✋ 移动</button>
+      {p && (
+        <>
+          <button className="btn" onClick={() => act(() => flip(p.id))}>↔️ 翻转</button>
+          <button
+            className="btn"
+            onClick={async () => {
+              await act(() => storeBack(p.id))
+              openMenu(null)
+            }}
+          >
+            🎒 收回背包
+          </button>
+        </>
+      )}
+      <button className="btn btn-ghost" onClick={() => openMenu(null)}>好了</button>
+    </div>
+  )
+}

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useStore, act } from '../../app/store'
 import { BALANCE } from '../../data/balance'
 import { getCatalogItem } from '../../data/catalog'
-import { Icon } from '../../ui/Icon'
 import { Mascot } from '../../ui/Mascot'
 import { ConfirmDialog } from '../../ui/Modal'
 import { toast } from '../../ui/Toast'
@@ -13,12 +12,15 @@ import { SeedPicker } from './SeedPicker'
 import { SKY, skyPhase } from './sky'
 import { HOUSE_RECT, expandCandidates } from '../../engine/plots'
 import { expandPlot } from '../../db/garden'
+import { PlacedView, placedProps } from '../decorate/PlacedView'
+import { PlacementLayer } from '../decorate/PlacementLayer'
+import { ItemMenu } from '../decorate/ItemMenu'
 import './garden.css'
 
 type Fx = { id: string; kind: 'water' | 'grow' }
 
 export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
-  const { child, plots, plants, placed, today, balance } = useStore()
+  const { child, plots, plants, placed, today, balance, decorating } = useStore()
   const [plantId, setPlantId] = useState<string | null>(null)
   const [emptyPlot, setEmptyPlot] = useState<{ x: number; y: number } | null>(null)
   const [expanding, setExpanding] = useState(false)
@@ -42,7 +44,7 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
   }
 
   const tapPlot = (x: number, y: number) => {
-    if (expanding) return
+    if (expanding || decorating) return
     const p = outdoorPlants.find((q) => q.x === x && q.y === y)
     if (p) setPlantId(p.id)
     else setEmptyPlot({ x, y })
@@ -76,15 +78,9 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
           />
         ))}
 
-        {outdoorPlaced.map((p) => {
-          const item = getCatalogItem(p.catalogId)
-          if (!item) return null
-          return (
-            <div key={p.id} className="placed" style={{ ...cell(p.x, p.y, item.size[0], item.size[1]), transform: p.flipped ? 'scaleX(-1)' : undefined }}>
-              <Icon icon={item.icon} size={48 * Math.max(...item.size)} />
-            </div>
-          )
-        })}
+        {outdoorPlaced.map((p) => (
+          <PlacedView key={p.id} {...placedProps(p)} size={48} />
+        ))}
 
         {outdoorPlants.map((p) => (
           <div key={p.id} className="plant" style={cell(p.x, p.y)}>
@@ -93,6 +89,8 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
           </div>
         ))}
 
+        {decorating && <PlacementLayer scene="outdoor" layer="ground" cols={BALANCE.gridWidth} rows={BALANCE.gridHeight} />}
+
         {candidates.map((c) => (
           <button key={`c${c.x}-${c.y}`} className="expand-cell pop" style={cell(c.x, c.y)} onClick={() => setExpandAt(c)} aria-label="扩建这里">
             ＋
@@ -100,7 +98,8 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
         ))}
       </div>
 
-      <div className="garden-tools">
+      {decorating && <ItemMenu />}
+      {!decorating && <div className="garden-tools">
         {expanding ? (
           <button className="btn btn-primary" onClick={() => setExpanding(false)}>完成扩建</button>
         ) : (
@@ -108,10 +107,10 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
             <button className="btn btn-ghost" onClick={() => setExpanding(true)}>🧱 扩建地块</button>
           )
         )}
-      </div>
+      </div>}
       {expanding && <div className="garden-hint pop">点一个“＋”，花 {BALANCE.plotExpandCost} 金币开一块新地</div>}
 
-      {outdoorPlants.length === 0 && !expanding && (
+      {outdoorPlants.length === 0 && !expanding && !decorating && (
         <div className="garden-empty">
           <Mascot size={72} bounce />
           <span className="bubble">{child.mascotName}：点一块空地，种下第一颗种子吧</span>

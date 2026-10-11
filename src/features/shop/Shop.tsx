@@ -29,18 +29,16 @@ const ITEMS: Record<Tab, CatalogItem[]> = {
   special: [...SPECIAL_SEEDS, ...OUTDOOR_SPECIAL],
 }
 
-/** 这一版（M2）还不能使用的物品，以及原因 */
+/** 这一版还不能使用的物品，以及原因 */
 function notYet(item: CatalogItem): string | null {
-  if (item.plant) {
-    if (item.plant.needs === 'pond') return '有池塘后才能种'
-    if (item.plant.needs === 'indoor') return '小屋装扮开放后能种'
-    return null
-  }
-  return '装扮功能开放后能买'
+  if (item.plant?.needs === 'pond') return '池塘种植稍后开放'
+  return null
 }
 
+const isStyle = (item: CatalogItem) => item.kind === 'wallStyle' || item.kind === 'floorStyle'
+
 export function Shop() {
-  const { child, balance } = useStore()
+  const { child, balance, inventory } = useStore()
   const [tab, setTab] = useState<Tab>('seed')
   const [stats, setStats] = useState<ProgressStats | null>(null)
   const [buying, setBuying] = useState<CatalogItem | null>(null)
@@ -65,6 +63,7 @@ export function Shop() {
           const locked = item.unlock && stats ? !isUnlocked(item.unlock, stats) : !!item.unlock && !stats
           const later = notYet(item)
           const short = item.price - balance.coin
+          const owned = isStyle(item) && inventory.some((i) => i.catalogId === item.id)
           return (
             <div key={item.id} className={`shop-card${locked ? ' locked' : ''}`}>
               <div className="shop-icon">
@@ -78,6 +77,8 @@ export function Shop() {
                   {describeUnlock(item.unlock)}
                   {stats && <div className="shop-progress">已完成 {Math.min(ruleProgress(item.unlock, stats), item.unlock.count)} / {item.unlock.count}</div>}
                 </div>
+              ) : owned ? (
+                <div className="shop-note">✓ 已拥有，在装扮里更换</div>
               ) : later ? (
                 <>
                   <div className="price">🪙 {item.price}</div>
@@ -102,7 +103,7 @@ export function Shop() {
           onConfirm={async () => {
             const r = await act(() => buyItem(child.id, buying.id))
             setBuying(null)
-            if (r.ok) toast(`${buying.name}${buying.plant ? '种子' : ''}放进背包啦`)
+            if (r.ok) toast(isStyle(buying) ? `买到${buying.name}啦，在小屋装扮里换上吧` : `${buying.name}${buying.plant ? '种子' : ''}放进背包啦`)
           }}
         />
       )}

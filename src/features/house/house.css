@@ -5,14 +5,11 @@
   flex-direction: column;
 }
 .wall {
-  height: 28%;
+  height: 26%;
+  min-height: 0;
   display: grid;
-  align-items: center;
-  justify-items: center;
-  padding: 12px 20px;
-  background:
-    repeating-linear-gradient(90deg, transparent 0 38px, rgba(255, 158, 192, 0.18) 38px 42px),
-    #ffe6ef;
+  gap: 4px;
+  padding: 10px 20px;
   border-bottom: 8px solid #e3b98c;
 }
 .window {
@@ -28,12 +25,24 @@
   display: grid;
   gap: 4px;
   padding: 12px 20px;
-  background:
-    repeating-linear-gradient(0deg, transparent 0 46px, rgba(185, 138, 94, 0.35) 46px 48px),
-    #e9c49b;
 }
 .floor-item, .wall-item {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  z-index: 1;
 }
+.clock { position: relative; display: inline-flex; flex-direction: column; align-items: center; }
+.clock-time {
+  font-family: var(--font-title);
+  font-size: 16px;
+  background: #fff;
+  border-radius: 999px;
+  padding: 0 8px;
+  margin-top: -6px;
+}
+.vase { position: relative; display: inline-flex; flex-direction: column; align-items: center; }
+.vase-flower { margin-bottom: -18px; z-index: 1; }

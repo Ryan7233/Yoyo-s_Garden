@@ -1,5 +1,6 @@
 // 花园操作：购买、种植、浇水、收获、出售、扩建（SPEC 5.2–5.4）
 import { db, uid } from './schema'
+import { addInventory, takeInventory } from './inventory'
 import type { LedgerEntry, PlantInstance } from '../data/types'
 import { getCatalogItem } from '../data/catalog'
 import { harvestInfo, VEGGIE_IDS, FRUIT_TREE_IDS } from '../data/plants'
@@ -17,20 +18,6 @@ async function ledger(childId: string) {
 
 async function addLedger(childId: string, e: Omit<LedgerEntry, 'id' | 'childId' | 'at' | 'date'>, now: Date) {
   await db.ledger.add({ ...e, id: uid(), childId, at: now.toISOString(), date: toTaskDay(now) })
-}
-
-async function addInventory(childId: string, catalogId: string, n: number) {
-  const row = await db.inventory.where({ childId, catalogId }).first()
-  if (row) await db.inventory.update(row.id, { count: row.count + n })
-  else await db.inventory.add({ id: uid(), childId, catalogId, count: n })
-}
-
-async function takeInventory(childId: string, catalogId: string, n = 1): Promise<boolean> {
-  const row = await db.inventory.where({ childId, catalogId }).first()
-  if (!row || row.count < n) return false
-  if (row.count === n) await db.inventory.delete(row.id)
-  else await db.inventory.update(row.id, { count: row.count - n })
-  return true
 }
 
 /** 解锁和访客用的累计数据 */
@@ -61,7 +48,7 @@ export async function progressStats(childId: string): Promise<ProgressStats> {
   }
 }
 
-export type BuyResult = { ok: true } | { ok: false; reason: 'coins' | 'locked' | 'unknown' }
+export type BuyResult = { ok: true } | { ok: false; reason: 'coins' | 'locked' | 'unknown' | 'owned' }
 
 export async function buyItem(childId: string, catalogId: string, now = new Date()): Promise<BuyResult> {
   const item = getCatalogItem(catalogId)
@@ -69,6 +56,10 @@ export async function buyItem(childId: string, catalogId: string, now = new Date
   if (item.unlock && !isUnlocked(item.unlock, await progressStats(childId))) return { ok: false, reason: 'locked' }
   return db.transaction('rw', [db.ledger, db.inventory], async () => {
     if (balanceOf(await ledger(childId)).coin < item.price) return { ok: false, reason: 'coins' } as const
+    // 墙纸地板买一次就够了
+    if ((item.kind === 'wallStyle' || item.kind === 'floorStyle') && (await db.inventory.where({ childId, catalogId }).count())) {
+      return { ok: false, reason: 'owned' } as const
+    }
     if (item.price > 0) await addLedger(childId, { currency: 'coin', amount: -item.price, reason: 'purchase', refId: catalogId }, now)
     await addInventory(childId, catalogId, 1)
     return { ok: true } as const

@@ -29,6 +29,8 @@ export async function setupChild(input: SetupInput, now = new Date()): Promise<C
     theme: input.theme,
     mascotName: input.mascotName.trim(),
     createdAt: at,
+    wallStyle: 'wall-default',
+    floorStyle: 'floor-wood',
   }
   const salt = newSalt()
   const settings: Settings = {
