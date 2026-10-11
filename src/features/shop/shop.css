@@ -34,3 +34,16 @@
 .shop-progress { font-size: 16px; }
 .price { font-family: var(--font-title); font-size: 22px; margin-top: auto; }
 .bag-section { font-size: 24px; margin: 16px 0 10px; }
+.shop-card { position: relative; }
+.shop-card.wished { border-color: var(--primary); }
+.wish-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 52px;
+  height: 52px;
+  border: none;
+  background: none;
+  font-size: 28px;
+}
+.wish-btn.on { animation: pop 0.45s ease-out; }

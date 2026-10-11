@@ -26,7 +26,7 @@ describe('商店', () => {
   })
   it('购买扣金币、进背包', async () => {
     await giveBonus(childId, '测试', 10, day(1))
-    expect(await buyItem(childId, 'seed-tulip', day(1))).toEqual({ ok: true })
+    expect(await buyItem(childId, 'seed-tulip', day(1))).toEqual({ ok: true, wishDone: false })
     expect((await balance()).coin).toBe(2)
     expect(await count('seed-tulip')).toBe(1)
   })

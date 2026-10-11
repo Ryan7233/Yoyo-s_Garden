@@ -15,3 +15,42 @@
 .codex-card.unknown { background: #f7f5f8; border-color: var(--mist); color: var(--text-soft); }
 /* 剪影 */
 .codex-card.unknown > :first-child { filter: brightness(0) opacity(0.25); }
+.codex-grid.wide { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.codex-sub { font-size: 16px; color: var(--text-soft); text-align: center; padding: 0 8px 8px; }
+.codex-card.unknown > .codex-sub { filter: none; }
+.badge-card { min-height: 170px; }
+.badge-card.got { border-color: var(--lavender); background: #f6f1ff; }
+.badge-medal {
+  font-size: 40px;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--lavender);
+  box-shadow: 0 4px 0 #8d71c9;
+}
+.badge-card.unknown .badge-medal { background: var(--mist); box-shadow: none; }
+.cal { max-width: 640px; margin: 0 auto; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.cal-title { font-size: 24px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal-week { text-align: center; color: var(--text-soft); font-size: 18px; }
+.cal-day {
+  aspect-ratio: 1;
+  border-radius: 16px;
+  background: var(--white);
+  border: 2px solid var(--primary-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+.cal-day:empty { background: none; border: none; }
+.cal-day.star { background: #fff6d9; border-color: var(--coin); }
+.cal-day.today { border-color: var(--primary-dark); }
+.cal-star { font-size: 22px; line-height: 1; }
+/* 没拿到的徽章：灰色但看得出图案 */
+.codex-card.badge-card.unknown > .badge-medal { filter: grayscale(1) opacity(0.55); }

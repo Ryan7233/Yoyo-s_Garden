@@ -185,3 +185,34 @@
 
 /* 场景里的物品：平时不挡点击，装扮模式下由 .tappable 打开 */
 .placed { pointer-events: none; }
+
+/* 心愿进度条 */
+.wish-bar {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 72px;
+  width: min(340px, 45%);
+  padding: 8px 16px 8px 10px;
+  border-radius: 24px;
+  border: var(--border) solid var(--primary-light);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow-soft);
+  text-align: left;
+}
+.wish-bar.ready { border-color: var(--coin); animation: wish-glow 1.4s ease-in-out infinite alternate; }
+.wish-icon { flex: none; }
+.wish-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.wish-title { font-family: var(--font-title); font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wish-track { height: 12px; border-radius: 999px; background: var(--primary-light); overflow: hidden; }
+.wish-fill { display: block; height: 100%; border-radius: 999px; background: var(--primary); transition: width 0.6s ease; }
+.wish-bar.ready .wish-fill { background: var(--coin); }
+.wish-text { font-size: 16px; color: var(--text-soft); }
+@keyframes wish-glow {
+  from { box-shadow: 0 0 0 0 rgba(255, 214, 107, 0.4); }
+  to { box-shadow: 0 0 18px 6px rgba(255, 214, 107, 0.9); }
+}

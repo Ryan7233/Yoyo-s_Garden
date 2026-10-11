@@ -15,6 +15,8 @@ import { expandPlot } from '../../db/garden'
 import { PlacedView, placedProps } from '../decorate/PlacedView'
 import { PlacementLayer } from '../decorate/PlacementLayer'
 import { ItemMenu } from '../decorate/ItemMenu'
+import { Visitors } from './Visitors'
+import { WishBar } from './WishBar'
 import './garden.css'
 
 type Fx = { id: string; kind: 'water' | 'grow' }
@@ -98,6 +100,8 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
         ))}
       </div>
 
+      <Visitors scene="outdoor" />
+      {!decorating && !expanding && <WishBar />}
       {decorating && <ItemMenu />}
       {!decorating && <div className="garden-tools">
         {expanding ? (

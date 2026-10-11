@@ -157,6 +157,8 @@ export interface Unlock {
   kind: 'item' | 'visitor' | 'badge' | 'codex'
   refId: string
   at: string
+  /** 孩子看过这条解锁提示的时间 */
+  seenAt?: string
 }
 export interface Wish { childId: string; catalogId: string; setAt: string }
 export interface Settings {

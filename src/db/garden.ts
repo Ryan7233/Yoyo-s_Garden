@@ -3,12 +3,13 @@ import { db, uid } from './schema'
 import { addInventory, takeInventory } from './inventory'
 import type { LedgerEntry, PlantInstance } from '../data/types'
 import { getCatalogItem } from '../data/catalog'
-import { harvestInfo, VEGGIE_IDS, FRUIT_TREE_IDS } from '../data/plants'
+import { harvestInfo } from '../data/plants'
 import { BALANCE } from '../data/balance'
 import { balanceOf } from '../engine/ledger'
 import { canHarvest, canWater, harvest, water } from '../engine/growth'
 import { expandCandidates } from '../engine/plots'
-import { isUnlocked, type ProgressStats } from '../engine/unlocks'
+import { type ProgressStats } from '../engine/unlocks'
+import { itemUnlocked } from '../engine/progress'
 import { dayProgress, latestRecordByTask } from '../engine/rewards'
 import { toTaskDay } from '../engine/taskDay'
 
@@ -48,21 +49,27 @@ export async function progressStats(childId: string): Promise<ProgressStats> {
   }
 }
 
-export type BuyResult = { ok: true } | { ok: false; reason: 'coins' | 'locked' | 'unknown' | 'owned' }
+export type BuyResult = { ok: true; wishDone: boolean } | { ok: false; reason: 'coins' | 'locked' | 'unknown' | 'owned' }
 
 export async function buyItem(childId: string, catalogId: string, now = new Date()): Promise<BuyResult> {
   const item = getCatalogItem(catalogId)
-  if (!item || item.starter) return { ok: false, reason: 'unknown' }
-  if (item.unlock && !isUnlocked(item.unlock, await progressStats(childId))) return { ok: false, reason: 'locked' }
-  return db.transaction('rw', [db.ledger, db.inventory], async () => {
+  // 免费的特殊装饰只能靠解锁获得
+  if (!item || item.starter || item.price <= 0) return { ok: false, reason: 'unknown' }
+  const unlocks = await db.unlocks.where('childId').equals(childId).toArray()
+  if (!itemUnlocked(item, item.unlock ? await progressStats(childId) : null, unlocks)) return { ok: false, reason: 'locked' }
+  return db.transaction('rw', [db.ledger, db.inventory, db.wishes], async () => {
     if (balanceOf(await ledger(childId)).coin < item.price) return { ok: false, reason: 'coins' } as const
     // 墙纸地板买一次就够了
     if ((item.kind === 'wallStyle' || item.kind === 'floorStyle') && (await db.inventory.where({ childId, catalogId }).count())) {
       return { ok: false, reason: 'owned' } as const
     }
-    if (item.price > 0) await addLedger(childId, { currency: 'coin', amount: -item.price, reason: 'purchase', refId: catalogId }, now)
+    await addLedger(childId, { currency: 'coin', amount: -item.price, reason: 'purchase', refId: catalogId }, now)
     await addInventory(childId, catalogId, 1)
-    return { ok: true } as const
+    // 买到心愿物品：心愿单清空，等她挑下一件
+    const wish = await db.wishes.get(childId)
+    const wishDone = wish?.catalogId === catalogId
+    if (wishDone) await db.wishes.delete(childId)
+    return { ok: true, wishDone } as const
   })
 }
 
@@ -154,8 +161,4 @@ export async function expandPlot(childId: string, x: number, y: number, now = ne
   })
 }
 
-/** 累计收获蔬果次数（瓢虫） */
-export function veggieHarvestCount(entries: LedgerEntry[]): number {
-  const ids = new Set([...VEGGIE_IDS, ...FRUIT_TREE_IDS])
-  return entries.filter((e) => e.reason === 'harvest' && ids.has(e.refId ?? '')).length
-}
+export { veggieHarvestCount } from '../engine/visitors'

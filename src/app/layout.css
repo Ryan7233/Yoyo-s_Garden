@@ -84,3 +84,6 @@
   .nav-btn { min-width: 64px; flex: 1; }
   .garden-name { font-size: 24px; }
 }
+
+.notice-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; text-align: left; }
+.notice-row { display: flex; align-items: center; gap: 14px; padding: 12px 16px; font-size: 20px; }

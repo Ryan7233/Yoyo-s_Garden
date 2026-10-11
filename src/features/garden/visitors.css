@@ -1,0 +1,56 @@
+.visitors { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.visitor {
+  position: absolute;
+  translate: -50% -50%;
+  pointer-events: auto;
+  border: none;
+  background: none;
+  padding: 0;
+  width: 72px;
+  height: 72px;
+  font-size: 46px;
+  line-height: 1;
+  animation: visitor-in 0.9s ease-out both;
+}
+/* 走动和飞舞只作用在身体上，说的话不跟着翻转 */
+.visitor-move { display: inline-block; animation: visitor-wander 7s ease-in-out 1s infinite alternate; }
+.visitor-move.fly { animation: visitor-flutter 3.2s ease-in-out 1s infinite; }
+.visitor-body { display: inline-block; }
+.visitor-body.hop { animation: visitor-hop 0.6s ease-out; }
+.visitor-say {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  translate: -50% -6px;
+  white-space: nowrap;
+  background: #fff;
+  border-radius: 18px;
+  padding: 8px 14px;
+  font-size: 19px;
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-family: var(--font-body);
+  z-index: 2;
+}
+@keyframes visitor-in {
+  0% { transform: translateX(60vw) scale(0.6); opacity: 0; }
+  60% { transform: translateX(-10px) scale(1.05); opacity: 1; }
+  100% { transform: translateX(0) scale(1); }
+}
+@keyframes visitor-wander {
+  0% { transform: translateX(0); }
+  45% { transform: translateX(-36px); }
+  50% { transform: translateX(-36px) scaleX(-1); }
+  95% { transform: translateX(0) scaleX(-1); }
+  100% { transform: translateX(0); }
+}
+@keyframes visitor-flutter {
+  0%, 100% { transform: translate(0, 0) rotate(-6deg); }
+  25% { transform: translate(16px, -12px) rotate(6deg); }
+  50% { transform: translate(30px, 0) rotate(-4deg); }
+  75% { transform: translate(14px, 10px) rotate(4deg); }
+}
+@keyframes visitor-hop {
+  0%, 100% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-22px) scale(1.15); }
+}

@@ -11,6 +11,7 @@ import { PlacedView, placedProps } from '../decorate/PlacedView'
 import { PlacementLayer } from '../decorate/PlacementLayer'
 import { ItemMenu } from '../decorate/ItemMenu'
 import { VasePicker } from './VasePicker'
+import { Visitors } from '../garden/Visitors'
 import './house.css'
 
 function useClock() {
@@ -85,6 +86,7 @@ export function HouseScene() {
         ))}
         {decorating && <PlacementLayer scene="indoor" layer="ground" cols={BALANCE.indoorWidth} rows={BALANCE.indoorHeight} />}
       </div>
+      <Visitors scene="indoor" />
       {decorating && <ItemMenu />}
       {plantId && <PlantSheet plantId={plantId} onClose={() => setPlantId(null)} onWatered={() => {}} />}
       {vaseId && <VasePicker vaseId={vaseId} onClose={() => setVaseId(null)} />}

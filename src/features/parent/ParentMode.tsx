@@ -7,18 +7,20 @@ import { RecordsPanel } from './RecordsPanel'
 import { BonusPanel } from './BonusPanel'
 import { TaskConfigPanel } from './TaskConfigPanel'
 import { ExerciseConfigPanel } from './ExerciseConfigPanel'
+import { StatsPanel } from './StatsPanel'
 import { DataPanel } from './DataPanel'
 import { SettingsPanel } from './SettingsPanel'
 import { diffDays, toTaskDay } from '../../engine/taskDay'
 import './parent.css'
 
-type Tab = 'pending' | 'records' | 'bonus' | 'tasks' | 'exercise' | 'data' | 'settings'
+type Tab = 'pending' | 'records' | 'bonus' | 'tasks' | 'exercise' | 'stats' | 'data' | 'settings'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'pending', label: '待确认' },
   { id: 'records', label: '今日记录' },
   { id: 'bonus', label: '加分' },
   { id: 'tasks', label: '任务配置' },
   { id: 'exercise', label: '运动目标' },
+  { id: 'stats', label: '统计' },
   { id: 'data', label: '数据' },
   { id: 'settings', label: '设置' },
 ]
@@ -88,6 +90,7 @@ export function ParentMode({ onClose }: { onClose: () => void }) {
               {tab === 'bonus' && <BonusPanel />}
               {tab === 'tasks' && <TaskConfigPanel />}
               {tab === 'exercise' && <ExerciseConfigPanel />}
+              {tab === 'stats' && <StatsPanel />}
               {tab === 'data' && <DataPanel />}
               {tab === 'settings' && <SettingsPanel />}
             </div>

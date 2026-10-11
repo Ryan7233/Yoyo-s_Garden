@@ -72,7 +72,7 @@ describe('花瓶、墙纸、卖家具', () => {
 
   it('墙纸买了才能换，买一次就够', async () => {
     expect(await applyStyle(childId, 'wall-stars')).toBe(false)
-    expect(await buyItem(childId, 'wall-stars', NOW)).toEqual({ ok: true })
+    expect(await buyItem(childId, 'wall-stars', NOW)).toEqual({ ok: true, wishDone: false })
     expect(await buyItem(childId, 'wall-stars', NOW)).toEqual({ ok: false, reason: 'owned' })
     expect(await applyStyle(childId, 'wall-stars')).toBe(true)
     expect((await db.children.get(childId))?.wallStyle).toBe('wall-stars')

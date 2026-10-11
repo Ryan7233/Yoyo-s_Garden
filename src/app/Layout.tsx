@@ -12,6 +12,7 @@ import { ToastHost } from '../ui/Toast'
 import { DecorateTray } from '../features/decorate/DecorateTray'
 import { useDecorate } from '../features/decorate/useDecorate'
 import { RewardNotices } from './RewardNotices'
+import { UnlockNotices } from './UnlockNotices'
 import { isStandalone } from './standalone'
 import { THEMES } from './themes'
 import { updateChild } from '../db/actions'
@@ -109,6 +110,7 @@ export function Layout() {
       )}
 
       {!parentOpen && <RewardNotices />}
+      {!parentOpen && !decorating && <UnlockNotices />}
       <ToastHost />
       {parentOpen && <ParentMode onClose={() => setParentOpen(false)} />}
     </div>
