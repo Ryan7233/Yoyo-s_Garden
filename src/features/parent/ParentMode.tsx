@@ -6,17 +6,19 @@ import { PendingPanel } from './PendingPanel'
 import { RecordsPanel } from './RecordsPanel'
 import { BonusPanel } from './BonusPanel'
 import { TaskConfigPanel } from './TaskConfigPanel'
+import { ExerciseConfigPanel } from './ExerciseConfigPanel'
 import { DataPanel } from './DataPanel'
 import { SettingsPanel } from './SettingsPanel'
 import { diffDays, toTaskDay } from '../../engine/taskDay'
 import './parent.css'
 
-type Tab = 'pending' | 'records' | 'bonus' | 'tasks' | 'data' | 'settings'
+type Tab = 'pending' | 'records' | 'bonus' | 'tasks' | 'exercise' | 'data' | 'settings'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'pending', label: '待确认' },
   { id: 'records', label: '今日记录' },
   { id: 'bonus', label: '加分' },
   { id: 'tasks', label: '任务配置' },
+  { id: 'exercise', label: '运动目标' },
   { id: 'data', label: '数据' },
   { id: 'settings', label: '设置' },
 ]
@@ -24,7 +26,9 @@ const TABS: { id: Tab; label: string }[] = [
 export function ParentMode({ onClose }: { onClose: () => void }) {
   const [unlocked, setUnlocked] = useState(false)
   const [tab, setTab] = useState<Tab>('pending')
-  const pendingCount = useStore((s) => s.records.filter((r) => r.status === 'pending').length)
+  const pendingCount = useStore(
+    (s) => s.records.filter((r) => r.status === 'pending').length + s.exerciseRecords.filter((r) => r.status === 'pending').length,
+  )
   const settings = useStore((s) => s.settings)
   const child = useStore((s) => s.child)
   const idle = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -83,6 +87,7 @@ export function ParentMode({ onClose }: { onClose: () => void }) {
               {tab === 'records' && <RecordsPanel />}
               {tab === 'bonus' && <BonusPanel />}
               {tab === 'tasks' && <TaskConfigPanel />}
+              {tab === 'exercise' && <ExerciseConfigPanel />}
               {tab === 'data' && <DataPanel />}
               {tab === 'settings' && <SettingsPanel />}
             </div>

@@ -29,6 +29,7 @@ function writeSeen(at: string) {
 export function RewardNotices() {
   const ledger = useStore((s) => s.ledger)
   const records = useStore((s) => s.records)
+  const exerciseRecords = useStore((s) => s.exerciseRecords)
   const [seen, setSeen] = useState<string | null>(() => readSeen())
 
   useEffect(() => {
@@ -43,13 +44,15 @@ export function RewardNotices() {
   const fresh = useMemo(() => {
     if (!seen) return []
     const parentRecordIds = new Set(records.filter((r) => r.source === 'parent' || r.confirmedAt !== r.createdAt).map((r) => r.id))
+    const videoIds = new Set(exerciseRecords.filter((r) => r.witness === 'video').map((r) => r.id))
     return ledger.filter(
       (e) =>
         e.at > seen &&
         e.amount > 0 &&
-        (e.reason === 'bonus' || e.reason === 'allDone' || e.reason === 'streak' || (e.reason === 'task' && parentRecordIds.has(e.refId ?? ''))),
+        (e.reason === 'bonus' || e.reason === 'allDone' || e.reason === 'streak' || (e.reason === 'task' && parentRecordIds.has(e.refId ?? '')) ||
+          (e.reason === 'personalBest' && videoIds.has(e.refId ?? ''))),
     )
-  }, [ledger, records, seen])
+  }, [ledger, records, exerciseRecords, seen])
 
   if (!fresh.length) return null
 
@@ -57,6 +60,7 @@ export function RewardNotices() {
   const others = fresh.filter((e) => e.reason !== 'bonus')
   const sum = (list: LedgerEntry[], c: 'coin' | 'drop') => list.filter((e) => e.currency === c).reduce((s, e) => s + e.amount, 0)
   const taskCount = new Set(others.filter((e) => e.reason === 'task').map((e) => e.refId)).size
+  const bestCount = others.filter((e) => e.reason === 'personalBest').length
 
   const close = () => {
     const last = ledger[ledger.length - 1].at
@@ -74,6 +78,9 @@ export function RewardNotices() {
             📝 因为你{b.note}，获得 {b.amount} 金币
           </div>
         ))}
+        {bestCount > 0 && (
+          <p className="title pop" style={{ fontSize: 28, margin: '12px 0' }}>🏆 爸爸妈妈看了视频，{bestCount > 1 ? `${bestCount} 个` : ''}新纪录确认啦！</p>
+        )}
         {others.length > 0 && (
           <p className="title" style={{ fontSize: 26, margin: '12px 0' }}>
             {taskCount > 0 ? `爸爸妈妈确认了 ${taskCount} 项任务，` : ''}

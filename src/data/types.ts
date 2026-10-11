@@ -70,7 +70,10 @@ export interface ExerciseRecord {
   createdAt: string
   recordAttempt: boolean
   witness?: 'parent' | 'video'
+  /** 视频存 IndexedDB，家长确认或驳回后删除 */
   videoBlobId?: string
+  /** 家长驳回时附的一句话 */
+  note?: string
 }
 
 export type Currency = 'coin' | 'drop'

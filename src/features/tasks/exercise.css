@@ -1,0 +1,47 @@
+.ex-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.ex-sub { color: var(--text-soft); font-size: 20px; margin: 8px 0 14px; text-align: center; }
+.ex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+.ex-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 12px;
+  min-height: 220px;
+  background: var(--white);
+  border-radius: var(--radius-card);
+  border: var(--border) solid var(--mist);
+  box-shadow: var(--shadow-soft);
+}
+.ex-card.done { border-color: var(--mint); background: #f1fbf6; }
+.ex-card:active { transform: scale(0.97); }
+.ex-icon { font-size: 52px; }
+.ex-name { font-family: var(--font-title); font-size: 26px; }
+.ex-meta { font-size: 17px; color: var(--text-soft); }
+.ex-card .badge { margin-top: auto; }
+.badge.todo { background: var(--primary-light); }
+.ex-run { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.ex-tip {
+  background: #fff6d9;
+  border: 2px solid var(--coin);
+  border-radius: 16px;
+  padding: 10px 18px;
+  font-size: 22px;
+}
+.ex-go { min-height: var(--btn-main); min-width: 240px; font-size: 34px; }
+.ex-clock {
+  font-family: var(--font-title);
+  font-size: 160px;
+  line-height: 1;
+  color: var(--primary-dark);
+  font-variant-numeric: tabular-nums;
+}
+.ex-clock.hurry { color: var(--coin-dark); animation: bounce 1s ease-in-out infinite; }
+.ex-big { font-family: var(--font-title); font-size: 64px; margin: 0; color: var(--primary-dark); }
+.ex-record { font-size: 36px; color: var(--coin-dark); }
+.ex-input { display: flex; align-items: center; gap: 12px; }
+.ex-input .input { width: 180px; text-align: center; font-size: 40px; min-height: 80px; }
+.ex-input .title { font-size: 28px; }
+.ex-choices { display: flex; flex-direction: column; gap: 14px; width: min(420px, 100%); }
+.ex-choice { min-height: 76px; font-size: 26px; }
+.ex-video { width: 100%; max-height: 50vh; border-radius: 16px; background: #000; }

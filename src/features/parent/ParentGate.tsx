@@ -4,22 +4,7 @@ import { PinPad } from '../../ui/PinPad'
 import { BALANCE } from '../../data/balance'
 import { afterFail, isLocked, isValidPin, makeResetQuestion, verifyPin, type PinLock } from '../../engine/pin'
 import { changePin } from '../../db/actions'
-
-const LOCK_KEY = 'little-garden:pin-lock'
-function readLock(): PinLock {
-  try {
-    return JSON.parse(localStorage.getItem(LOCK_KEY) ?? '') as PinLock
-  } catch {
-    return { fails: 0, lockedUntil: 0 }
-  }
-}
-function writeLock(l: PinLock) {
-  try {
-    localStorage.setItem(LOCK_KEY, JSON.stringify(l))
-  } catch {
-    /* 忽略 */
-  }
-}
+import { readLock, writeLock } from './pinLock'
 
 export function ParentGate({ onPass, onCancel }: { onPass: () => void; onCancel: () => void }) {
   const settings = useStore((s) => s.settings)

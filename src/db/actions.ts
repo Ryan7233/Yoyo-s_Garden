@@ -62,13 +62,13 @@ export async function setupChild(input: SetupInput, now = new Date()): Promise<C
   return child
 }
 
-async function addEntries(childId: string, entries: NewEntry[], now: Date) {
+export async function addEntries(childId: string, entries: NewEntry[], now: Date) {
   if (!entries.length) return
   const at = now.toISOString()
   await db.ledger.bulkAdd(entries.map((e) => ({ ...e, id: uid(), childId, at })))
 }
 
-async function ledgerOf(childId: string): Promise<LedgerEntry[]> {
+export async function ledgerOf(childId: string): Promise<LedgerEntry[]> {
   return db.ledger.where('childId').equals(childId).sortBy('at')
 }
 
