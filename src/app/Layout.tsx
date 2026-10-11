@@ -6,6 +6,9 @@ import { HouseScene } from '../features/house/HouseScene'
 import { TodayTasks } from '../features/tasks/TodayTasks'
 import { ParentMode } from '../features/parent/ParentMode'
 import { Bag } from '../features/shop/Bag'
+import { Shop } from '../features/shop/Shop'
+import { Codex } from '../features/codex/Codex'
+import { ToastHost } from '../ui/Toast'
 import { ComingSoon } from './ComingSoon'
 import { RewardNotices } from './RewardNotices'
 import { isStandalone } from './standalone'
@@ -71,8 +74,8 @@ export function Layout() {
             <button className="btn btn-ghost icon-btn sheet-close" onClick={() => go(scene)} aria-label="关闭">✕</button>
             {sheet === 'tasks' && <TodayTasks />}
             {sheet === 'bag' && <Bag />}
-            {sheet === 'shop' && <ComingSoon title="商店" text="小商店正在装修，马上就开张啦！" />}
-            {sheet === 'codex' && <ComingSoon title="图鉴" text="种出新植物、迎来小动物后，这里会慢慢亮起来。" />}
+            {sheet === 'shop' && <Shop />}
+            {sheet === 'codex' && <Codex />}
             {sheet === 'decorate' && <ComingSoon title="装扮" text="很快就可以自己摆放花园和小屋啦！" />}
           </section>
         </div>
@@ -100,6 +103,7 @@ export function Layout() {
       )}
 
       {!parentOpen && <RewardNotices />}
+      <ToastHost />
       {parentOpen && <ParentMode onClose={() => setParentOpen(false)} />}
     </div>
   )

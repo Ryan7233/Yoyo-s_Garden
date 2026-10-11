@@ -88,7 +88,7 @@
   position: relative;
 }
 .plant { z-index: 2; }
-.thirsty {
+.plant-art .thirsty, .thirsty {
   position: absolute;
   top: -6px;
   right: -2px;
@@ -112,3 +112,73 @@
   font-size: 20px;
   margin-bottom: 40px;
 }
+
+.plot { padding: 0; }
+.plot:active { filter: brightness(0.95); }
+.plant { pointer-events: none; }
+.plant-art { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+.plant-art.hop { animation: hop 0.6s ease-out 2; }
+.plant-art.ready { filter: drop-shadow(0 0 6px #ffd66b); }
+.ready-badge { position: absolute; top: -8px; left: -6px; font-size: 20px; animation: bounce 1.2s ease-in-out infinite; }
+@keyframes hop {
+  0%, 100% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-14px) scale(1.12); }
+}
+.fx {
+  position: absolute;
+  top: -10px;
+  font-size: 30px;
+  animation: fx-rise 1.2s ease-out both;
+}
+@keyframes fx-rise {
+  0% { transform: translateY(10px); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateY(-30px); opacity: 0; }
+}
+.expand-cell {
+  border: 3px dashed var(--mint-dark);
+  background: rgba(126, 215, 181, 0.35);
+  border-radius: 14px;
+  font-size: 28px;
+  color: var(--mint-dark);
+  padding: 0;
+  z-index: 3;
+}
+.garden-tools {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  display: flex;
+  gap: 10px;
+}
+.garden-tools .btn { min-height: 56px; font-size: 20px; padding: 0 20px; }
+.garden-hint {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  top: 16px;
+  background: #fff;
+  border-radius: 999px;
+  padding: 8px 20px;
+  box-shadow: var(--shadow-soft);
+  font-size: 20px;
+}
+.seed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+.seed-btn {
+  min-height: 130px;
+  border-radius: 20px;
+  border: var(--border) solid var(--primary-light);
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 22px;
+  box-shadow: 0 4px 0 var(--primary-light);
+}
+.seed-btn:active { transform: translateY(3px); }
+.seed-count { color: var(--text-soft); font-size: 18px; }
+.water-dots { display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; font-size: 24px; }
+.water-dots span { opacity: 0.25; filter: grayscale(1); }
+.water-dots span.on { opacity: 1; filter: none; }

@@ -1,6 +1,6 @@
 // 业务操作：组合 engine 纯函数和数据库写入。每次操作即时写入。
 import { db, uid, SCHEMA_VERSION } from './schema'
-import type { Child, LedgerEntry, PlacedItem, Plot, Settings, TaskDef, TaskRecord, ThemeName } from '../data/types'
+import type { Child, LedgerEntry, PlacedItem, Settings, TaskDef, TaskRecord, ThemeName } from '../data/types'
 import { defaultTasks } from '../data/tasks'
 import { DEFAULT_EXERCISES } from '../data/exercises'
 import { BALANCE } from '../data/balance'
@@ -8,6 +8,7 @@ import { balanceOf } from '../engine/ledger'
 import { dayProgress, latestRecordByTask, reconcileDayAwards, revokeEntries, taskRewardEntries, type NewEntry } from '../engine/rewards'
 import { addDays, diffDays, toTaskDay } from '../engine/taskDay'
 import { hashPin, newSalt } from '../engine/pin'
+import { starterPlots } from '../engine/plots'
 
 export interface SetupInput {
   name: string
@@ -16,13 +17,6 @@ export interface SetupInput {
   houseColor: string
   mascotName: string
   pin: string
-}
-
-/** 初始 6 块地（2 × 3），放在花园中间偏左 */
-export function starterPlots(childId: string): Plot[] {
-  const out: Plot[] = []
-  for (let y = 4; y < 6; y++) for (let x = 3; x < 6; x++) out.push({ childId, x, y, kind: 'soil' })
-  return out
 }
 
 export async function setupChild(input: SetupInput, now = new Date()): Promise<Child> {

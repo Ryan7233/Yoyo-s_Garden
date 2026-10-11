@@ -29,7 +29,10 @@ export const BALANCE = {
   plotExpandCost: 20,
   maxPlots: 24,
   thirstyAfterDays: 3,
+  /** 家具半价卖回 */
   sellRatio: 0.5,
+  /** 果实卖出价 = 收获金币 × 该比例（向上取整） */
+  fruitSellRatio: 0.5,
 
   /** 室内 */
   indoorWidth: 8,

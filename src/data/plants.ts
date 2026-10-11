@@ -77,3 +77,36 @@ export const SPECIAL_SEEDS: CatalogItem[] = SPECIAL.map(([id, name, unlockId, ne
     needs,
   },
 }))
+
+export interface HarvestInfo {
+  id: string
+  seedId: string
+  name: string
+  icon: string
+  /** 鲜花插花瓶，果实可以卖 */
+  kind: 'flower' | 'fruit'
+  sellPrice: number
+}
+
+const FRUIT_SEEDS = new Set([...VEGGIE_IDS, ...FRUIT_TREE_IDS])
+
+/** 收获物信息：harvest-xxx → 名字、图标、能否出售 */
+export function harvestInfo(harvestId: string): HarvestInfo | undefined {
+  const seed = [...SEEDS, ...SPECIAL_SEEDS].find((s) => s.plant?.harvestItem === harvestId)
+  if (!seed?.plant) return undefined
+  const kind = FRUIT_SEEDS.has(seed.id) ? 'fruit' : 'flower'
+  const name = seed.id.endsWith('-tree') ? seed.name.replace(/树$/, '') : seed.name
+  return {
+    id: harvestId,
+    seedId: seed.id,
+    name,
+    icon: seed.icon,
+    kind,
+    sellPrice: kind === 'fruit' ? Math.ceil(seed.plant.harvestCoins * BALANCE.fruitSellRatio) : 0,
+  }
+}
+
+/** 一颗种子在当前阶段（M2）能否种在室外泥土地块 */
+export function plantableOutdoors(item: CatalogItem): boolean {
+  return item.plant?.needs === 'soil'
+}
