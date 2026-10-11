@@ -3,6 +3,7 @@ import { useStore } from '../../app/store'
 import { VISITORS, type VisitorDef } from '../../data/visitors'
 import { presentVisitors, snapshotOf } from '../../engine/visitors'
 import './visitors.css'
+import { play } from '../../ui/sfx'
 
 // 每位访客固定的落脚点（相对场景的百分比），避开左上角的小屋；会飞的在高处
 const SPOTS: Record<string, { left: number; top: number; fly?: boolean }> = {
@@ -47,6 +48,7 @@ function Visitor({ v, delay, talking, onTap }: { v: VisitorDef; delay: number; t
       aria-label={v.name}
       onClick={() => {
         setHop((n) => n + 1)
+        play('visitor')
         onTap()
       }}
     >

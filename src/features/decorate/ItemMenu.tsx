@@ -2,6 +2,7 @@ import { useStore, act } from '../../app/store'
 import { getCatalogItem } from '../../data/catalog'
 import { flip, storeBack } from '../../db/decorate'
 import { useDecorate } from './useDecorate'
+import { toast } from '../../ui/Toast'
 
 /** 点已摆放物品弹出的浮动菜单：移动、左右翻转、收回背包 */
 export function ItemMenu() {
@@ -24,7 +25,8 @@ export function ItemMenu() {
           <button
             className="btn"
             onClick={async () => {
-              await act(() => storeBack(p.id))
+              const r = await act(() => storeBack(p.id))
+              if (!r.ok && r.reason === 'pondPlanted') toast('池塘里种着植物，不能收回哦')
               openMenu(null)
             }}
           >

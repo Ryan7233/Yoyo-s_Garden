@@ -3,7 +3,7 @@ import { db, uid } from './schema'
 import { addInventory, takeInventory } from './inventory'
 import type { LedgerEntry, PlantInstance } from '../data/types'
 import { getCatalogItem } from '../data/catalog'
-import { harvestInfo } from '../data/plants'
+import { harvestInfo, plantableInPond, POND_ID } from '../data/plants'
 import { BALANCE } from '../data/balance'
 import { balanceOf } from '../engine/ledger'
 import { canHarvest, canWater, harvest, water } from '../engine/growth'
@@ -83,6 +83,21 @@ export async function plantSeed(childId: string, catalogId: string, x: number, y
     if (taken) return false
     if (!(await takeInventory(childId, catalogId))) return false
     await db.plants.add({ id: uid(), childId, scene: 'outdoor', x, y, catalogId, plantedAt: now.toISOString(), waterCount: 0, stage: 0 })
+    return true
+  })
+}
+
+/** 在摆好的池塘里种莲花或水晶莲：一个池塘种一株 */
+export async function plantInPond(childId: string, catalogId: string, pondId: string, now = new Date()): Promise<boolean> {
+  const item = getCatalogItem(catalogId)
+  if (!item || !plantableInPond(item)) return false
+  return db.transaction('rw', [db.inventory, db.plants, db.placed], async () => {
+    const pond = await db.placed.get(pondId)
+    if (!pond || pond.childId !== childId || pond.catalogId !== POND_ID) return false
+    const taken = await db.plants.where('childId').equals(childId).filter((p) => p.pondId === pondId).count()
+    if (taken) return false
+    if (!(await takeInventory(childId, catalogId))) return false
+    await db.plants.add({ id: uid(), childId, scene: 'outdoor', x: pond.x, y: pond.y, pondId, catalogId, plantedAt: now.toISOString(), waterCount: 0, stage: 0 })
     return true
   })
 }

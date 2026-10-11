@@ -216,3 +216,5 @@
   from { box-shadow: 0 0 0 0 rgba(255, 214, 107, 0.4); }
   to { box-shadow: 0 0 18px 6px rgba(255, 214, 107, 0.9); }
 }
+/* 池塘里的植物画在池塘中间 */
+.plant.in-pond { z-index: 3; }

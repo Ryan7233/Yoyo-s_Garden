@@ -17,3 +17,23 @@
 .balance-pill.coin { border-color: var(--coin); }
 .balance-pill.drop { border-color: var(--sky); }
 .balance-icon { font-size: 30px; }
+
+/* 金币飞入 */
+.coin-fly { position: fixed; inset: 0; pointer-events: none; z-index: 300; }
+.coin-fly-coin {
+  position: absolute;
+  font-size: 34px;
+  translate: -50% -50%;
+  animation: coin-fly 0.9s cubic-bezier(0.5, 0, 0.75, 0) both;
+}
+.coin-fly-amount {
+  position: absolute;
+  translate: -50% -50%;
+  font-family: var(--font-title);
+  font-size: 44px;
+  color: var(--coin-dark);
+  text-shadow: 0 2px 0 #fff, 0 0 8px #fff;
+  animation: pop 0.45s ease-out both, fade-out 0.4s ease-in 0.8s forwards;
+}
+.balance-pill.bump { animation: pop 0.45s ease-out 0.8s; }
+@keyframes fade-out { to { opacity: 0; } }

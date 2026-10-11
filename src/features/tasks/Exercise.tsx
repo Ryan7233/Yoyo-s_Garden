@@ -13,6 +13,7 @@ import { Modal } from '../../ui/Modal'
 import { Celebrate } from '../../ui/Celebrate'
 import { cueEnd, cueStart, cueTick, unlockAudio } from '../../ui/voice'
 import { WitnessPin } from '../parent/WitnessPin'
+import { play } from '../../ui/sfx'
 import './exercise.css'
 
 export function formatValue(def: Pick<ExerciseConfig, 'unit'>, v: number): string {
@@ -105,6 +106,7 @@ function ExerciseRun({ def, onBack }: { def: ExerciseConfig; onBack: () => void 
     setBusy(true)
     try {
       const record = await act(() => logExercise(child.id, def.id, today, value, witness))
+      play(record.isPersonalBest ? 'fanfare' : 'done')
       setPhase({ kind: 'result', record })
     } finally {
       setBusy(false)
@@ -116,6 +118,7 @@ function ExerciseRun({ def, onBack }: { def: ExerciseConfig; onBack: () => void 
     setBusy(true)
     try {
       const record = await act(() => logExerciseWithVideo(child.id, def.id, today, value, video))
+      play('done')
       setPhase({ kind: 'result', record })
     } finally {
       setBusy(false)

@@ -10,12 +10,18 @@ import { Mascot } from '../ui/Mascot'
 import { Celebrate } from '../ui/Celebrate'
 import { Icon } from '../ui/Icon'
 import type { Unlock } from '../data/types'
+import { useEffect } from 'react'
+import { play } from '../ui/sfx'
 
 /** 新解锁的特殊物品、第一次来访的小动物、新徽章：孩子下次打开时看到 */
 export function UnlockNotices() {
   const unlocks = useStore((s) => s.unlocks)
   const fresh = unlocks.filter((u) => !u.seenAt && u.kind !== 'codex')
-  if (!fresh.length) return null
+  const has = fresh.length > 0
+  useEffect(() => {
+    if (has) play('fanfare')
+  }, [has])
+  if (!has) return null
   const close = () => act(() => markUnlocksSeen(fresh.map((u) => u.id)))
   return (
     <>

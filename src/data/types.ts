@@ -149,6 +149,8 @@ export interface PlantInstance {
   stage: 0 | 1 | 2 | 3
   /** 多年生植物上次收获时的浇水次数，避免同一轮重复收获 */
   lastHarvestWater?: number
+  /** 种在池塘里时，所在池塘（已摆放物品 id）；位置跟着池塘走 */
+  pondId?: string
 }
 export interface Plot { childId: string; x: number; y: number; kind: 'soil' | 'pond' }
 export interface Unlock {

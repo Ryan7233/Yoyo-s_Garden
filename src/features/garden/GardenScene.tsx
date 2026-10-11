@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore, act } from '../../app/store'
 import { BALANCE } from '../../data/balance'
 import { getCatalogItem } from '../../data/catalog'
+import { POND_ID } from '../../data/plants'
 import { Mascot } from '../../ui/Mascot'
 import { ConfirmDialog } from '../../ui/Modal'
 import { toast } from '../../ui/Toast'
@@ -24,7 +25,7 @@ type Fx = { id: string; kind: 'water' | 'grow' }
 export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
   const { child, plots, plants, placed, today, balance, decorating } = useStore()
   const [plantId, setPlantId] = useState<string | null>(null)
-  const [emptyPlot, setEmptyPlot] = useState<{ x: number; y: number } | null>(null)
+  const [emptyPlot, setEmptyPlot] = useState<{ x: number; y: number; pondId?: string } | null>(null)
   const [expanding, setExpanding] = useState(false)
   const [expandAt, setExpandAt] = useState<{ x: number; y: number } | null>(null)
   const [fx, setFx] = useState<Fx | null>(null)
@@ -45,9 +46,16 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
     setTimeout(() => setFx((cur) => (cur === f ? null : cur)), 1200)
   }
 
+  const tapPond = (pondId: string, x: number, y: number) => {
+    if (expanding || decorating) return
+    const p = outdoorPlants.find((q) => q.pondId === pondId)
+    if (p) setPlantId(p.id)
+    else setEmptyPlot({ x, y, pondId })
+  }
+
   const tapPlot = (x: number, y: number) => {
     if (expanding || decorating) return
-    const p = outdoorPlants.find((q) => q.x === x && q.y === y)
+    const p = outdoorPlants.find((q) => !q.pondId && q.x === x && q.y === y)
     if (p) setPlantId(p.id)
     else setEmptyPlot({ x, y })
   }
@@ -81,11 +89,11 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
         ))}
 
         {outdoorPlaced.map((p) => (
-          <PlacedView key={p.id} {...placedProps(p)} size={48} />
+          <PlacedView key={p.id} {...placedProps(p)} size={48} onTap={p.catalogId === POND_ID ? () => tapPond(p.id, p.x, p.y) : undefined} />
         ))}
 
         {outdoorPlants.map((p) => (
-          <div key={p.id} className="plant" style={cell(p.x, p.y)}>
+          <div key={p.id} className={`plant${p.pondId ? ' in-pond' : ''}`} style={p.pondId ? cell(p.x, p.y, 2, 2) : cell(p.x, p.y)}>
             <PlantArt plant={p} today={today} hop={fx?.id === p.id && fx.kind === 'grow'} />
             {fx?.id === p.id && <span className="fx">{fx.kind === 'grow' ? '💗' : '💧'}</span>}
           </div>
@@ -128,7 +136,7 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
           onWatered={(id, stageUp) => showFx({ id, kind: stageUp ? 'grow' : 'water' })}
         />
       )}
-      {emptyPlot && <SeedPicker x={emptyPlot.x} y={emptyPlot.y} onClose={() => setEmptyPlot(null)} />}
+      {emptyPlot && <SeedPicker x={emptyPlot.x} y={emptyPlot.y} pondId={emptyPlot.pondId} onClose={() => setEmptyPlot(null)} />}
       {expandAt && (
         <ConfirmDialog
           title={`花 ${BALANCE.plotExpandCost} 金币开一块新地？`}

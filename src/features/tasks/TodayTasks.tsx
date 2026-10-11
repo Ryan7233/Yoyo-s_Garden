@@ -10,6 +10,7 @@ import { Celebrate } from '../../ui/Celebrate'
 import { ExerciseSheet } from './Exercise'
 import { bestTodayByExercise, exercisesForDay } from '../../engine/exercise'
 import './tasks.css'
+import { play } from '../../ui/sfx'
 
 export function TodayTasks() {
   const { child, tasks, records, ledger, today, exercises, exerciseRecords } = useStore()
@@ -32,7 +33,10 @@ export function TodayTasks() {
       return
     }
     const r = await act(() => childReportTask(child.id, task.id, today))
-    if (r.status === 'done') setCelebrate((n) => n + 1)
+    if (r.status === 'done') {
+      play('done')
+      setCelebrate((n) => n + 1)
+    }
   }
 
   return (

@@ -1,20 +1,14 @@
 // 计时器的语音提示和提示音：要足够响，家长在隔壁也能听到（SPEC 4.3）
-// iPad Safari 要求第一次发声发生在点按里，所以“开始”按钮里先调用 unlockAudio()。
-
-let ctx: AudioContext | null = null
+// 这是功能提示，不受“音效”开关影响。iPad Safari 要求第一次发声发生在点按里，所以“开始”按钮里先调用 unlockAudio()。
+import { audioContext } from './sfx'
 
 export function unlockAudio() {
-  try {
-    const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-    if (!ctx && AC) ctx = new AC()
-    void ctx?.resume()
-  } catch {
-    /* 不支持就只用语音 */
-  }
+  audioContext()
 }
 
 /** 响亮的提示音：freq 赫兹，持续 ms 毫秒 */
 export function beep(freq = 880, ms = 250) {
+  const ctx = audioContext()
   if (!ctx) return
   try {
     const osc = ctx.createOscillator()

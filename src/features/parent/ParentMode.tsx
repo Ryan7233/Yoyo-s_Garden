@@ -11,6 +11,7 @@ import { StatsPanel } from './StatsPanel'
 import { DataPanel } from './DataPanel'
 import { SettingsPanel } from './SettingsPanel'
 import { diffDays, toTaskDay } from '../../engine/taskDay'
+import { usePwa } from '../../app/pwa'
 import './parent.css'
 
 type Tab = 'pending' | 'records' | 'bonus' | 'tasks' | 'exercise' | 'stats' | 'data' | 'settings'
@@ -32,6 +33,7 @@ export function ParentMode({ onClose }: { onClose: () => void }) {
     (s) => s.records.filter((r) => r.status === 'pending').length + s.exerciseRecords.filter((r) => r.status === 'pending').length,
   )
   const settings = useStore((s) => s.settings)
+  const needRefresh = usePwa((s) => s.needRefresh)
   const child = useStore((s) => s.child)
   const idle = useRef<ReturnType<typeof setTimeout>>(undefined)
 
@@ -71,6 +73,11 @@ export function ParentMode({ onClose }: { onClose: () => void }) {
             {backupDue && (
               <div className="parent-alert" onClick={() => setTab('data')}>
                 💾 已经 {BALANCE.backupRemindDays} 天以上没有备份了，点这里导出一份吧
+              </div>
+            )}
+            {needRefresh && (
+              <div className="parent-alert" onClick={() => setTab('settings')}>
+                🆕 有新版本了，点这里到“设置”里更新（孩子使用时不会自动更新）
               </div>
             )}
             {settings?.clockWentBack && (

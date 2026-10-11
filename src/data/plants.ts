@@ -106,7 +106,14 @@ export function harvestInfo(harvestId: string): HarvestInfo | undefined {
   }
 }
 
-/** 一颗种子在当前阶段（M2）能否种在室外泥土地块 */
+/** 一颗种子能否种在室外泥土地块 */
 export function plantableOutdoors(item: CatalogItem): boolean {
   return item.plant?.needs === 'soil'
 }
+
+/** 一颗种子能否种在池塘（莲花、水晶莲） */
+export function plantableInPond(item: CatalogItem): boolean {
+  return item.plant?.needs === 'pond'
+}
+
+export const POND_ID = 'out-pond'

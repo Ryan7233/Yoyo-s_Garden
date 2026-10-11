@@ -85,7 +85,8 @@ export function footprintOf(item: CatalogItem, x: number, y: number): Footprint 
 export function buildSceneState(scene: Scene, plots: Plot[], placed: PlacedItem[], plants: PlantInstance[]): SceneState {
   return {
     plots: scene === 'outdoor' ? plots : [],
-    plants: plants.filter((p) => p.scene === scene),
+    // 池塘里的植物在池塘占格之内，不另外占格
+    plants: plants.filter((p) => p.scene === scene && !p.pondId),
     placed: placed.flatMap((p) => {
       if (p.scene !== scene) return []
       const item = getCatalogItem(p.catalogId)

@@ -51,8 +51,11 @@ export async function moveTo(childId: string, id: string, x: number, y: number):
     if (plant && plant.scene !== 'indoor') return false
     const s = await sceneState(childId, scene)
     if (!canPlace(footprintOf(item, x, y), scene, layer, s, id)) return false
-    if (placed) await db.placed.update(id, { x, y })
-    else await db.plants.update(id, { x, y })
+    if (placed) {
+      await db.placed.update(id, { x, y })
+      // 池塘里的植物跟着池塘走
+      await db.plants.where('childId').equals(childId).filter((p) => p.pondId === id).modify({ x, y })
+    } else await db.plants.update(id, { x, y })
     return true
   })
 }
@@ -62,14 +65,20 @@ export async function flip(id: string) {
   if (p) await db.placed.update(id, { flipped: !p.flipped })
 }
 
-/** 收回背包；花瓶里的花也一起收回 */
-export async function storeBack(id: string) {
-  await db.transaction('rw', [db.placed, db.inventory], async () => {
+export type StoreBackResult = { ok: true } | { ok: false; reason: 'pondPlanted' | 'missing' }
+
+/** 收回背包；花瓶里的花也一起收回。池塘里种着植物时不能收回 */
+export async function storeBack(id: string): Promise<StoreBackResult> {
+  return db.transaction('rw', [db.placed, db.plants, db.inventory], async () => {
     const p = await db.placed.get(id)
-    if (!p) return
+    if (!p) return { ok: false, reason: 'missing' } as const
+    if (await db.plants.where('childId').equals(p.childId).filter((pl) => pl.pondId === id).count()) {
+      return { ok: false, reason: 'pondPlanted' } as const
+    }
     await db.placed.delete(id)
     await addInventory(p.childId, p.catalogId, 1)
     if (p.content) await addInventory(p.childId, p.content, 1)
+    return { ok: true } as const
   })
 }
 

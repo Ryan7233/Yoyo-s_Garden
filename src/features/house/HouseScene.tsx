@@ -12,6 +12,7 @@ import { PlacementLayer } from '../decorate/PlacementLayer'
 import { ItemMenu } from '../decorate/ItemMenu'
 import { VasePicker } from './VasePicker'
 import { Visitors } from '../garden/Visitors'
+import { play } from '../../ui/sfx'
 import './house.css'
 
 function useClock() {
@@ -27,8 +28,15 @@ export function HouseScene() {
   const { child, placed, plants, today, decorating } = useStore()
   const [plantId, setPlantId] = useState<string | null>(null)
   const [vaseId, setVaseId] = useState<string | null>(null)
+  const [singing, setSinging] = useState<string | null>(null)
   const now = useClock()
   if (!child) return null
+
+  const sing = (id: string) => {
+    play('song')
+    setSinging(id)
+    setTimeout(() => setSinging((cur) => (cur === id ? null : cur)), 3200)
+  }
 
   const indoor = placed.filter((p) => p.scene === 'indoor')
   const wall = indoor.filter((p) => p.layer === 'wall')
@@ -68,12 +76,24 @@ export function HouseScene() {
               {...placedProps(p)}
               size={60}
               className="floor-item"
-              onTap={p.catalogId === 'in-vase' ? () => setVaseId(p.id) : undefined}
+              onTap={p.catalogId === 'in-vase' ? () => setVaseId(p.id) : p.catalogId === 'in-sing-corner' ? () => sing(p.id) : undefined}
             >
               {p.catalogId === 'in-vase' ? (
                 <span className="vase">
                   {flower && <span className="vase-flower"><Icon icon={flower.icon} size={40} /></span>}
                   <Icon icon="🏺" size={56} />
+                </span>
+              ) : p.catalogId === 'in-sing-corner' ? (
+                <span className="sing">
+                  <Icon icon="🎤" size={56} />
+                  {singing === p.id && ['🎵', '🎶', '🎵'].map((n, i) => (
+                    <span key={i} className="sing-note" style={{ left: `${i * 22}px`, animationDelay: `${i * 0.3}s` }}>{n}</span>
+                  ))}
+                </span>
+              ) : p.catalogId === 'in-fish-tank' ? (
+                <span className="tank">
+                  <span className="tank-fish">🐠</span>
+                  <span className="tank-bubble" />
                 </span>
               ) : undefined}
             </PlacedView>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useStore, act } from '../../app/store'
-import { SEEDS, SPECIAL_SEEDS } from '../../data/plants'
+import { POND_ID, SEEDS, SPECIAL_SEEDS } from '../../data/plants'
 import { OUTDOOR, OUTDOOR_SPECIAL } from '../../data/outdoor'
 import { INDOOR, STYLES } from '../../data/indoor'
 import { describeUnlock } from '../../data/unlocks'
@@ -15,6 +15,7 @@ import { Icon } from '../../ui/Icon'
 import { ConfirmDialog } from '../../ui/Modal'
 import { toast } from '../../ui/Toast'
 import './shop.css'
+import { play } from '../../ui/sfx'
 
 type Tab = 'seed' | 'outdoor' | 'indoor' | 'style' | 'special'
 const TABS: { id: Tab; label: string; icon: string }[] = [
@@ -33,16 +34,12 @@ const ITEMS: Record<Tab, CatalogItem[]> = {
   special: [...SPECIAL_SEEDS, ...OUTDOOR_SPECIAL],
 }
 
-/** 这一版还不能使用的物品，以及原因 */
-function notYet(item: CatalogItem): string | null {
-  if (item.plant?.needs === 'pond') return '池塘种植稍后开放'
-  return null
-}
 
 const isStyle = (item: CatalogItem) => item.kind === 'wallStyle' || item.kind === 'floorStyle'
 
 export function Shop() {
-  const { child, balance, inventory, unlocks, wish } = useStore()
+  const { child, balance, inventory, unlocks, wish, placed } = useStore()
+  const hasPond = placed.some((p) => p.catalogId === POND_ID) || inventory.some((i) => i.catalogId === POND_ID)
   const [celebrate, setCelebrate] = useState(0)
   const [tab, setTab] = useState<Tab>('seed')
   const [stats, setStats] = useState<ProgressStats | null>(null)
@@ -66,14 +63,15 @@ export function Shop() {
       <div className="shop-grid">
         {ITEMS[tab].map((item) => {
           const locked = !itemUnlocked(item, stats, unlocks)
-          const later = notYet(item)
+          // 池塘植物：还没有池塘时提醒一句（不拦着买）
+          const pondHint = item.plant?.needs === 'pond' && !hasPond
           const short = item.price - balance.coin
           const owned = isStyle(item) && inventory.some((i) => i.catalogId === item.id)
           const gift = item.price <= 0
           const wished = wish?.catalogId === item.id
           return (
             <div key={item.id} className={`shop-card${locked ? ' locked' : ''}${wished ? ' wished' : ''}`}>
-              {!locked && !owned && !later && canWish(item) && (
+              {!locked && !owned && canWish(item) && (
                 <button
                   className={`wish-btn${wished ? ' on' : ''}`}
                   aria-label={wished ? '取消心愿' : '设为心愿'}
@@ -94,6 +92,7 @@ export function Shop() {
               </div>
               <div className="title shop-name">{item.name}</div>
               {item.note && <div className="shop-note">{item.note}</div>}
+              {pondHint && !locked && <div className="shop-note">要先有一个池塘才能种哦</div>}
               {locked && item.unlock ? (
                 <div className="shop-unlock">
                   {describeUnlock(item.unlock)}
@@ -103,11 +102,6 @@ export function Shop() {
                 <div className="shop-note">✓ 解锁时已送给你，在装扮里摆放</div>
               ) : owned ? (
                 <div className="shop-note">✓ 已拥有，在装扮里更换</div>
-              ) : later ? (
-                <>
-                  <div className="price">🪙 {item.price}</div>
-                  <div className="shop-note">{later}</div>
-                </>
               ) : short > 0 ? (
                 <button className="btn" disabled>还差 {short} 金币</button>
               ) : (
@@ -128,6 +122,7 @@ export function Shop() {
           onConfirm={async () => {
             const r = await act(() => buyItem(child.id, buying.id))
             setBuying(null)
+            if (r.ok) play(r.wishDone ? 'fanfare' : 'buy')
             if (r.ok && r.wishDone) {
               setCelebrate((n) => n + 1)
               toast(`心愿实现啦！${buying.name}放进背包了，再挑一个新心愿吧`)

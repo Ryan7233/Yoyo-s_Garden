@@ -8,6 +8,7 @@ import { Modal, ConfirmDialog } from '../../ui/Modal'
 import { Celebrate } from '../../ui/Celebrate'
 import { toast } from '../../ui/Toast'
 import { PlantArt } from './PlantArt'
+import { play } from '../../ui/sfx'
 
 const STAGE = ['种子', '发芽了', '长大了', '开花啦']
 
@@ -30,6 +31,7 @@ export function PlantSheet({ plantId, onClose, onWatered }: { plantId: string; o
   const doWater = async () => {
     const r = await act(() => waterPlant(plant.id))
     if (r.ok) {
+      play(r.stageUp ? 'grow' : 'water')
       onWatered(plant.id, r.stageUp)
       onClose()
     } else if (r.reason === 'drops') toast('水滴用完啦，完成任务可以得到水滴 💧')
@@ -38,6 +40,7 @@ export function PlantSheet({ plantId, onClose, onWatered }: { plantId: string; o
   const doHarvest = async () => {
     const r = await act(() => harvestPlant(plant.id))
     if (!r) return
+    play('harvest')
     setParty((n) => n + 1)
     const name = harvestInfo(r.harvestId ?? '')?.name ?? item.name
     toast(`${r.firstTime ? `图鉴里点亮了${item.name}！` : `收获了${name}！`}${r.coins ? ` +${r.coins} 金币` : ''}`)

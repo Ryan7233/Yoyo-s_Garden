@@ -9,6 +9,7 @@ import { Bag } from '../features/shop/Bag'
 import { Shop } from '../features/shop/Shop'
 import { Codex } from '../features/codex/Codex'
 import { ToastHost } from '../ui/Toast'
+import { CoinFly } from '../ui/CoinFly'
 import { DecorateTray } from '../features/decorate/DecorateTray'
 import { useDecorate } from '../features/decorate/useDecorate'
 import { RewardNotices } from './RewardNotices'
@@ -111,6 +112,7 @@ export function Layout() {
 
       {!parentOpen && <RewardNotices />}
       {!parentOpen && !decorating && <UnlockNotices />}
+      <CoinFly />
       <ToastHost />
       {parentOpen && <ParentMode onClose={() => setParentOpen(false)} />}
     </div>
