@@ -1,0 +1,19 @@
+.balance-bar {
+  display: flex;
+  gap: 12px;
+}
+.balance-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
+  padding: 0 20px 0 10px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  border: var(--border) solid;
+  font-size: 28px;
+  box-shadow: var(--shadow-soft);
+}
+.balance-pill.coin { border-color: var(--coin); }
+.balance-pill.drop { border-color: var(--sky); }
+.balance-icon { font-size: 30px; }

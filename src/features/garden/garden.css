@@ -1,0 +1,114 @@
+.garden {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sky {
+  position: relative;
+  height: 18%;
+  min-height: 60px;
+  overflow: hidden;
+}
+.stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(2px 2px at 10% 30%, #fff 50%, transparent 51%),
+    radial-gradient(2px 2px at 30% 60%, #ffd66b 50%, transparent 51%),
+    radial-gradient(2px 2px at 55% 25%, #fff 50%, transparent 51%),
+    radial-gradient(2px 2px at 75% 55%, #fff 50%, transparent 51%),
+    radial-gradient(2px 2px at 90% 20%, #ffd66b 50%, transparent 51%);
+}
+.cloud {
+  position: absolute;
+  left: 0;
+  width: 120px;
+  height: 36px;
+  background: #fff;
+  border-radius: 999px;
+  opacity: 0.85;
+  animation: float-cloud linear infinite;
+}
+.cloud::before {
+  content: '';
+  position: absolute;
+  width: 56px;
+  height: 48px;
+  border-radius: 50%;
+  background: #fff;
+  left: 26px;
+  top: -22px;
+}
+.cloud.small { transform: scale(0.7); }
+
+.ground {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  background:
+    radial-gradient(circle at 12% 70%, #fff 0 3px, transparent 4px),
+    radial-gradient(circle at 48% 88%, #fff 0 3px, transparent 4px),
+    radial-gradient(circle at 82% 40%, #fff 0 3px, transparent 4px),
+    radial-gradient(circle at 66% 76%, #fff 0 3px, transparent 4px),
+    #bfeab0;
+  border-top-left-radius: 40% 24px;
+  border-top-right-radius: 40% 24px;
+  position: relative;
+}
+.house-cell {
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 2;
+}
+.house-cell svg { width: 100%; height: 100%; }
+.placed svg, .plant svg { max-width: 100%; max-height: 100%; }
+.plot {
+  border-radius: 14px;
+  background: #d9b48f;
+  border: 2.5px solid #b98a5e;
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.06);
+}
+.plot.pond { background: #7cc8f8; border-color: #3d9fdc; }
+.placed, .plant {
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+  position: relative;
+}
+.plant { z-index: 2; }
+.thirsty {
+  position: absolute;
+  top: -6px;
+  right: -2px;
+  font-size: 22px;
+  animation: bounce 1.2s ease-in-out infinite;
+}
+.garden-empty {
+  position: absolute;
+  right: 20px;
+  bottom: 16px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+.bubble {
+  background: #fff;
+  border-radius: 20px;
+  padding: 8px 16px;
+  box-shadow: var(--shadow-soft);
+  font-size: 20px;
+  margin-bottom: 40px;
+}

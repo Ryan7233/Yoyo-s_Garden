@@ -1,0 +1,51 @@
+/* 视觉风格变量（SPEC 7.4）。换主题只切换 --primary 三档 */
+:root {
+  /* 主题色：樱花粉（默认） */
+  --primary: #ff9ec0;
+  --primary-dark: #e85a8f;
+  --primary-light: #ffe6ef;
+
+  --bg: #fff9f5;
+  --text: #5b4366;
+  --text-soft: #7e6889;
+  --coin: #ffd66b;
+  --coin-dark: #e0a92a;
+  --sky: #7cc8f8;
+  --sky-dark: #3d9fdc;
+  --mint: #7ed7b5;
+  --mint-dark: #3fae86;
+  --lavender: #b79ced;
+  --mist: #d9d3dc;
+  --white: #ffffff;
+
+  --radius-card: 24px;
+  --radius-pill: 999px;
+  --border: 2.5px;
+  --shadow: 0 6px 18px rgba(232, 90, 143, 0.14);
+  --shadow-soft: 0 3px 10px rgba(232, 90, 143, 0.1);
+
+  --font-title: 'ZCOOL KuaiLe', 'PingFang SC', system-ui, sans-serif;
+  --font-body: 'PingFang SC', 'Hiragino Sans GB', system-ui, sans-serif;
+
+  --touch: 64px;
+  --btn-main: 88px;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  color-scheme: light only;
+}
+
+[data-theme='lavender'] {
+  --primary: #b79ced;
+  --primary-dark: #7f5fc9;
+  --primary-light: #efe8fc;
+}
+
+[data-theme='mint'] {
+  --primary: #7ed7b5;
+  --primary-dark: #2f9a73;
+  --primary-light: #e3f7ef;
+}

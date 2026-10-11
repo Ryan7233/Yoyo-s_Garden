@@ -1,0 +1,53 @@
+.today { display: flex; flex-direction: column; gap: 16px; }
+.today-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding-right: 72px; }
+.today-title { font-size: 34px; }
+.today-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.stat-pill {
+  background: var(--primary-light);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-family: var(--font-title);
+  font-size: 22px;
+}
+.all-done {
+  background: #fff6d9;
+  border: 2.5px solid var(--coin);
+  border-radius: 20px;
+  padding: 12px 20px;
+  font-family: var(--font-title);
+  font-size: 24px;
+  text-align: center;
+}
+.task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 14px; }
+@media (max-width: 900px) { .task-grid { grid-template-columns: 1fr; } }
+.task-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 104px;
+  padding: 14px 18px;
+  background: var(--white);
+  border-radius: var(--radius-card);
+  border: var(--border) solid var(--mist);
+  box-shadow: var(--shadow-soft);
+}
+.task-card.pending { border-color: var(--coin); background: #fffbef; }
+.task-card.done { border-color: var(--mint); background: #f1fbf6; }
+.task-card.rejected { border-color: var(--mist); background: #f7f5f8; }
+.task-icon { font-size: 44px; width: 64px; text-align: center; }
+.task-body { flex: 1; min-width: 0; }
+.task-name { font-family: var(--font-title); font-size: 26px; }
+.task-reward { color: var(--text-soft); font-size: 20px; }
+.task-note { color: var(--text-soft); font-size: 20px; margin-top: 4px; }
+.task-action .btn { min-height: 64px; padding: 0 22px; }
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-family: var(--font-title);
+  font-size: 20px;
+  white-space: nowrap;
+}
+.badge.done { background: var(--mint); }
+.badge.pending { background: var(--coin); }
+.more-toggle { align-self: center; }

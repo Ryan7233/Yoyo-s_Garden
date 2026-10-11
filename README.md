@@ -1,0 +1,55 @@
+# 小花园成长计划 🌷
+
+在 iPad 上离线运行的网页小游戏：孩子完成每天的学习和生活任务获得金币和水滴，再用它们经营一座自己的花园。
+数据只存在 iPad 本地（IndexedDB），通过 GitHub Pages 发布为 PWA。
+
+完整需求见 [docs/SPEC.md](docs/SPEC.md)。
+
+## 开发
+
+```bash
+npm install
+npm run dev        # 本地开发
+npm test           # 单元测试（Vitest）
+npm run build      # 类型检查 + 构建到 dist/
+npm run preview    # 预览构建结果
+```
+
+## 发布
+
+推送到 `main` 分支后，`.github/workflows/deploy.yml` 会自动测试、构建并发布到 GitHub Pages。
+首次使用需要在仓库 **Settings → Pages → Source** 选择 **GitHub Actions**。
+
+发布地址：`https://<用户名>.github.io/Yoyo-s_Garden/`（`vite.config.ts` 里的 `BASE` 要与仓库名一致）。
+
+## 代码结构
+
+```
+src/
+├─ app/         # 布局、首次启动引导、全局状态、PWA 更新
+├─ features/
+│  ├─ tasks/    # 今日任务、运动打卡
+│  ├─ garden/   # 室外场景
+│  ├─ house/    # 室内场景
+│  ├─ decorate/ # 装扮编辑
+│  ├─ shop/     # 商店、背包、心愿单
+│  ├─ codex/    # 图鉴、访客、成就
+│  └─ parent/   # 家长模式
+├─ data/        # 静态配置：任务、运动、植物、装饰、家具、访客、解锁、数值（balance.ts）
+├─ engine/      # 纯函数业务规则（不依赖 React 和数据库），配单元测试
+├─ db/          # Dexie 表定义、业务操作、备份导入导出
+└─ ui/          # 通用组件和主题变量（theme.css）
+```
+
+## 进度
+
+- [x] **M1 骨架、任务打卡与备份**：首次引导、今日任务、自报/家长确认、家长模式（PIN、待确认、补录、撤销、加分、任务配置、备份、设置）、流水与全勤/连续奖励、PWA 与自动部署
+- [ ] M2 室外花园与种植（生长规则 `engine/growth.ts` 和物品目录已就绪）
+- [ ] M3 装扮与室内小屋
+- [ ] M4 运动打卡（奖励计算 `exerciseReward` 已就绪；家长加分已完成）
+- [ ] M5 访客、特殊物品、心愿单与统计（访客与解锁判定已就绪）
+- [ ] M6 打磨与真机验收
+
+## 隐私
+
+仓库里不出现孩子的真实姓名、学校或照片。名字在首次启动时输入，只存在 iPad 本地。应用不联网、不收集数据。
