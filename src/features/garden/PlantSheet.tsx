@@ -8,6 +8,7 @@ import { Modal, ConfirmDialog } from '../../ui/Modal'
 import { Celebrate } from '../../ui/Celebrate'
 import { toast } from '../../ui/Toast'
 import { PlantArt } from './PlantArt'
+import { SvgArt } from '../../ui/SvgArt'
 import { play } from '../../ui/sfx'
 
 const STAGE = ['种子', '发芽了', '长大了', '开花啦']
@@ -50,21 +51,21 @@ export function PlantSheet({ plantId, onClose, onWatered }: { plantId: string; o
   return (
     <>
       <Modal onClose={onClose}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+        <div className="plant-hero">
           <PlantArt plant={plant} today={today} size={110} />
         </div>
-        <h2 style={{ fontSize: 32 }}>{item.name}</h2>
-        <p className="title" style={{ fontSize: 22, color: 'var(--text-soft)', margin: '4px 0 12px' }}>{stageLabel}</p>
+        <h2 className="modal-title">{item.name}</h2>
+        <p className="title stage-label">{stageLabel}</p>
         {plant.stage < 3 && (
           <div className="water-dots" aria-label={`已浇水 ${grown} / ${spec.waterToMature} 次`}>
             {Array.from({ length: spec.waterToMature }, (_, i) => (
-              <span key={i} className={i < grown ? 'on' : ''}>💧</span>
+              <span key={i} className={i < grown ? 'on' : ''}><SvgArt id="drop" fluid /></span>
             ))}
           </div>
         )}
-        {thirsty && <p>它有点口渴了，浇点水就会继续长大～</p>}
-        {!waterable && !ready && plant.lastWateredDate === today && <p style={{ color: 'var(--text-soft)' }}>今天已经浇过水啦，明天再来吧</p>}
-        <div className="modal-actions" style={{ marginTop: 16 }}>
+        {thirsty && <p className="modal-text">💧 它有点口渴了，浇点水就会继续长大～</p>}
+        {!waterable && !ready && plant.lastWateredDate === today && <p className="modal-text">今天已经浇过水啦，明天再来吧</p>}
+        <div className="modal-actions">
           {ready && <button className="btn btn-primary btn-big" onClick={doHarvest}>🧺 收获</button>}
           {waterable && (
             <button className="btn btn-primary btn-big" onClick={doWater} disabled={balance.drop < 1}>
@@ -72,7 +73,7 @@ export function PlantSheet({ plantId, onClose, onWatered }: { plantId: string; o
             </button>
           )}
         </div>
-        <div className="modal-actions" style={{ marginTop: 16 }}>
+        <div className="modal-actions">
           {plant.stage < 3 && <button className="btn btn-ghost" onClick={() => setDigging(true)}>铲掉</button>}
           <button className="btn btn-ghost" onClick={onClose}>关闭</button>
         </div>

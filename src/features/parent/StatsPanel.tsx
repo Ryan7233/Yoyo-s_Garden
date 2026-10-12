@@ -99,9 +99,9 @@ export function StatsPanel() {
 
       <section className="stats-card">
         <h3 className="panel-day">金币流水</h3>
-        <div className="chips" style={{ marginBottom: 8 }}>
+        <div className="chips">
           {Object.entries(coins.byReason).sort((a, b) => b[1]! - a[1]!).map(([k, v]) => (
-            <span key={k} className="tag" style={{ fontSize: 16, marginLeft: 0 }}>{REASON_LABEL[k as LedgerReason] ?? k} {v! > 0 ? `+${v}` : v}</span>
+            <span key={k} className="tag reason-tag">{REASON_LABEL[k as LedgerReason] ?? k} {v! > 0 ? `+${v}` : v}</span>
           ))}
         </div>
         {coins.entries.slice(0, 50).map((e) => (
@@ -141,7 +141,7 @@ function ExerciseChart({ def, days, values }: { def: ExerciseConfig; days: strin
       <span className="row-sub">{def.target === null ? '未定目标' : `目标 ${formatValue(def, def.target)}`}</span>
     </div>
   )
-  if (!nums.length) return <div className="ex-chart">{header}<p className="row-sub" style={{ margin: '24px 0', textAlign: 'center' }}>这段时间没做</p></div>
+  if (!nums.length) return <div className="ex-chart">{header}<p className="row-sub chart-empty">这段时间没做</p></div>
 
   const lo = Math.min(0, ...nums, def.target ?? Infinity)
   const hi = Math.max(...nums, def.target ?? -Infinity, lo + 1)

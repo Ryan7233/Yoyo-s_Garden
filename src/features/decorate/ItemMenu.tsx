@@ -2,9 +2,10 @@ import { useStore, act } from '../../app/store'
 import { getCatalogItem } from '../../data/catalog'
 import { flip, storeBack } from '../../db/decorate'
 import { useDecorate } from './useDecorate'
+import { Icon } from '../../ui/Icon'
 import { toast } from '../../ui/Toast'
 
-/** 点已摆放物品弹出的浮动菜单：移动、左右翻转、收回背包 */
+/** 点已摆放物品后，工具盒上方的菜单：移动、左右翻转、收回背包（长名字自动省略，不挤掉按钮） */
 export function ItemMenu() {
   const { placed, plants } = useStore()
   const { menuId, openMenu, hold } = useDecorate()
@@ -17,6 +18,7 @@ export function ItemMenu() {
 
   return (
     <div className="item-menu pop">
+      <span className="item-menu-icon"><Icon icon={item.icon} size={40} /></span>
       <span className="title item-menu-name">{item.name}</span>
       <button className="btn" onClick={() => hold({ kind: 'move', id: menuId, catalogId })}>✋ 移动</button>
       {p && (
@@ -34,7 +36,7 @@ export function ItemMenu() {
           </button>
         </>
       )}
-      <button className="btn btn-ghost" onClick={() => openMenu(null)}>好了</button>
+      <button className="btn btn-primary" onClick={() => openMenu(null)}>好了</button>
     </div>
   )
 }

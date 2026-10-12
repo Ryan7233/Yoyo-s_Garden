@@ -13,8 +13,8 @@
   animation: visitor-in 0.9s ease-out both;
 }
 /* 走动和飞舞只作用在身体上，说的话不跟着翻转 */
-.visitor-move { display: inline-block; animation: visitor-wander 7s ease-in-out 1s infinite alternate; }
-.visitor-move.fly { animation: visitor-flutter 3.2s ease-in-out 1s infinite; }
+.visitor-move { display: inline-block; animation: visitor-wander 14s ease-in-out 1s infinite alternate; }
+.visitor-move.fly { animation: visitor-flutter 6s ease-in-out 1s infinite; }
 .visitor-body { display: inline-block; }
 .visitor-body.hop { animation: visitor-hop 0.6s ease-out; }
 .visitor-say {

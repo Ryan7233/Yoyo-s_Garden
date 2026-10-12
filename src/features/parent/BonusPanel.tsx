@@ -30,7 +30,7 @@ export function BonusPanel() {
           <button key={v} className={`chip${amount === v ? ' active' : ''}`} onClick={() => setAmount(v)}>🪙 {v}</button>
         ))}
       </div>
-      <p style={{ color: 'var(--text-soft)' }}>孩子会看到：“因为你{finalReason || '……'}，获得 {amount} 金币”</p>
+      <p className="modal-text">孩子会看到：“因为你{finalReason || '……'}，获得 {amount} 金币”</p>
       <button
         className="btn btn-primary btn-big"
         disabled={!finalReason}

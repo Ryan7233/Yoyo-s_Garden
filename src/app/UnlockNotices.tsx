@@ -28,7 +28,7 @@ export function UnlockNotices() {
       <Celebrate />
       <Modal onClose={close}>
         <Mascot size={88} bounce />
-        <h2 className="title" style={{ fontSize: 30, margin: '8px 0 12px' }}>有好消息！</h2>
+        <h2 className="modal-title">有好消息！</h2>
         <div className="notice-list">
           {fresh.map((u) => <Notice key={u.id} u={u} />)}
         </div>

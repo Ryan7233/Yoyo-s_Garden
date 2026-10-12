@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 const PETALS = ['🌸', '⭐', '🌼', '✨', '🌷', '⭐', '🌸', '✨']
 
-/** 花瓣和星星飘落，1.2 秒后消失，点一下可跳过 */
+/** 花瓣和星星飘落，1.2 秒后消失；不挡点击，孩子可以直接做下一步 */
 export function Celebrate() {
   const [on, setOn] = useState(true)
   useEffect(() => {
@@ -11,10 +11,7 @@ export function Celebrate() {
   }, [])
   if (!on) return null
   return (
-    <div
-      onClick={() => setOn(false)}
-      style={{ position: 'fixed', inset: 0, zIndex: 200, pointerEvents: 'auto', overflow: 'hidden' }}
-    >
+    <div aria-hidden style={{ position: 'fixed', inset: 0, zIndex: 200, pointerEvents: 'none', overflow: 'hidden' }}>
       {PETALS.map((p, i) => (
         <span
           key={i}

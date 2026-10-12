@@ -16,11 +16,11 @@ export function SeedPicker({ x, y, pondId, onClose }: { x: number; y: number; po
 
   return (
     <Modal onClose={onClose}>
-      <h2 style={{ fontSize: 30, marginBottom: 16 }}>{pondId ? '池塘里种点什么呢？' : '种点什么呢？'}</h2>
+      <h2 className="modal-title">{pondId ? '池塘里种点什么呢？' : '种点什么呢？'}</h2>
       {seeds.length === 0 ? (
         <>
           <Mascot size={88} bounce />
-          <p style={{ color: 'var(--text-soft)' }}>{pondId ? '池塘里能种莲花和水晶莲，背包里还没有，去商店看看吧' : '背包里没有种子啦，去商店看看吧'}</p>
+          <p className="modal-text">{pondId ? '池塘里能种莲花和水晶莲，背包里还没有，去商店看看吧' : '背包里没有种子啦，去商店看看吧'}</p>
           <button className="btn btn-primary btn-big" onClick={() => { onClose(); go('shop') }}>去商店 🛍️</button>
         </>
       ) : (

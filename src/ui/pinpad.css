@@ -1,8 +1,15 @@
-.pinpad { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.pinpad { display: flex; flex-direction: column; align-items: center; gap: var(--sp-4); }
 .pin-dots { display: flex; gap: 18px; }
-.pin-dot { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--primary-dark); }
+.pin-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 3px solid var(--primary-dark);
+  background: var(--paper);
+  box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.06);
+}
 .pin-dot.on { background: var(--primary-dark); }
-.pin-keys { display: grid; grid-template-columns: repeat(3, 84px); gap: 14px; }
-.pin-key { width: 84px; height: 72px; padding: 0; font-size: 30px; }
+.pin-keys { display: grid; grid-template-columns: repeat(3, 88px); gap: 10px 14px; }
+.pin-key { width: 88px; height: 72px; padding: 0; font-family: var(--font-num); font-weight: 700; font-size: 30px; }
 @keyframes shake { 0%,100% { transform: translateX(0) } 25% { transform: translateX(-10px) } 75% { transform: translateX(10px) } }
 .shake .pin-dots { animation: shake 0.3s ease 2; }

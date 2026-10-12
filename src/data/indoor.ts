@@ -4,9 +4,9 @@ type Row = [id: string, icon: string, name: string, wall: boolean, w: number, h:
 
 // 第 6.3 节室内家具
 const ROWS: Row[] = [
-  ['bed', '🛏️', '床', false, 2, 1, 0, undefined, true],
-  ['chair', '🪑', '椅子', false, 1, 1, 0, undefined, true],
-  ['vase', '🏺', '花瓶', false, 1, 1, 0, '可插收获的鲜花', true],
+  ['bed', 'svg:bed', '床', false, 2, 1, 0, undefined, true],
+  ['chair', 'svg:chair', '椅子', false, 1, 1, 0, undefined, true],
+  ['vase', 'svg:vase', '花瓶', false, 1, 1, 0, '可插收获的鲜花', true],
   ['teddy', '🧸', '玩具熊', false, 1, 1, 15],
   ['desk-lamp', '💡', '台灯', false, 1, 1, 15],
   ['radio', '📻', '收音机', false, 1, 1, 30],

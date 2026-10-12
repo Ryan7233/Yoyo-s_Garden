@@ -78,10 +78,10 @@ export function PendingPanel() {
       })}
       {rejectingEx && (
         <Modal onClose={() => setRejectingEx(null)}>
-          <h2 style={{ fontSize: 28, marginBottom: 12 }}>驳回这次纪录</h2>
-          <p style={{ color: 'var(--text-soft)' }}>日常练习的奖励不扣，只是不算纪录。可以留一句话给孩子：</p>
+          <h2 className="modal-title">驳回这次纪录</h2>
+          <p className="modal-text">日常练习的奖励不扣，只是不算纪录。可以留一句话给孩子：</p>
           <input className="input" value={note} maxLength={30} placeholder="比如：脚碰到地了，下次再挑战" onChange={(e) => setNote(e.target.value)} />
-          <div className="modal-actions" style={{ marginTop: 20 }}>
+          <div className="modal-actions">
             <button className="btn btn-ghost" onClick={() => setRejectingEx(null)}>取消</button>
             <button
               className="btn btn-primary"
@@ -97,10 +97,10 @@ export function PendingPanel() {
       )}
       {rejecting && (
         <Modal onClose={() => setRejecting(null)}>
-          <h2 style={{ fontSize: 28, marginBottom: 12 }}>驳回：{taskOf(rejecting.taskId)?.name}</h2>
-          <p style={{ color: 'var(--text-soft)' }}>不扣分，只是这次不发奖励。可以留一句话给孩子：</p>
+          <h2 className="modal-title">驳回：{taskOf(rejecting.taskId)?.name}</h2>
+          <p className="modal-text">不扣分，只是这次不发奖励。可以留一句话给孩子：</p>
           <input className="input" value={note} maxLength={30} placeholder="比如：明天再试试" onChange={(e) => setNote(e.target.value)} />
-          <div className="modal-actions" style={{ marginTop: 20 }}>
+          <div className="modal-actions">
             <button className="btn btn-ghost" onClick={() => setRejecting(null)}>取消</button>
             <button
               className="btn btn-primary"

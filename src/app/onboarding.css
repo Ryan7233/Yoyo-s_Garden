@@ -4,51 +4,93 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: calc(24px + var(--safe-top)) 24px calc(24px + var(--safe-bottom));
+  padding: calc(20px + var(--safe-top)) 20px calc(20px + max(var(--safe-bottom), var(--kb, 0px)));
   background:
-    radial-gradient(circle at 15% 20%, var(--primary-light) 0, transparent 40%),
-    radial-gradient(circle at 85% 80%, #e3f7ef 0, transparent 40%),
-    var(--bg);
+    radial-gradient(circle at 15% 15%, var(--primary-light) 0, transparent 40%),
+    radial-gradient(circle at 85% 85%, var(--mint-light) 0, transparent 45%),
+    linear-gradient(180deg, var(--sky-light), var(--bg) 40%);
   overflow-y: auto;
 }
 .onboarding-card {
-  width: min(640px, 100%);
+  width: min(660px, 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
-  padding: 40px 32px;
+  gap: var(--sp-4);
+  padding: 0 0 var(--sp-6);
   text-align: center;
+  overflow: hidden;
+  margin: auto;
+  background: var(--cream);
 }
-.ob-title { font-size: 34px; }
-.ob-sub { font-size: 26px; }
-.ob-hint { color: var(--text-soft); margin: 0; }
-.ob-input { max-width: 420px; text-align: center; font-size: 28px; }
-.ob-row { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
-.ob-nav { display: flex; gap: 16px; align-items: center; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
+
+/* 顶部插画：小山坡、小屋（屋顶颜色跟着选择变）、吉祥物 */
+.ob-art {
+  position: relative;
+  width: 100%;
+  height: 170px;
+  background: linear-gradient(180deg, #bfe6ff, #e8f6ff 70%);
+  overflow: hidden;
+}
+.ob-hill {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: -60px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--grass-light), var(--grass));
+  border-top: 3px solid #b6e28f;
+}
+.ob-house { position: absolute; left: 50%; bottom: 14px; width: 150px; height: 140px; translate: -88% 0; }
+.ob-mascot { position: absolute; left: 50%; bottom: 10px; translate: 18% 0; }
+
+/* 步骤进度 */
+.ob-progress { display: flex; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.ob-progress li { width: 14px; height: 14px; border-radius: 50%; background: var(--mist); }
+.ob-progress li.past { background: var(--primary); }
+.ob-progress li.on { width: 36px; border-radius: 999px; background: var(--primary-dark); }
+
+.ob-body {
+  width: 100%;
+  padding: 0 var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+}
+.ob-title { font-size: 32px; line-height: 1.25; }
+.ob-sub { font-size: var(--fs-l); }
+.ob-hint { color: var(--text-soft); margin: 0; font-size: var(--fs-s); line-height: 1.6; text-align: left; }
+.ob-error { color: var(--primary-edge); font-weight: 600; text-align: center; }
+.ob-input { max-width: 420px; text-align: center; font-size: 28px; min-height: 72px; }
+.ob-row { display: flex; gap: var(--sp-4); flex-wrap: wrap; justify-content: center; }
+.ob-nav { display: flex; gap: var(--sp-4); align-items: center; margin-top: var(--sp-2); flex-wrap: wrap; justify-content: center; }
 .ob-steps { text-align: left; font-size: 22px; margin: 0; padding-left: 28px; }
 .ob-steps li { margin: 6px 0; }
 .swatch {
   width: 120px;
   height: 96px;
-  border-radius: 24px;
+  border-radius: var(--r-l);
   border: 4px solid transparent;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   padding-bottom: 8px;
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--hl), 0 5px 0 rgba(0, 0, 0, 0.12);
+  transition: transform var(--dur-fast);
 }
-.swatch.selected { border-color: var(--text); transform: scale(1.05); }
-.swatch-label { font-family: var(--font-title); font-size: 20px; color: var(--text); background: rgba(255,255,255,.85); border-radius: 999px; padding: 0 12px; }
+.swatch.selected { border-color: var(--text); transform: translateY(-3px); }
+.swatch-label { font-family: var(--font-title); font-size: var(--fs-m); color: var(--text); background: rgba(255, 255, 255, 0.88); border-radius: 999px; padding: 0 12px; }
 .roof {
-  width: 80px;
-  height: 72px;
-  border-radius: 20px;
-  background: var(--white);
-  border: 3px solid var(--mist);
+  width: 84px;
+  height: 76px;
+  border-radius: var(--r-m);
+  background: #fff;
+  border: 3px solid var(--cream-edge);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 0 var(--cream-edge);
 }
 .roof.selected { border-color: var(--text); background: var(--primary-light); }

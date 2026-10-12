@@ -1,78 +1,171 @@
+/* ================================================================
+ * 装扮模式：底部工具盒 + 占格预览
+ * ================================================================ */
 .tray {
   grid-row: 4;
-  background: var(--white);
-  border-top: var(--border) solid var(--primary-light);
-  padding: 10px 16px calc(10px + var(--safe-bottom));
+  margin: 8px 12px 0;
+  padding: 10px 14px calc(8px + var(--safe-bottom));
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  background:
+    linear-gradient(180deg, var(--wood-light), var(--wood) 14px, var(--wood) 100%);
+  border: var(--bw) solid var(--wood-dark);
+  border-bottom: none;
+  box-shadow: var(--hl), 0 -4px 14px rgba(91, 58, 50, 0.16);
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 }
-.tray-head { display: flex; align-items: center; gap: 12px; }
-.tray-head .btn { min-height: 56px; font-size: 20px; padding: 0 18px; }
-.tray-title { font-size: 24px; white-space: nowrap; }
-.tray-tip { flex: 1; font-size: 17px; color: var(--text-soft); }
-.tray-items { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; min-height: 96px; align-items: stretch; }
+.tray .btn { margin-bottom: var(--depth-btn); }
+.tray-head { display: flex; align-items: center; gap: var(--sp-3); min-width: 0; }
+.tray-title { font-size: var(--fs-l); white-space: nowrap; color: #5a3a22; }
+.tray-steps {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+  overflow: hidden;
+}
+.tray-steps li {
+  counter-increment: step;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 12px 6px 6px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 250, 243, 0.6);
+  font-size: var(--fs-s);
+  color: #6b4a30;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tray-steps li::before {
+  content: counter(step);
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  font-family: var(--font-num);
+  font-weight: 700;
+  font-size: 15px;
+}
+.tray-steps li.on { background: var(--cream); color: var(--text); font-size: var(--fs-m); box-shadow: 0 0 0 2.5px var(--primary-dark); flex-shrink: 1; }
+.tray-steps li.on::before { background: var(--primary-dark); color: #fff; }
+.tray-steps li.past::before { content: '✓'; }
+.tray-steps li b { margin: 0 2px; }
+
+/* 物品格：可以左右滑动，手里的那件高亮 */
+.tray-items {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 2px 8px;
+  min-height: 108px;
+  align-items: stretch;
+  scrollbar-width: none;
+}
+.tray-items::-webkit-scrollbar { display: none; }
 .tray-item {
   position: relative;
   flex: 0 0 auto;
-  width: 96px;
-  min-height: 92px;
-  border-radius: 18px;
-  border: var(--border) solid var(--primary-light);
-  background: var(--white);
+  width: 104px;
+  min-height: 100px;
+  border-radius: var(--r-m);
+  border: var(--bw) solid var(--cream-edge);
+  background: linear-gradient(180deg, #fff, var(--cream));
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
   touch-action: none;
+  box-shadow: var(--hl), 0 4px 0 var(--wood-dark);
+  margin-bottom: 4px;
+  transition: transform var(--dur-fast);
 }
-.tray-item.active { background: var(--primary-light); border-color: var(--primary-dark); }
-.tray-name { font-size: 16px; }
+.tray-item.active {
+  background: linear-gradient(180deg, #fff, var(--primary-light));
+  border-color: var(--primary-dark);
+  box-shadow: var(--hl), 0 4px 0 var(--primary-dark), 0 0 0 4px rgba(255, 255, 255, 0.7);
+  transform: translateY(-6px);
+}
+.tray-icon { width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; }
+.tray-icon svg { max-width: 100%; max-height: 100%; }
+.tray-name { font-size: var(--fs-s); max-width: 96px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tray-count { position: absolute; top: 4px; right: 8px; font-size: 15px; color: var(--text-soft); }
-.tray-empty { color: var(--text-soft); align-self: center; font-size: 18px; }
-.tray-sep { flex: 0 0 2px; background: var(--primary-light); margin: 6px 4px; }
+.tray-check { position: absolute; top: 4px; right: 8px; color: var(--mint-dark); font-weight: 700; }
+.tray-empty { color: #6b4a30; align-self: center; font-size: var(--fs-m); padding: 0 var(--sp-3); }
+.tray-sep { flex: 0 0 3px; background: rgba(90, 58, 34, 0.25); margin: 8px 4px; border-radius: 2px; }
 
+/* 物品菜单：在工具盒上方，不盖住场景 */
+.item-menu {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.item-menu .btn { flex: none; }
+.item-menu-icon { flex: none; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; background: var(--cream); border-radius: 14px; }
+.item-menu-icon svg { max-width: 100%; max-height: 100%; }
+.item-menu-name { flex: 1; min-width: 0; font-size: var(--fs-l); color: #5a3a22; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- 占格预览：格子本身就是点击/放下的目标 ---- */
 .place-cell {
-  border: 2px dashed rgba(91, 67, 102, 0.15);
+  border: 2px dashed rgba(79, 59, 90, 0.18);
   background: transparent;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 0;
-  z-index: 5;
+  margin: 2px;
+  z-index: 7;
   touch-action: none;
 }
-.place-cell.can { background: rgba(126, 215, 181, 0.28); border-color: rgba(63, 174, 134, 0.5); }
+.place-cell.can { background: rgba(126, 215, 181, 0.22); border-color: rgba(47, 154, 115, 0.45); }
 .place-preview {
-  z-index: 6;
+  position: relative;
+  z-index: 8;
   pointer-events: none;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 3px solid;
+  margin: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.place-preview.good { background: rgba(126, 215, 181, 0.55); border-color: var(--mint-dark); }
-.place-preview.bad { background: rgba(255, 138, 122, 0.45); border-color: #e06a5a; }
+.place-preview.good { background: rgba(126, 215, 181, 0.5); border-color: var(--mint-dark); }
+.place-preview.bad { background: rgba(255, 138, 122, 0.42); border-color: #d9604f; }
+.place-preview svg { max-width: 80%; max-height: 80%; }
+.place-preview::after {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 18px;
+  font-weight: 700;
+}
+.place-preview.good::after { content: '✓'; color: var(--mint-dark); }
+.place-preview.bad::after { content: '✕'; color: #c0483a; }
 
 .tappable { pointer-events: auto !important; cursor: pointer; touch-action: none; }
-.selected { outline: 4px solid var(--primary-dark); outline-offset: 2px; border-radius: 12px; }
+.decorating .tappable { touch-action: none; }
+.selected .art { outline: 4px solid var(--primary-dark); outline-offset: 2px; border-radius: 12px; background: rgba(255, 255, 255, 0.35); }
 .moving { opacity: 0.35; }
 
-.item-menu {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  translate: -50% 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--white);
-  border: var(--border) solid var(--primary);
-  border-radius: 999px;
-  padding: 8px 10px 8px 22px;
-  box-shadow: var(--shadow);
-  white-space: nowrap;
+/* 装扮时天空收窄，给格子多留位置 */
+.scene-wrap.decorating .garden { --sky-min: 28px; --front: 8px; }
+.scene-wrap.decorating .room { --wall-min: 120px; }
+
+/* 窄屏：其他步骤只显示序号，当前步骤完整显示 */
+@media (max-width: 900px) {
+  .tray-steps li:not(.on) { padding: 4px; font-size: 0; gap: 0; }
+  .tray-steps li:not(.on)::before { font-size: 15px; }
+  .tray-title { display: none; }
 }
-.item-menu .btn { min-height: 56px; font-size: 20px; padding: 0 16px; }
-.item-menu-name { font-size: 22px; }

@@ -1,14 +1,69 @@
-.garden {
+/* ================================================================
+ * 室外花园：网格 + 布景
+ * 格子宽 --cw、高 --ch，按场景大小计算，最小 --cell-min（64px）。
+ * 放不下时 .scene-scroll 可以滑动。
+ * ================================================================ */
+.scene-scroll {
   position: absolute;
   inset: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.scene-scroll::-webkit-scrollbar { display: none; }
+
+.garden {
+  --pad: 12px;
+  --front: 16px;
+  --sky-min: 72px;
+  --cw: max(var(--cell-min), calc((100cqw - 2 * var(--pad)) / var(--cols)));
+  --ch: clamp(
+    var(--cell-min),
+    calc((100cqh - var(--sky-min) - 2 * var(--pad) - var(--front)) / var(--rows)),
+    calc(var(--cw) * 1.3)
+  );
+  --obj: min(var(--cw), var(--ch));
+  position: relative;
   display: flex;
   flex-direction: column;
+  min-height: 100%;
+  width: max(100%, calc(var(--cols) * var(--cw) + 2 * var(--pad)));
 }
+
+/* ---- 天空与远景 ---- */
 .sky {
   position: relative;
-  height: 18%;
-  min-height: 60px;
+  flex: 1 0 var(--sky-min);
   overflow: hidden;
+}
+.horizon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 64px;
+}
+.sun {
+  position: absolute;
+  top: 14px;
+  left: 36%;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 35%, #fff6c9, #ffd66b 60%, #ffc24a);
+  box-shadow: 0 0 0 10px rgba(255, 230, 140, 0.35), 0 0 30px 14px rgba(255, 220, 120, 0.35);
+}
+.moon {
+  position: absolute;
+  top: 14px;
+  left: 36%;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fffbe6, #f4e7b0);
+  box-shadow: 0 0 24px 8px rgba(255, 245, 200, 0.3);
 }
 .stars {
   position: absolute;
@@ -24,10 +79,11 @@
   position: absolute;
   left: 0;
   width: 120px;
-  height: 36px;
-  background: #fff;
+  height: 34px;
+  background: linear-gradient(#fff, #f3f8ff);
   border-radius: 999px;
-  opacity: 0.85;
+  opacity: 0.92;
+  box-shadow: 0 6px 0 rgba(160, 190, 220, 0.25);
   animation: float-cloud linear infinite;
 }
 .cloud::before {
@@ -37,96 +93,159 @@
   height: 48px;
   border-radius: 50%;
   background: #fff;
-  left: 26px;
+  left: 24px;
   top: -22px;
 }
 .cloud.small { transform: scale(0.7); }
 
-.ground {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  gap: 4px;
-  padding: 10px;
-  background:
-    radial-gradient(circle at 12% 70%, #fff 0 3px, transparent 4px),
-    radial-gradient(circle at 48% 88%, #fff 0 3px, transparent 4px),
-    radial-gradient(circle at 82% 40%, #fff 0 3px, transparent 4px),
-    radial-gradient(circle at 66% 76%, #fff 0 3px, transparent 4px),
-    #bfeab0;
-  border-top-left-radius: 40% 24px;
-  border-top-right-radius: 40% 24px;
+/* ---- 草地 ---- */
+.ground-wrap {
   position: relative;
+  flex: none;
+  padding: var(--pad) var(--pad) calc(var(--pad) + var(--front));
+  background:
+    radial-gradient(120% 70% at 18% 0%, rgba(255, 255, 255, 0.35), transparent 55%),
+    linear-gradient(180deg, var(--grass-light) 0%, var(--grass) 40%, var(--grass-mid) 100%);
+  border-top: 3px solid #b6e28f;
 }
+.ground-decor { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.decor { position: absolute; translate: -50% -50%; }
+.decor.flower { width: 18px; height: 18px; }
+.decor.tuft { width: 30px; height: 18px; }
+.stepping-stone {
+  position: absolute;
+  width: calc(var(--obj) * 0.42);
+  height: calc(var(--obj) * 0.26);
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(70% 70% at 35% 30%, #fff, var(--stone) 55%, var(--stone-dark));
+  box-shadow: 0 3px 0 var(--stone-dark), 0 5px 6px rgba(70, 45, 30, 0.18);
+}
+.ground-front {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--front) + 10px);
+  background:
+    radial-gradient(14px 16px at 10px 100%, var(--grass-dark) 98%, transparent) 0 0 / 22px 100% repeat-x;
+  opacity: 0.85;
+}
+
+.ground {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), var(--cw));
+  grid-template-rows: repeat(var(--rows), var(--ch));
+  justify-content: center;
+}
+
+/* ---- 小屋（3 × 3 格，整块可点进入） ---- */
 .house-cell {
+  position: relative;
   background: none;
   border: none;
-  padding: 0;
+  padding: 0 0 4px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   z-index: 2;
+  border-radius: var(--r-l);
 }
-.house-cell svg { width: 100%; height: 100%; }
-.placed svg, .plant svg { max-width: 100%; max-height: 100%; }
+.house-cell:active svg { transform: translateY(2px) scale(0.99); }
+.house-cell svg { transition: transform var(--dur-fast); }
+
+/* ---- 土地：圆润顶面 + 侧面厚度 + 接触阴影；点击区域就是整个格子 ---- */
 .plot {
-  border-radius: 14px;
-  background: #d9b48f;
-  border: 2.5px solid #b98a5e;
-  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.06);
+  position: relative;
+  padding: 0;
+  border: none;
+  background: none;
+  z-index: 1;
 }
-.plot.pond { background: #7cc8f8; border-color: #3d9fdc; }
+.plot::before {
+  content: '';
+  position: absolute;
+  inset: 5px 5px 11px;
+  border-radius: 16px;
+  border: 2.5px solid var(--soil-dark);
+  background:
+    radial-gradient(90% 70% at 25% 20%, rgba(255, 236, 205, 0.55), transparent 60%),
+    repeating-linear-gradient(180deg, transparent 0 7px, rgba(122, 82, 51, 0.16) 7px 9px),
+    radial-gradient(circle at 70% 60%, rgba(122, 82, 51, 0.25) 0 2px, transparent 3px) 0 0 / 14px 12px,
+    var(--soil-top);
+  box-shadow:
+    0 6px 0 var(--soil-side),
+    0 6px 0 2.5px var(--soil-dark),
+    3px 11px 10px rgba(70, 45, 30, 0.22);
+  transition: transform var(--dur-fast);
+}
+.plot:active::before { transform: translateY(2px); filter: brightness(0.97); }
+.plot.pond::before {
+  border-color: var(--sky-dark);
+  background: radial-gradient(80% 60% at 30% 25%, #e3f4ff, #7cc8f8 70%);
+  box-shadow: 0 5px 0 #3d9fdc, 2px 10px 10px rgba(30, 80, 120, 0.2);
+}
+
+/* ---- 场景物件和植物：扎根在格子底部，脚下有影子 ---- */
 .placed, .plant {
+  position: relative;
   min-width: 0;
   min-height: 0;
-  overflow: visible;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 3;
+}
+.plant { z-index: 4; padding-bottom: 16px; }
+.plant::before {
+  content: '';
+  position: absolute;
+  bottom: 13px;
+  left: 50%;
+  translate: -50% 0;
+  width: calc(var(--obj) * 0.5);
+  height: calc(var(--obj) * 0.14);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--sh-contact), transparent);
+}
+.plant.in-pond { padding-bottom: calc(var(--ch) * 0.3); }
+.plant.in-pond::before { display: none; }
+
+.plant-art { position: relative; display: inline-flex; align-items: flex-end; justify-content: center; }
+.plant-art.fluid { width: calc(var(--obj) * 0.98); height: calc(var(--obj) * 1.05); }
+.plant-art.fluid > svg { width: 100%; height: 100%; overflow: visible; }
+.plant-art.fluid .emoji-fluid { font-size: calc(var(--obj) * 0.86); line-height: 1; filter: drop-shadow(1px 2px 0 rgba(70, 45, 30, 0.14)); }
+.plant-art.hop { animation: hop 0.6s var(--ease-out) 2; }
+.plant-art.ready { filter: drop-shadow(0 0 6px rgba(255, 214, 107, 0.95)); }
+/* 状态小牌子：口渴（水滴）、可收获（星光），圆牌 + 图标，不只靠颜色 */
+.plant-flag {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: none;
-  z-index: 1;
-  position: relative;
-}
-.plant { z-index: 2; }
-.plant-art .thirsty, .thirsty {
-  position: absolute;
-  top: -6px;
-  right: -2px;
-  font-size: 22px;
-  animation: bounce 1.2s ease-in-out infinite;
-}
-.garden-empty {
-  position: absolute;
-  right: 20px;
-  bottom: 16px;
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  pointer-events: none;
-}
-.bubble {
+  font-size: 17px;
   background: #fff;
-  border-radius: 20px;
-  padding: 8px 16px;
-  box-shadow: var(--shadow-soft);
-  font-size: 20px;
-  margin-bottom: 40px;
+  border: 2.5px solid;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.12);
 }
-
-.plot { padding: 0; }
-.plot:active { filter: brightness(0.95); }
-.plant { pointer-events: none; }
-.plant-art { position: relative; display: inline-flex; align-items: center; justify-content: center; }
-.plant-art.hop { animation: hop 0.6s ease-out 2; }
-.plant-art.ready { filter: drop-shadow(0 0 6px #ffd66b); }
-.ready-badge { position: absolute; top: -8px; left: -6px; font-size: 20px; animation: bounce 1.2s ease-in-out infinite; }
+/* 只有“可以收获”轻轻呼吸，口渴牌子保持安静，避免满屏都在动 */
+.plant-flag.ready-flag { animation: breathe 3s ease-in-out infinite; }
+.plant-flag.thirsty { border-color: var(--sky-dark); background: var(--sky-light); }
+.plant-flag.ready-flag { border-color: var(--coin-dark); background: var(--coin-light); left: -10px; right: auto; }
 @keyframes hop {
   0%, 100% { transform: translateY(0) scale(1); }
-  40% { transform: translateY(-14px) scale(1.12); }
+  40% { transform: translateY(-14px) scale(1.1); }
 }
 .fx {
   position: absolute;
-  top: -10px;
+  top: -6px;
   font-size: 30px;
   animation: fx-rise 1.2s ease-out both;
 }
@@ -135,86 +254,130 @@
   30% { opacity: 1; }
   100% { transform: translateY(-30px); opacity: 0; }
 }
+
+/* ---- 扩建：虚线小牌 ---- */
 .expand-cell {
-  border: 3px dashed var(--mint-dark);
-  background: rgba(126, 215, 181, 0.35);
-  border-radius: 14px;
-  font-size: 28px;
-  color: var(--mint-dark);
+  position: relative;
+  border: none;
+  background: none;
   padding: 0;
-  z-index: 3;
+  z-index: 6;
 }
-.garden-tools {
+.expand-cell span {
   position: absolute;
-  right: 16px;
-  top: 16px;
+  inset: 6px 6px 12px;
+  border: 3px dashed var(--mint-dark);
+  border-radius: 16px;
+  background: rgba(230, 248, 239, 0.75);
   display: flex;
-  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  color: var(--mint-dark);
+  font-weight: 700;
 }
-.garden-tools .btn { min-height: 56px; font-size: 20px; padding: 0 20px; }
-.garden-hint {
+
+/* ---- 浮在天空上的工具（不随场景滑动） ---- */
+.scene-overlay {
   position: absolute;
-  left: 50%;
-  translate: -50% 0;
-  top: 16px;
-  background: #fff;
-  border-radius: 999px;
-  padding: 8px 20px;
-  box-shadow: var(--shadow-soft);
-  font-size: 20px;
+  left: 10px;
+  right: 10px;
+  z-index: 10;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  pointer-events: none;
 }
-.seed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
-.seed-btn {
-  min-height: 130px;
+.scene-overlay.top { top: 4px; }
+.scene-overlay > * { pointer-events: auto; }
+.scene-overlay .spacer { flex: 1; pointer-events: none; }
+.scene-hint {
+  background: var(--cream);
+  border: 2px solid var(--cream-edge);
+  border-radius: var(--r-pill);
+  padding: 10px 18px;
+  font-size: var(--fs-m);
+  box-shadow: var(--sh-1);
+  align-self: center;
+}
+.garden-empty {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-2);
+  pointer-events: none;
+  z-index: 9;
+}
+.bubble {
+  position: relative;
+  background: var(--cream);
+  border: 2px solid var(--cream-edge);
   border-radius: 20px;
-  border: var(--border) solid var(--primary-light);
-  background: var(--white);
+  padding: 10px 16px;
+  box-shadow: var(--sh-1);
+  font-size: var(--fs-m);
+  margin-bottom: 36px;
+  max-width: 300px;
+}
+
+/* ---- 种子选择、浇水进度 ---- */
+.seed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: var(--sp-3); }
+.seed-btn {
+  min-height: 140px;
+  border-radius: var(--r-l);
+  border: var(--bw) solid var(--cream-edge);
+  background: linear-gradient(180deg, #fff, var(--cream));
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
   font-size: 22px;
-  box-shadow: 0 4px 0 var(--primary-light);
+  box-shadow: var(--hl), 0 5px 0 var(--cream-edge);
+  margin-bottom: 5px;
 }
-.seed-btn:active { transform: translateY(3px); }
-.seed-count { color: var(--text-soft); font-size: 18px; }
-.water-dots { display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; font-size: 24px; }
-.water-dots span { opacity: 0.25; filter: grayscale(1); }
+.seed-btn:active { transform: translateY(3px); box-shadow: var(--hl), 0 2px 0 var(--cream-edge); }
+.seed-count { color: var(--text-soft); font-size: var(--fs-s); }
+.water-dots { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin: var(--sp-2) 0; }
+.water-dots span { width: 26px; height: 26px; opacity: 0.28; filter: grayscale(1); }
 .water-dots span.on { opacity: 1; filter: none; }
+.plant-hero {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  height: 130px;
+  margin: 0 auto var(--sp-2);
+  width: 160px;
+  border-radius: 50%;
+  background: radial-gradient(60% 18% at 50% 92%, var(--sh-contact), transparent);
+}
+.stage-label { font-size: var(--fs-l); color: var(--text-soft); margin: 2px 0 var(--sp-2); }
 
 /* 场景里的物品：平时不挡点击，装扮模式下由 .tappable 打开 */
 .placed { pointer-events: none; }
 
-/* 心愿进度条 */
+/* ---- 心愿进度条：一块小木牌，放在天空里 ---- */
 .wish-bar {
-  position: absolute;
-  left: 16px;
-  bottom: 16px;
-  z-index: 6;
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 72px;
-  width: min(340px, 45%);
-  padding: 8px 16px 8px 10px;
-  border-radius: 24px;
-  border: var(--border) solid var(--primary-light);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: var(--shadow-soft);
+  min-height: 64px;
+  width: min(340px, 48vw);
+  padding: 6px 16px 6px 8px;
+  border-radius: var(--r-l);
+  border: var(--bw) solid var(--cream-edge);
+  background: linear-gradient(180deg, #fff, var(--cream));
+  box-shadow: var(--hl), 0 4px 0 var(--cream-edge), var(--sh-1);
   text-align: left;
 }
-.wish-bar.ready { border-color: var(--coin); animation: wish-glow 1.4s ease-in-out infinite alternate; }
-.wish-icon { flex: none; }
-.wish-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.wish-bar.ready { border-color: var(--coin-dark); box-shadow: var(--hl), 0 4px 0 var(--coin-dark), 0 0 0 4px rgba(255, 214, 107, 0.5); }
+.wish-icon { flex: none; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; background: var(--primary-light); border-radius: 14px; }
+.wish-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .wish-title { font-family: var(--font-title); font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.wish-track { height: 12px; border-radius: 999px; background: var(--primary-light); overflow: hidden; }
-.wish-fill { display: block; height: 100%; border-radius: 999px; background: var(--primary); transition: width 0.6s ease; }
-.wish-bar.ready .wish-fill { background: var(--coin); }
-.wish-text { font-size: 16px; color: var(--text-soft); }
-@keyframes wish-glow {
-  from { box-shadow: 0 0 0 0 rgba(255, 214, 107, 0.4); }
-  to { box-shadow: 0 0 18px 6px rgba(255, 214, 107, 0.9); }
-}
-/* 池塘里的植物画在池塘中间 */
-.plant.in-pond { z-index: 3; }
+.wish-track { height: 12px; border-radius: 999px; background: var(--mist-light); box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.06); overflow: hidden; }
+.wish-fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(180deg, #ffd0e1, var(--primary)); transition: width 0.6s ease; }
+.wish-bar.ready .wish-fill { background: linear-gradient(180deg, #ffe9a6, var(--coin)); }
+.wish-text { font-size: var(--fs-xs); color: var(--text-soft); }
+.wish-text .num { font-size: 16px; }

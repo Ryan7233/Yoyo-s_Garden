@@ -1,47 +1,95 @@
-.ex-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; }
-.ex-sub { color: var(--text-soft); font-size: 20px; margin: 8px 0 14px; text-align: center; }
-.ex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+/* ================================================================
+ * 运动打卡：五个子项卡片 + 计时页（大数字表盘为中心）
+ * ================================================================ */
+.ex-head { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; justify-content: center; }
+.ex-head .modal-title { margin: 0; }
+.ex-rules { color: var(--text-soft); font-size: var(--fs-s); text-align: center; margin: var(--sp-2) 0 var(--sp-4); line-height: 2; }
+.ex-sub { color: var(--text-soft); font-size: var(--fs-m); margin: 4px 0 8px; text-align: center; }
+
+.ex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--sp-4); }
 .ex-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 16px 12px;
-  min-height: 220px;
-  background: var(--white);
-  border-radius: var(--radius-card);
-  border: var(--border) solid var(--mist);
-  box-shadow: var(--shadow-soft);
+  gap: 6px;
+  padding: 16px 14px 14px;
+  min-height: 250px;
+  background: linear-gradient(180deg, #fff, var(--cream));
+  border-radius: var(--r-l);
+  border: var(--bw) solid var(--cream-edge);
+  box-shadow: var(--hl), 0 5px 0 var(--cream-edge), var(--sh-1);
+  margin-bottom: 5px;
+  transition: transform var(--dur-fast);
 }
-.ex-card.done { border-color: var(--mint); background: #f1fbf6; }
-.ex-card:active { transform: scale(0.97); }
-.ex-icon { font-size: 52px; }
+.ex-card:active { transform: translateY(3px); }
+.ex-card.done { border-color: var(--mint); box-shadow: var(--hl), 0 5px 0 var(--mint), var(--sh-1); background: linear-gradient(180deg, #fff, var(--mint-light)); }
+.ex-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  background: var(--sky-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.06);
+}
 .ex-name { font-family: var(--font-title); font-size: 26px; }
-.ex-meta { font-size: 17px; color: var(--text-soft); }
-.ex-card .badge { margin-top: auto; }
-.badge.todo { background: var(--primary-light); }
-.ex-run { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.ex-stats { display: flex; flex-direction: column; gap: 2px; width: 100%; }
+.ex-stats > span { display: flex; justify-content: space-between; gap: 8px; font-size: var(--fs-s); padding: 2px 6px; border-radius: 8px; }
+.ex-stats > span:nth-child(2) { background: rgba(255, 255, 255, 0.7); }
+.ex-stats i { font-style: normal; color: var(--text-soft); }
+.ex-stats b { font-size: 18px; }
+.ex-card .badge { margin-top: auto; font-size: var(--fs-s); }
+
+/* ---- 计时页 ---- */
+.ex-run { display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); text-align: center; }
 .ex-tip {
-  background: #fff6d9;
-  border: 2px solid var(--coin);
-  border-radius: 16px;
-  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--coin-light);
+  border: var(--bw) solid var(--coin);
+  border-radius: var(--r-l);
+  padding: 10px 20px;
   font-size: 22px;
+  font-weight: 600;
+  max-width: 100%;
 }
-.ex-go { min-height: var(--btn-main); min-width: 240px; font-size: 34px; }
-.ex-clock {
-  font-family: var(--font-title);
-  font-size: 160px;
-  line-height: 1;
+.ex-go { min-width: 260px; font-size: 34px; }
+.ex-stop { --btn-face: #f06b7f; --btn-edge: #b83a52; --btn-line: #b83a52; }
+
+/* 表盘：进度环 + 大号数字。计时中不放任何会挡住数字的动画 */
+.ex-dial {
+  position: relative;
+  width: min(300px, 62vw);
+  aspect-ratio: 1;
   color: var(--primary-dark);
-  font-variant-numeric: tabular-nums;
 }
-.ex-clock.hurry { color: var(--coin-dark); animation: bounce 1s ease-in-out infinite; }
-.ex-big { font-family: var(--font-title); font-size: 64px; margin: 0; color: var(--primary-dark); }
-.ex-record { font-size: 36px; color: var(--coin-dark); }
-.ex-input { display: flex; align-items: center; gap: 12px; }
-.ex-input .input { width: 180px; text-align: center; font-size: 40px; min-height: 80px; }
+.ex-dial svg { width: 100%; height: 100%; }
+.ex-dial svg circle:last-child { transition: stroke-dashoffset 0.2s linear; }
+.ex-dial.hurry { color: var(--coin-dark); }
+.ex-dial.running { color: var(--mint-dark); }
+.ex-dial-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.ex-clock { font-size: clamp(72px, 16vw, 120px); line-height: 1; color: var(--text); }
+.ex-dial.hurry .ex-clock { color: #a46500; }
+.ex-clock-unit { font-size: var(--fs-l); color: var(--text-soft); }
+
+.ex-big { font-size: 64px; margin: 0; color: var(--primary-dark); line-height: 1.1; }
+.ex-record { font-size: 36px; color: #a46500; }
+.ex-question { font-size: 28px; margin: 0; }
+.ex-got { display: flex; align-items: center; gap: var(--sp-3); font-size: 26px; margin: 4px 0; }
+.ex-input { display: flex; align-items: center; gap: var(--sp-3); }
+.ex-input .input { width: 200px; text-align: center; font-family: var(--font-num); font-weight: 700; font-size: 44px; min-height: 88px; }
 .ex-input .title { font-size: 28px; }
-.ex-choices { display: flex; flex-direction: column; gap: 14px; width: min(420px, 100%); }
-.ex-choice { min-height: 76px; font-size: 26px; }
+.ex-input .btn { margin-bottom: var(--depth-btn); }
+.ex-choices { display: flex; flex-direction: column; gap: var(--sp-3); width: min(440px, 100%); }
+.ex-choice { min-height: var(--btn-main); font-size: 26px; }
 .ex-video { width: 100%; max-height: 50vh; border-radius: 16px; background: #000; }

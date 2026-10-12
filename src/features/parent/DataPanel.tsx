@@ -67,7 +67,7 @@ export function DataPanel() {
         <ConfirmDialog
           title="用这份备份覆盖当前数据？"
           message={
-            <div style={{ textAlign: 'left' }}>
+            <div className="text-left">
               <p>备份日期：{new Date(sum.exportedAt).toLocaleString('zh-CN')}</p>
               <p>孩子：{sum.childName}</p>
               <p>金币 🪙 {sum.coins}　水滴 💧 {sum.drops}</p>
@@ -86,10 +86,10 @@ export function DataPanel() {
 
       {resetOpen && (
         <Modal onClose={() => setResetOpen(false)}>
-          <h2 style={{ fontSize: 28, marginBottom: 12 }}>真的要重置吗？</h2>
-          <p style={{ color: 'var(--text-soft)' }}>请输入“确认重置”四个字</p>
+          <h2 className="modal-title">真的要重置吗？</h2>
+          <p className="modal-text">请输入“确认重置”四个字</p>
           <input className="input" value={resetText} onChange={(e) => setResetText(e.target.value)} />
-          <div className="modal-actions" style={{ marginTop: 20 }}>
+          <div className="modal-actions">
             <button className="btn btn-ghost" onClick={() => setResetOpen(false)}>取消</button>
             <button
               className="btn btn-primary"

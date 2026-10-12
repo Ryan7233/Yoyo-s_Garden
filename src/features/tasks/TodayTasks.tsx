@@ -11,6 +11,7 @@ import { ExerciseSheet } from './Exercise'
 import { bestTodayByExercise, exercisesForDay } from '../../engine/exercise'
 import './tasks.css'
 import { play } from '../../ui/sfx'
+import { Reward } from '../../ui/Reward'
 
 export function TodayTasks() {
   const { child, tasks, records, ledger, today, exercises, exerciseRecords } = useStore()
@@ -39,23 +40,39 @@ export function TodayTasks() {
     }
   }
 
+  const pct = progress.requiredTotal ? progress.requiredDone / progress.requiredTotal : 0
+
   return (
     <div className="today">
-      <header className="today-head">
-        <h2 className="today-title">📋 今日任务</h2>
-        <div className="today-stats">
-          <span className="stat-pill">⭐ 必做 {progress.requiredDone} / {progress.requiredTotal}</span>
-          <span className="stat-pill">今天得到 🪙 {earned.coin} 💧 {earned.drop}</span>
+      <h2 className="sheet-title">📋 今日任务</h2>
+      <div className="today-summary card">
+        <div className="today-progress">
+          <div className="today-progress-label">
+            <span className="title">必做任务</span>
+            <span className="num today-count">{progress.requiredDone} / {progress.requiredTotal}</span>
+          </div>
+          <div className="meter" role="progressbar" aria-valuemin={0} aria-valuemax={progress.requiredTotal} aria-valuenow={progress.requiredDone}>
+            <span className="meter-fill" style={{ width: `${pct * 100}%` }} />
+            {Array.from({ length: progress.requiredTotal }, (_, i) => (
+              <span key={i} className={`meter-star${i < progress.requiredDone ? ' on' : ''}`} style={{ left: `${((i + 1) / progress.requiredTotal) * 100}%` }}>★</span>
+            ))}
+          </div>
         </div>
-      </header>
+        <div className="today-earned">
+          <span className="hint">今天得到</span>
+          <Reward coins={earned.coin || 0} drops={earned.drop || 0} size="l" />
+          {!earned.coin && !earned.drop && <span className="num today-zero">0</span>}
+        </div>
+      </div>
 
       {progress.allDone && <div className="all-done pop">🌟 今天的必做任务全部完成啦！</div>}
 
+      <h3 className="section-title">⭐ 今日必做</h3>
       <div className="task-grid">
         {required.map((t) => <TaskCard key={t.id} task={t} record={latest.get(t.id)} sport={sport} onReport={() => report(t)} />)}
       </div>
 
-      <button className="more-toggle btn btn-ghost" onClick={() => setShowMore(!showMore)}>
+      <button className="more-toggle btn btn-ghost" aria-expanded={showMore} onClick={() => setShowMore(!showMore)}>
         {showMore ? '收起更多任务 ▲' : `更多任务（${more.length}）▼`}
       </button>
       {showMore && (
@@ -72,48 +89,50 @@ export function TodayTasks() {
 
 interface SportProgress { done: number; total: number }
 
+const STATUS_TEXT = { done: '✓ 已完成', pending: '⏳ 等爸爸妈妈确认', rejected: '↺ 可以再试一次' } as const
+
+/** 任务牌：图标、名字、奖励、状态、按钮。状态都有图标和文字，不只靠颜色 */
 function TaskCard({ task, record, sport, onReport }: { task: TaskDef; record?: TaskRecord; sport: SportProgress; onReport: () => void }) {
   if (task.id === EXERCISE_TASK_ID) return <SportCard task={task} sport={sport} onOpen={onReport} />
   const status = record?.status === 'revoked' ? undefined : record?.status
-  const reward = [task.coins ? `${task.coins} 金币` : '', task.drops ? `${task.drops} 水滴` : ''].filter(Boolean).join(' ')
   return (
     <div className={`task-card ${status ?? 'todo'}`}>
-      <span className="task-icon">{task.icon}</span>
+      <span className="task-icon" aria-hidden>{task.icon}</span>
       <div className="task-body">
         <div className="task-name">{task.name}</div>
-        <div className="task-reward">{reward}</div>
+        <div className="task-meta">
+          <Reward coins={task.coins} drops={task.drops} size="s" />
+          {status && <span className={`badge ${status}`}>{STATUS_TEXT[status]}</span>}
+        </div>
         {status === 'rejected' && record?.note && <div className="task-note">💬 {record.note}</div>}
       </div>
-      <div className="task-action">
-        {status === 'done' && <span className="badge done">✓ 已完成</span>}
-        {status === 'pending' && <span className="badge pending">⏳ 等爸爸妈妈确认</span>}
-        {(!status || status === 'rejected') && (
-          <button className="btn btn-primary" onClick={onReport}>
-            {status === 'rejected' ? '再试一次' : '我完成了'}
-          </button>
-        )}
-      </div>
+      {(!status || status === 'rejected') && (
+        <button className="btn btn-primary task-btn" onClick={onReport}>
+          {status === 'rejected' ? '再试一次' : '我完成了'}
+        </button>
+      )}
     </div>
   )
 }
 
-/** 运动卡片：做了几项记几项，点开进入运动打卡 */
+/** 运动牌：做了几项记几项，点开进入运动打卡 */
 function SportCard({ task, sport, onOpen }: { task: TaskDef; sport: SportProgress; onOpen: () => void }) {
   const all = sport.total > 0 && sport.done === sport.total
   return (
-    <div className={`task-card ${sport.done > 0 ? 'done' : 'todo'}`}>
-      <span className="task-icon">{task.icon}</span>
+    <div className={`task-card sport ${sport.done > 0 ? 'done' : 'todo'}`}>
+      <span className="task-icon" aria-hidden>{task.icon}</span>
       <div className="task-body">
         <div className="task-name">{task.name}</div>
-        <div className="task-reward">{sport.done > 0 ? `今天做了 ${sport.done} / ${sport.total} 项` : '每做一项 2 金币'}</div>
+        <div className="task-meta">
+          {sport.done > 0
+            ? <span className="badge done">✓ 做了 <span className="num">{sport.done} / {sport.total}</span> 项</span>
+            : <span className="hint">每做一项</span>}
+          {sport.done === 0 && <Reward coins={2} size="s" />}
+        </div>
       </div>
-      <div className="task-action">
-        {all ? (
-          <button className="btn btn-ghost" onClick={onOpen}>✓ 全做完啦</button>
-        ) : (
-          <button className="btn btn-primary" onClick={onOpen}>{sport.done > 0 ? '继续运动' : '去运动'}</button>
-        )}
-      </div>
+      <button className={`btn task-btn ${all ? 'btn-ghost' : 'btn-primary'}`} onClick={onOpen}>
+        {all ? '看看成绩' : sport.done > 0 ? '继续运动' : '去运动'}
+      </button>
     </div>
   )
 }

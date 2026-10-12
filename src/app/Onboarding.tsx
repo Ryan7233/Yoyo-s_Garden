@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { ThemeName } from '../data/types'
 import { Mascot } from '../ui/Mascot'
+import { House } from '../features/garden/House'
 import { isValidPin } from '../engine/pin'
 import { setupChild } from '../db/actions'
 import { act } from './store'
@@ -10,6 +11,8 @@ import { isStandalone } from './standalone'
 import './onboarding.css'
 
 type Step = 'name' | 'garden' | 'look' | 'mascot' | 'pin' | 'pin2' | 'home'
+const STEP_NO: Record<Step, number> = { name: 1, garden: 2, look: 3, mascot: 4, pin: 5, pin2: 5, home: 6 }
+const STEP_COUNT = 6
 
 export function Onboarding() {
   const [step, setStep] = useState<Step>('name')
@@ -27,9 +30,22 @@ export function Onboarding() {
     await act(() => setupChild({ name, gardenName, theme, houseColor, mascotName, pin }))
   }
 
+  const stepNo = STEP_NO[step]
+
   return (
     <div className="onboarding" data-theme={theme}>
-      <div className="onboarding-card card pop" key={step}>
+      <div className="onboarding-card card">
+        <div className="ob-art" aria-hidden>
+          <div className="ob-hill" />
+          <span className="ob-house"><House roof={houseColor} fluid /></span>
+          <span className="ob-mascot"><Mascot size={step === 'mascot' ? 104 : 84} /></span>
+        </div>
+        <ol className="ob-progress" aria-label={`第 ${stepNo} 步，共 ${STEP_COUNT} 步`}>
+          {Array.from({ length: STEP_COUNT }, (_, i) => (
+            <li key={i} className={i + 1 < stepNo ? 'past' : i + 1 === stepNo ? 'on' : ''} />
+          ))}
+        </ol>
+        <div className="ob-body pop" key={step}>
         {step === 'name' && (
           <TextStep
             title="你好呀！你叫什么名字？"
@@ -51,7 +67,6 @@ export function Onboarding() {
         )}
         {step === 'look' && (
           <>
-            <Mascot size={88} bounce />
             <h1 className="ob-title">选一个喜欢的颜色</h1>
             <div className="ob-row">
               {THEMES.map((t) => (
@@ -113,7 +128,7 @@ export function Onboarding() {
         {step === 'pin2' && (
           <>
             <h1 className="ob-title">再输入一次确认</h1>
-            {pinError && <p className="ob-hint" style={{ color: 'var(--primary-dark)' }}>{pinError}</p>}
+            {pinError && <p className="ob-hint ob-error">{pinError}</p>}
             <PinPad
               key="pin2"
               onComplete={(p) => {
@@ -129,7 +144,6 @@ export function Onboarding() {
         )}
         {step === 'home' && (
           <>
-            <Mascot size={110} bounce />
             <h1 className="ob-title">最后一步：添加到主屏幕</h1>
             <ol className="ob-steps">
               <li>点 Safari 右上角的 <b>分享</b> 按钮 <span aria-hidden>⬆️</span></li>
@@ -137,14 +151,15 @@ export function Onboarding() {
               <li>以后都从主屏幕上的 <b>小花园</b> 图标打开</li>
             </ol>
             <p className="ob-hint">
-              从 Safari 标签页和从主屏幕打开是两份不同的数据，所以一定要从主屏幕图标打开哦。
-              {isStandalone() && ' （现在已经是从主屏幕打开的，太棒了！）'}
+              花园记录只保存在这台 iPad 上。从 Safari 标签页和从主屏幕打开的是两份不同的记录，请一直从主屏幕图标打开；家长也可以在家长模式里定期导出备份。
+              {isStandalone() && ' （现在已经是从主屏幕打开的。）'}
             </p>
             <button className="btn btn-primary btn-big" disabled={busy} onClick={finish}>
               进入花园 🌷
             </button>
           </>
         )}
+        </div>
       </div>
     </div>
   )
@@ -162,7 +177,6 @@ function TextStep(props: {
   const ok = props.value.trim().length > 0
   return (
     <>
-      <Mascot size={props.mascot ? 120 : 88} bounce />
       <h1 className="ob-title">{props.title}</h1>
       <input
         className="input ob-input"

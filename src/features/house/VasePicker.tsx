@@ -11,11 +11,11 @@ export function VasePicker({ vaseId, onClose }: { vaseId: string; onClose: () =>
   const flowers = inventory.filter((i) => i.count > 0 && harvestInfo(i.catalogId)?.kind === 'flower')
   return (
     <Modal onClose={onClose}>
-      <h2 style={{ fontSize: 30, marginBottom: 16 }}>🏺 插一朵花吧</h2>
+      <h2 className="modal-title">插一朵花吧</h2>
       {flowers.length === 0 ? (
         <>
           <Mascot size={88} bounce />
-          <p style={{ color: 'var(--text-soft)' }}>还没有收获的鲜花，去花园种花吧</p>
+          <p className="modal-text">还没有收获的鲜花。去花园种花，开花后点它收获，就能插在这里</p>
           <button className="btn btn-primary" onClick={onClose}>好的</button>
         </>
       ) : (

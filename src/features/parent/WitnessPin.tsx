@@ -32,11 +32,11 @@ export function WitnessPin({ onPass, onCancel }: { onPass: () => void; onCancel:
 
   return (
     <div className="parent-gate">
-      <h2 style={{ fontSize: 28 }}>👀 我看到了</h2>
+      <h2 className="modal-title">👀 我看到了</h2>
       {locked ? (
         <p>输错太多次啦，请 {Math.ceil((lock.lockedUntil - now) / 1000)} 秒后再试</p>
       ) : (
-        <p style={{ color: 'var(--text-soft)' }}>{lock.fails > 0 ? `密码不对，还可以试 ${BALANCE.pinMaxTries - lock.fails} 次` : '请爸爸妈妈输入密码确认'}</p>
+        <p className="modal-text">{lock.fails > 0 ? `密码不对，还可以试 ${BALANCE.pinMaxTries - lock.fails} 次` : '请爸爸妈妈输入密码确认'}</p>
       )}
       <PinPad onComplete={tryPin} disabled={locked} shakeKey={shake} />
       <button className="btn btn-ghost" onClick={onCancel}>返回</button>

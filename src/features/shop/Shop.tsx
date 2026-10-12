@@ -11,6 +11,7 @@ import { itemUnlocked } from '../../engine/progress'
 import { canWish } from '../../engine/wish'
 import { clearWish, setWish } from '../../db/progress'
 import { Celebrate } from '../../ui/Celebrate'
+import { Reward } from '../../ui/Reward'
 import { Icon } from '../../ui/Icon'
 import { ConfirmDialog } from '../../ui/Modal'
 import { toast } from '../../ui/Toast'
@@ -56,7 +57,7 @@ export function Shop() {
       <nav className="shop-tabs">
         {TABS.map((t) => (
           <button key={t.id} className={`shop-tab${tab === t.id ? ' active' : ''}`} onClick={() => setTab(t.id)}>
-            <span>{t.icon}</span> {t.label}
+            <span aria-hidden>{t.icon}</span> {t.label}
           </button>
         ))}
       </nav>
@@ -86,27 +87,35 @@ export function Shop() {
                   {wished ? '💗' : '🤍'}
                 </button>
               )}
-              <div className="shop-icon">
-                <Icon icon={item.icon} size={64} />
-                {locked && <span className="lock">🔒</span>}
+              <div className="shop-stand">
+                <span className="shop-icon"><Icon icon={item.icon} size={84} /></span>
+                {locked && <span className="lock" aria-label="还没解锁">🔒</span>}
               </div>
-              <div className="title shop-name">{item.name}</div>
+              <div className="title shop-name">{item.name}{item.plant ? <span className="shop-kind">种子</span> : null}</div>
+              {!gift && <div className="price-tag"><Reward coins={item.price} /></div>}
               {item.note && <div className="shop-note">{item.note}</div>}
               {pondHint && !locked && <div className="shop-note">要先有一个池塘才能种哦</div>}
-              {locked && item.unlock ? (
-                <div className="shop-unlock">
-                  {describeUnlock(item.unlock)}
-                  {stats && <div className="shop-progress">已完成 {Math.min(ruleProgress(item.unlock, stats), item.unlock.count)} / {item.unlock.count}</div>}
-                </div>
-              ) : gift ? (
-                <div className="shop-note">✓ 解锁时已送给你，在装扮里摆放</div>
-              ) : owned ? (
-                <div className="shop-note">✓ 已拥有，在装扮里更换</div>
-              ) : short > 0 ? (
-                <button className="btn" disabled>还差 {short} 金币</button>
-              ) : (
-                <button className="btn btn-primary" onClick={() => setBuying(item)}>🪙 {item.price} 买</button>
-              )}
+              <div className="shop-action">
+                {locked && item.unlock ? (
+                  <div className="shop-unlock">
+                    <span>🔒 {describeUnlock(item.unlock)}</span>
+                    {stats && (
+                      <span className="mini-meter" aria-label="解锁进度">
+                        <span style={{ width: `${Math.min(1, ruleProgress(item.unlock, stats) / item.unlock.count) * 100}%` }} />
+                        <b className="num">{Math.min(ruleProgress(item.unlock, stats), item.unlock.count)} / {item.unlock.count}</b>
+                      </span>
+                    )}
+                  </div>
+                ) : gift ? (
+                  <span className="badge done">✓ 已送给你，去装扮里摆放</span>
+                ) : owned ? (
+                  <span className="badge done">✓ 已拥有，在装扮里更换</span>
+                ) : short > 0 ? (
+                  <button className="btn" disabled>还差 <span className="num">{short}</span> 金币</button>
+                ) : (
+                  <button className="btn btn-primary" onClick={() => setBuying(item)}>买</button>
+                )}
+              </div>
             </div>
           )
         })}

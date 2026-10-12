@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from '../app/store'
 import { play } from './sfx'
+import { SvgArt } from './SvgArt'
 
 interface Burst { key: number; n: number; amount: number; sx: number; sy: number; dx: number; dy: number }
 
@@ -65,7 +66,7 @@ export function CoinFly() {
               animationDelay: `${i * 0.04}s`,
             }}
           >
-            🪙
+            <SvgArt id="coin" fluid />
           </span>
         )
       })}

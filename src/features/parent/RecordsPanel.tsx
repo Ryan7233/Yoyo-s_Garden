@@ -96,7 +96,7 @@ function ExerciseRecords({ day }: { day: string }) {
                   <span>
                     {formatValue(d, r.value)}{r.isPersonalBest ? ' 🏆' : ''}{EX_STATUS[r.status] ? ` · ${EX_STATUS[r.status]}` : ''}
                   </span>
-                  {r.status !== 'revoked' && <button className="mini" style={{ width: 'auto', padding: '0 10px' }} onClick={() => setRevoking(r)}>撤销</button>}
+                  {r.status !== 'revoked' && <button className="btn btn-ghost btn-small" onClick={() => setRevoking(r)}>撤销</button>}
                 </div>
               ))}
             </div>
@@ -106,10 +106,10 @@ function ExerciseRecords({ day }: { day: string }) {
       })}
       {entering && (
         <Modal onClose={() => setEntering(null)}>
-          <h2 style={{ fontSize: 28, marginBottom: 12 }}>{entering.icon} {entering.name}</h2>
-          <p style={{ color: 'var(--text-soft)' }}>家长录入的成绩算作家长见证，超过个人最好就记为新纪录。</p>
-          <div className="ex-input" style={{ justifyContent: 'center', margin: '12px 0 20px' }}>
-            <input className="input" style={{ width: 160, textAlign: 'center' }} autoFocus inputMode={entering.unit === 'cm' ? 'decimal' : 'numeric'} value={text} maxLength={5} onChange={(e) => setText(e.target.value)} />
+          <h2 className="modal-title">{entering.icon} {entering.name}</h2>
+          <p className="modal-text">家长录入的成绩算作家长见证，超过个人最好就记为新纪录。</p>
+          <div className="ex-input centered">
+            <input className="input" autoFocus inputMode={entering.unit === 'cm' ? 'decimal' : 'numeric'} value={text} maxLength={5} onChange={(e) => setText(e.target.value)} />
             <span className="title">{UNIT_LABEL[entering.unit]}</span>
           </div>
           <div className="modal-actions">

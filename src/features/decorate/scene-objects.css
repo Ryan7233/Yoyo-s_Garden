@@ -1,0 +1,44 @@
+/* 场景物件（花园和小屋共用）：图像按格子大小缩放，落在格子底部，脚下有接触阴影 */
+.placed, .floor-item, .wall-item {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 3;
+}
+.placed.tile, .floor-item.tile { z-index: 1; }
+/* 图像可以略高出所占的格子（看起来立在地上），但只画画，不接收点击：点击区域始终是占的格子 */
+.art {
+  position: absolute;
+  left: 2%;
+  right: 2%;
+  bottom: 7%;
+  top: calc(var(--obj) * var(--lift, 0.32) * -1);
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+  transition: transform var(--dur-fast);
+}
+.art > svg { width: 100%; height: 100%; overflow: visible; }
+.art .emoji-fluid {
+  font-size: calc(var(--obj) * var(--span-e, 1) * 0.92);
+  line-height: 1;
+  filter: drop-shadow(1px 2px 0 rgba(70, 45, 30, 0.12));
+}
+.tile .art { inset: 2px; align-items: stretch; }
+.contact {
+  position: absolute;
+  bottom: 5%;
+  left: 50%;
+  translate: -50% 0;
+  width: 72%;
+  height: calc(var(--obj) * 0.17);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--sh-contact), transparent);
+  pointer-events: none;
+}
+.wall-item .art { inset: 4%; align-items: center; }

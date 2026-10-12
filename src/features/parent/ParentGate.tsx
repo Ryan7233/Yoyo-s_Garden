@@ -38,11 +38,11 @@ export function ParentGate({ onPass, onCancel }: { onPass: () => void; onCancel:
     <div className="parent-gate">
       {mode === 'pin' && (
         <>
-          <h2 style={{ fontSize: 30 }}>家长模式</h2>
+          <h2 className="modal-title">家长模式</h2>
           {locked ? (
             <p>输错太多次啦，请 {Math.ceil((lock.lockedUntil - now) / 1000)} 秒后再试</p>
           ) : (
-            <p style={{ color: 'var(--text-soft)' }}>{lock.fails > 0 ? `密码不对，还可以试 ${BALANCE.pinMaxTries - lock.fails} 次` : '请输入 4 位密码'}</p>
+            <p className="modal-text">{lock.fails > 0 ? `密码不对，还可以试 ${BALANCE.pinMaxTries - lock.fails} 次` : '请输入 4 位密码'}</p>
           )}
           <PinPad onComplete={tryPin} disabled={locked} shakeKey={shake} />
           <div className="modal-actions">
@@ -53,9 +53,9 @@ export function ParentGate({ onPass, onCancel }: { onPass: () => void; onCancel:
       )}
       {mode === 'forgot' && (
         <>
-          <h2 style={{ fontSize: 30 }}>回答问题重设密码</h2>
-          <p className="title" style={{ fontSize: 40 }}>{q.a} × {q.b} = ?</p>
-          <input className="input" inputMode="numeric" value={answer} onChange={(e) => setAnswer(e.target.value.replace(/\D/g, ''))} style={{ maxWidth: 240, textAlign: 'center' }} />
+          <h2 className="modal-title">回答问题重设密码</h2>
+          <p className="gate-question num">{q.a} × {q.b} = ?</p>
+          <input className="input gate-answer" inputMode="numeric" value={answer} onChange={(e) => setAnswer(e.target.value.replace(/\D/g, ''))} />
           <div className="modal-actions">
             <button className="btn btn-ghost" onClick={() => setMode('pin')}>返回</button>
             <button className="btn btn-primary" disabled={!answer} onClick={() => (Number(answer) === q.answer ? setMode('newpin') : setAnswer(''))}>确定</button>
@@ -64,7 +64,7 @@ export function ParentGate({ onPass, onCancel }: { onPass: () => void; onCancel:
       )}
       {mode === 'newpin' && (
         <>
-          <h2 style={{ fontSize: 30 }}>设置新密码</h2>
+          <h2 className="modal-title">设置新密码</h2>
           <PinPad
             onComplete={async (p) => {
               if (!isValidPin(p)) return

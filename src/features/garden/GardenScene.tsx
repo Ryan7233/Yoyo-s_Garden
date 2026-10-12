@@ -1,7 +1,6 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { useStore, act } from '../../app/store'
 import { BALANCE } from '../../data/balance'
-import { getCatalogItem } from '../../data/catalog'
 import { POND_ID } from '../../data/plants'
 import { Mascot } from '../../ui/Mascot'
 import { ConfirmDialog } from '../../ui/Modal'
@@ -12,16 +11,22 @@ import { PlantSheet } from './PlantSheet'
 import { SeedPicker } from './SeedPicker'
 import { SKY, skyPhase } from './sky'
 import { HOUSE_RECT, expandCandidates } from '../../engine/plots'
+import { getCatalogItem } from '../../data/catalog'
 import { expandPlot } from '../../db/garden'
 import { PlacedView, placedProps } from '../decorate/PlacedView'
 import { PlacementLayer } from '../decorate/PlacementLayer'
-import { ItemMenu } from '../decorate/ItemMenu'
 import { Visitors } from './Visitors'
 import { WishBar } from './WishBar'
+import { Horizon, GroundDecor } from './Scenery'
 import './garden.css'
 
 type Fx = { id: string; kind: 'water' | 'grow' }
 
+/**
+ * 室外花园：天空 → 远景树丛 → 小屋和种植区 → 前景草地。
+ * 场景本身就是 DOM 网格，点击、拖拽和占格预览都用同一套格子坐标；
+ * 格子最小 64px，屏幕放不下时整片花园可以滑动，而不是继续缩小。
+ */
 export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
   const { child, plots, plants, placed, today, balance, decorating } = useStore()
   const [plantId, setPlantId] = useState<string | null>(null)
@@ -60,72 +65,85 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
     else setEmptyPlot({ x, y })
   }
 
+  const gridStyle = {
+    '--cols': BALANCE.gridWidth,
+    '--rows': BALANCE.gridHeight,
+  } as CSSProperties
+
   return (
-    <div className="garden" style={{ background: SKY[phase] }}>
-      <div className="sky">
-        {phase === 'night' && <div className="stars" />}
-        <div className="cloud" style={{ top: '18%', animationDuration: '90s' }} />
-        <div className="cloud small" style={{ top: '40%', animationDuration: '130s', animationDelay: '-60s' }} />
-      </div>
-      <div
-        className="ground"
-        style={{
-          gridTemplateColumns: `repeat(${BALANCE.gridWidth}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${BALANCE.gridHeight}, minmax(0, 1fr))`,
-        }}
-      >
-        <button className="house-cell" style={cell(HOUSE_RECT.x, HOUSE_RECT.y, HOUSE_RECT.w, HOUSE_RECT.h)} onClick={onEnterHouse} aria-label="进入小屋">
-          <House roof={child.houseColor} size={150} />
-        </button>
-
-        {plots.map((p) => (
-          <button
-            key={`${p.x}-${p.y}`}
-            className={`plot ${p.kind}`}
-            style={cell(p.x, p.y)}
-            onClick={() => tapPlot(p.x, p.y)}
-            aria-label="地块"
-          />
-        ))}
-
-        {outdoorPlaced.map((p) => (
-          <PlacedView key={p.id} {...placedProps(p)} size={48} onTap={p.catalogId === POND_ID ? () => tapPond(p.id, p.x, p.y) : undefined} />
-        ))}
-
-        {outdoorPlants.map((p) => (
-          <div key={p.id} className={`plant${p.pondId ? ' in-pond' : ''}`} style={p.pondId ? cell(p.x, p.y, 2, 2) : cell(p.x, p.y)}>
-            <PlantArt plant={p} today={today} hop={fx?.id === p.id && fx.kind === 'grow'} />
-            {fx?.id === p.id && <span className="fx">{fx.kind === 'grow' ? '💗' : '💧'}</span>}
+    <>
+      <div className="scene-scroll">
+        <div className={`garden phase-${phase}`} style={gridStyle}>
+          <div className="sky" style={{ background: SKY[phase] }}>
+            {phase === 'night' ? <div className="moon" /> : <div className="sun" />}
+            {phase === 'night' && <div className="stars" />}
+            <div className="cloud" style={{ top: '22%', animationDuration: '110s' }} />
+            <div className="cloud small" style={{ top: '48%', animationDuration: '150s', animationDelay: '-70s' }} />
+            <Horizon night={phase === 'night'} />
           </div>
-        ))}
+          <div className="ground-wrap">
+            <GroundDecor />
+            <div className="ground">
+              <button className="house-cell" style={cell(HOUSE_RECT.x, HOUSE_RECT.y, HOUSE_RECT.w, HOUSE_RECT.h)} onClick={onEnterHouse} aria-label="进入小屋">
+                <House roof={child.houseColor} fluid />
+              </button>
 
-        {decorating && <PlacementLayer scene="outdoor" layer="ground" cols={BALANCE.gridWidth} rows={BALANCE.gridHeight} />}
+              {plots.map((p) => (
+                <button
+                  key={`${p.x}-${p.y}`}
+                  className={`plot ${p.kind}`}
+                  style={cell(p.x, p.y)}
+                  onClick={() => tapPlot(p.x, p.y)}
+                  aria-label="地块"
+                />
+              ))}
 
-        {candidates.map((c) => (
-          <button key={`c${c.x}-${c.y}`} className="expand-cell pop" style={cell(c.x, c.y)} onClick={() => setExpandAt(c)} aria-label="扩建这里">
-            ＋
-          </button>
-        ))}
+              {outdoorPlaced.map((p) => (
+                <PlacedView key={p.id} {...placedProps(p)} onTap={p.catalogId === POND_ID ? () => tapPond(p.id, p.x, p.y) : undefined} />
+              ))}
+
+              {outdoorPlants.map((p) => (
+                <div key={p.id} className={`plant${p.pondId ? ' in-pond' : ''}`} style={p.pondId ? cell(p.x, p.y, 2, 2) : cell(p.x, p.y)}>
+                  <PlantArt plant={p} today={today} fluid hop={fx?.id === p.id && fx.kind === 'grow'} />
+                  {fx?.id === p.id && <span className="fx">{fx.kind === 'grow' ? '💗' : '💧'}</span>}
+                </div>
+              ))}
+
+              {decorating && <PlacementLayer scene="outdoor" layer="ground" cols={BALANCE.gridWidth} rows={BALANCE.gridHeight} />}
+
+              {candidates.map((c) => (
+                <button key={`c${c.x}-${c.y}`} className="expand-cell pop" style={cell(c.x, c.y)} onClick={() => setExpandAt(c)} aria-label="扩建这里">
+                  <span>＋</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <Visitors scene="outdoor" />
+        </div>
       </div>
 
-      <Visitors scene="outdoor" />
-      {!decorating && !expanding && <WishBar />}
-      {decorating && <ItemMenu />}
-      {!decorating && <div className="garden-tools">
-        {expanding ? (
-          <button className="btn btn-primary" onClick={() => setExpanding(false)}>完成扩建</button>
-        ) : (
-          soilCount < BALANCE.maxPlots && (
-            <button className="btn btn-ghost" onClick={() => setExpanding(true)}>🧱 扩建地块</button>
-          )
-        )}
-      </div>}
-      {expanding && <div className="garden-hint pop">点一个“＋”，花 {BALANCE.plotExpandCost} 金币开一块新地</div>}
+      {/* 浮在天空上的工具：不随场景滑动，也不盖住地块 */}
+      {!decorating && (
+        <div className="scene-overlay top">
+          {!expanding && <WishBar />}
+          <span className="spacer" />
+          {expanding ? (
+            <>
+              <span className="scene-hint pop">点一个“＋”，花 {BALANCE.plotExpandCost} 金币开一块新地</span>
+              <button className="btn btn-primary" onClick={() => setExpanding(false)}>完成扩建</button>
+            </>
+          ) : (
+            soilCount < BALANCE.maxPlots && (
+              <button className="btn" onClick={() => setExpanding(true)}>🧱 扩建地块</button>
+            )
+          )}
+        </div>
+      )}
 
       {outdoorPlants.length === 0 && !expanding && !decorating && (
         <div className="garden-empty">
-          <Mascot size={72} bounce />
           <span className="bubble">{child.mascotName}：点一块空地，种下第一颗种子吧</span>
+          <Mascot size={72} bounce />
         </div>
       )}
 
@@ -155,7 +173,7 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
           }}
         />
       )}
-    </div>
+    </>
   )
 }
 

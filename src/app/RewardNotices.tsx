@@ -3,6 +3,8 @@ import { useStore } from './store'
 import { Modal } from '../ui/Modal'
 import { Mascot } from '../ui/Mascot'
 import { Celebrate } from '../ui/Celebrate'
+import { Reward } from '../ui/Reward'
+import { UnlockNotices } from './UnlockNotices'
 import type { LedgerEntry } from '../data/types'
 
 const SEEN_KEY = 'little-garden:seen-ledger-at'
@@ -26,7 +28,7 @@ function writeSeen(at: string) {
  * 孩子下次打开时看到家长确认后的到账和加分小纸条。
  * 只提示家长操作产生的收入；孩子自己操作的到账当场已经有动画。
  */
-export function RewardNotices() {
+export function RewardNotices({ showUnlocks = true }: { showUnlocks?: boolean }) {
   const ledger = useStore((s) => s.ledger)
   const records = useStore((s) => s.records)
   const exerciseRecords = useStore((s) => s.exerciseRecords)
@@ -54,7 +56,8 @@ export function RewardNotices() {
     )
   }, [ledger, records, exerciseRecords, seen])
 
-  if (!fresh.length) return null
+  // 一次只弹一个：到账提示看完，再看解锁和访客的好消息
+  if (!fresh.length) return showUnlocks ? <UnlockNotices /> : null
 
   const bonuses = fresh.filter((e) => e.reason === 'bonus')
   const others = fresh.filter((e) => e.reason !== 'bonus')
@@ -74,18 +77,17 @@ export function RewardNotices() {
       <Modal onClose={close}>
         <Mascot size={96} bounce />
         {bonuses.map((b) => (
-          <div key={b.id} className="card pop" style={{ background: '#fffbef', borderColor: 'var(--coin)', margin: '12px 0', fontSize: 24 }}>
-            📝 因为你{b.note}，获得 {b.amount} 金币
+          <div key={b.id} className="note-paper pop">
+            📝 因为你{b.note}，获得 <Reward coins={b.amount} />
           </div>
         ))}
         {bestCount > 0 && (
-          <p className="title pop" style={{ fontSize: 28, margin: '12px 0' }}>🏆 爸爸妈妈看了视频，{bestCount > 1 ? `${bestCount} 个` : ''}新纪录确认啦！</p>
+          <p className="title notice-line pop">🏆 爸爸妈妈看了视频，{bestCount > 1 ? `${bestCount} 个` : ''}新纪录确认啦！</p>
         )}
         {others.length > 0 && (
-          <p className="title" style={{ fontSize: 26, margin: '12px 0' }}>
+          <p className="title notice-line">
             {taskCount > 0 ? `爸爸妈妈确认了 ${taskCount} 项任务，` : ''}
-            获得 🪙 {sum(others, 'coin')}
-            {sum(others, 'drop') > 0 ? ` 💧 ${sum(others, 'drop')}` : ''}
+            获得 <Reward coins={sum(others, 'coin')} drops={sum(others, 'drop')} size="l" />
           </p>
         )}
         <button className="btn btn-primary btn-big" onClick={close}>收下啦</button>

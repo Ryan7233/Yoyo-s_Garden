@@ -1,34 +1,128 @@
-/* 视觉风格变量（SPEC 7.4）。换主题只切换 --primary 三档 */
+/*
+ * 视觉基础（SPEC 7.4）：圆润、温暖、有体积的童话微缩花园。
+ * 所有颜色、字号、间距、圆角、描边、阴影、按钮厚度和动画参数都在这里定义；
+ * 换主题只切换主题色三档（加一档按钮底边色）。
+ * 光源统一在左上方：顶面高光、右下侧略深、底部接触阴影。
+ */
 :root {
-  /* 主题色：樱花粉（默认） */
+  /* ---- 主题色：樱花粉（默认） ---- */
   --primary: #ff9ec0;
   --primary-dark: #e85a8f;
   --primary-light: #ffe6ef;
+  --primary-edge: #c2416f; /* 主按钮底边（厚度） */
 
-  --bg: #fff9f5;
-  --text: #5b4366;
-  --text-soft: #7e6889;
-  --coin: #ffd66b;
-  --coin-dark: #e0a92a;
-  --sky: #7cc8f8;
-  --sky-dark: #3d9fdc;
-  --mint: #7ed7b5;
-  --mint-dark: #3fae86;
-  --lavender: #b79ced;
-  --mist: #d9d3dc;
+  /* ---- 大面积底色：奶油白、草绿、天空 ---- */
+  --bg: #fff8ee;
+  --cream: #fffaf3;
+  --cream-2: #fff1df;
+  --cream-edge: #ecd9c2;
+  --paper: #ffffff;
   --white: #ffffff;
 
-  --radius-card: 24px;
-  --radius-pill: 999px;
-  --border: 2.5px;
-  --shadow: 0 6px 18px rgba(232, 90, 143, 0.14);
-  --shadow-soft: 0 3px 10px rgba(232, 90, 143, 0.1);
+  /* ---- 文字 ---- */
+  --text: #4f3b5a;
+  --text-soft: #75617f;
+  --text-muted: #9a8aa2;
+  --ink: #5b4366; /* 插画描边 */
 
+  /* ---- 花园材质 ---- */
+  --grass-light: #c9ec9f;
+  --grass: #a9dc83;
+  --grass-mid: #8fcd6b;
+  --grass-dark: #6cae53;
+  --grass-edge: #4f9146;
+  --soil-top: #d9a877;
+  --soil: #c28c5a;
+  --soil-side: #9a6a40;
+  --soil-dark: #7a5233;
+  --wood-light: #f0cfa4;
+  --wood: #ddaa74;
+  --wood-dark: #b4824f;
+  --stone: #e9e1d6;
+  --stone-dark: #c8bba9;
+
+  /* ---- 功能色 ---- */
+  --coin: #ffd66b;
+  --coin-dark: #d99a1c;
+  --coin-light: #fff4cc;
+  --sky: #7cc8f8;
+  --sky-dark: #3d9fdc;
+  --sky-light: #e3f4ff;
+  --mint: #7ed7b5;
+  --mint-dark: #2f9a73;
+  --mint-light: #e6f8ef;
+  --lavender: #b79ced;
+  --lavender-dark: #7f5fc9;
+  --lavender-light: #f3edff;
+  --mist: #ddd5e0;
+  --mist-light: #f4f0f5;
+
+  /* ---- 字体 ---- */
   --font-title: 'ZCOOL KuaiLe', 'PingFang SC', system-ui, sans-serif;
   --font-body: 'PingFang SC', 'Hiragino Sans GB', system-ui, sans-serif;
+  /* 数字和计时器：系统自带的圆体数字，清晰易读 */
+  --font-num: ui-rounded, 'SF Pro Rounded', 'PingFang SC', system-ui, sans-serif;
 
+  /* ---- 字号（儿童主要信息不小于 20px） ---- */
+  --fs-xs: 15px;
+  --fs-s: 17px;
+  --fs-m: 20px;
+  --fs-l: 24px;
+  --fs-xl: 30px;
+  --fs-2xl: 36px;
+  --fs-hero: 64px;
+
+  /* ---- 间距 ---- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+
+  /* ---- 圆角 ---- */
+  --r-s: 12px;
+  --r-m: 18px;
+  --r-l: 24px;
+  --r-xl: 32px;
+  --r-pill: 999px;
+  /* 旧名字，保持兼容 */
+  --radius-card: var(--r-l);
+  --radius-pill: var(--r-pill);
+
+  /* ---- 描边 ---- */
+  --bw: 2.5px;
+  --border: var(--bw);
+  --line: rgba(79, 59, 90, 0.14);
+  --line-strong: rgba(79, 59, 90, 0.28);
+
+  /* ---- 阴影（光在左上，阴影落在右下，暖色调） ---- */
+  --sh-1: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 2px 4px 10px rgba(122, 82, 51, 0.1);
+  --sh-2: 3px 8px 20px rgba(122, 82, 51, 0.14);
+  --sh-3: 4px 14px 36px rgba(91, 58, 50, 0.2);
+  --sh-contact: rgba(70, 45, 30, 0.22);
+  /* 旧名字，保持兼容 */
+  --shadow: var(--sh-2);
+  --shadow-soft: var(--sh-1);
+
+  /* ---- 卡片和按钮的厚度 ---- */
+  --depth-card: 4px;
+  --depth-btn: 6px;
+  --hl: inset 0 3px 0 rgba(255, 255, 255, 0.45); /* 顶部高光 */
+
+  /* ---- 触控尺寸 ---- */
   --touch: 64px;
   --btn-main: 88px;
+
+  /* ---- 场景格子：最小 64px，空间不够时场景可以滑动，而不是继续缩小 ---- */
+  --cell-min: 64px;
+
+  /* ---- 动画 ---- */
+  --dur-fast: 120ms;
+  --dur: 250ms;
+  --dur-slow: 450ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -42,10 +136,12 @@
   --primary: #b79ced;
   --primary-dark: #7f5fc9;
   --primary-light: #efe8fc;
+  --primary-edge: #5d3fa3;
 }
 
 [data-theme='mint'] {
   --primary: #7ed7b5;
   --primary-dark: #2f9a73;
   --primary-light: #e3f7ef;
+  --primary-edge: #1f7656;
 }

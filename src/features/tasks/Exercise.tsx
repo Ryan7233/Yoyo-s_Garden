@@ -1,5 +1,5 @@
 // 运动打卡：五个子项的计时器、数值录入、目标与个人纪录、破纪录见证（SPEC 4.3）
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useStore, act } from '../../app/store'
 import type { ExerciseConfig } from '../../db/schema'
 import { logExercise, logExerciseWithVideo } from '../../db/exercise'
@@ -14,6 +14,7 @@ import { Celebrate } from '../../ui/Celebrate'
 import { cueEnd, cueStart, cueTick, unlockAudio } from '../../ui/voice'
 import { WitnessPin } from '../parent/WitnessPin'
 import { play } from '../../ui/sfx'
+import { Reward } from '../../ui/Reward'
 import './exercise.css'
 
 export function formatValue(def: Pick<ExerciseConfig, 'unit'>, v: number): string {
@@ -37,27 +38,32 @@ export function ExerciseSheet({ onClose }: { onClose: () => void }) {
   return (
     <Modal wide onClose={onClose}>
       <header className="ex-head">
-        <h2 className="title" style={{ fontSize: 32 }}>🏃 运动打卡</h2>
-        <span className="stat-pill">今天做了 {doneCount} / {scheduled.length} 项</span>
+        <h2 className="modal-title">🏃 运动打卡</h2>
+        <span className="stat-pill">今天做了 <span className="num">{doneCount} / {scheduled.length}</span> 项</span>
       </header>
-      <p className="ex-sub">做了几项记几项，每做一项 🪙2，达到目标再 🪙1，{scheduled.length} 项都做完再得 🪙3 💧2</p>
-      {scheduled.length === 0 && <p className="empty">今天休息一天～</p>}
+      <p className="ex-rules">
+        做了几项记几项：每做一项 <Reward coins={2} size="s" />，达到目标再 <Reward coins={1} size="s" />，{scheduled.length} 项都做完再得 <Reward coins={3} drops={2} size="s" />
+      </p>
+      {scheduled.length === 0 && <p className="empty-state">今天休息一天～</p>}
       <div className="ex-grid">
         {scheduled.map((d) => {
           const b = best.get(d.id)
           const pb = personalBestOf(exerciseRecords, d.id)
           return (
             <button key={d.id} className={`ex-card${b ? ' done' : ''}`} onClick={() => setRunning(d)}>
-              <span className="ex-icon">{d.icon}</span>
+              <span className="ex-icon" aria-hidden>{d.icon}</span>
               <span className="ex-name">{d.name}</span>
-              <span className="ex-meta">{targetText(d)}</span>
-              <span className="ex-meta">🏆 {pb === null ? '还没有纪录' : formatValue(d, pb)}</span>
-              {b ? <span className="badge done">✓ 今天 {formatValue(d, b.value)}</span> : <span className="badge todo">去做 ›</span>}
+              <span className="ex-stats">
+                <span><i>目标</i><b className="num">{d.target === null ? '先测一测' : formatValue(d, d.target)}</b></span>
+                <span><i>今天</i><b className="num">{b ? formatValue(d, b.value) : '—'}</b></span>
+                <span><i>🏆 纪录</i><b className="num">{pb === null ? '还没有' : formatValue(d, pb)}</b></span>
+              </span>
+              {b ? <span className="badge done">✓ 今天做过了</span> : <span className="badge todo">去做 ›</span>}
             </button>
           )
         })}
       </div>
-      <div className="modal-actions" style={{ marginTop: 20 }}>
+      <div className="modal-actions">
         <button className="btn btn-ghost" onClick={onClose}>返回</button>
       </div>
     </Modal>
@@ -137,18 +143,18 @@ function ExerciseRun({ def, onBack }: { def: ExerciseConfig; onBack: () => void 
     <Modal wide>
       <div className="ex-run">
         <header className="ex-head">
-          <h2 className="title" style={{ fontSize: 32 }}>{def.icon} {def.name}</h2>
-          <span className="stat-pill">{targetText(def)}</span>
-          <span className="stat-pill">🏆 {pb === null ? '还没有纪录' : formatValue(def, pb)}</span>
+          <h2 className="modal-title">{def.icon} {def.name}</h2>
+          <span className="stat-pill">🎯 {def.target === null ? '目标：先测一测' : <>目标 <span className="num">{formatValue(def, def.target)}</span></>}</span>
+          <span className="stat-pill">🏆 {pb === null ? '还没有纪录' : <span className="num">{formatValue(def, pb)}</span>}</span>
         </header>
-        {def.tip && phase.kind !== 'result' && <div className="ex-tip">💡 {def.tip}</div>}
+        {def.tip && phase.kind !== 'result' && <div className="ex-tip"><span aria-hidden>💡</span> {def.tip}</div>}
 
         {phase.kind === 'ready' && (
           <>
             <p className="ex-sub">
               {def.timer === 'countdown60' ? `点“开始”后计时 ${COUNTDOWN_SECONDS} 秒，听到“时间到”就停，然后输入做了几${unit}。` : '点“开始”后计时，坚持不住了就点“停”，秒数会自动记下来。'}
             </p>
-            <button className="btn btn-primary ex-go" onClick={start}>开始！</button>
+            <button className="btn btn-primary btn-big ex-go" onClick={start}>▶ 开始！</button>
             <button className="btn btn-ghost" onClick={onBack}>返回</button>
           </>
         )}
@@ -178,8 +184,8 @@ function ExerciseRun({ def, onBack }: { def: ExerciseConfig; onBack: () => void 
         {phase.kind === 'challenge' && (
           <>
             <p className="ex-big pop">{formatValue(def, phase.value)}</p>
-            <h3 className="title" style={{ fontSize: 28 }}>{pb === null ? '这是你的第一个纪录！' : '比最好纪录还多！'}要挑战纪录吗？</h3>
-            <p className="ex-sub">纪录需要有人见证，刷新纪录再得 🪙5</p>
+            <h3 className="ex-question">{pb === null ? '这是你的第一个纪录！' : '比最好纪录还多！'}要挑战纪录吗？</h3>
+            <p className="ex-sub">纪录需要有人见证，刷新纪录再得 <Reward coins={5} size="s" /></p>
             <div className="ex-choices">
               <button className="btn btn-primary ex-choice" onClick={() => setPhase({ kind: 'pin', value: phase.value })}>👀 喊爸爸妈妈来看</button>
               <button className="btn btn-primary ex-choice" onClick={() => setPhase({ kind: 'video', value: phase.value })}>📹 录一段视频</button>
@@ -198,7 +204,7 @@ function ExerciseRun({ def, onBack }: { def: ExerciseConfig; onBack: () => void 
         {phase.kind === 'video' && (
           <>
             <p className="ex-sub">把 iPad 立在旁边，让镜头拍到你，录下再做一次的全过程。爸爸妈妈有空时会看视频确认。</p>
-            <label className="btn btn-primary ex-go">
+            <label className="btn btn-primary btn-big ex-go">
               📹 打开相机
               <input
                 type="file"
@@ -255,6 +261,33 @@ function ValueInput({ def, text, onChange }: { def: ExerciseConfig; text: string
   )
 }
 
+/** 计时表盘：一圈进度环，中间是大号数字 */
+function Dial({ ratio, hurry, running, children }: { ratio: number; hurry?: boolean; running?: boolean; children: ReactNode }) {
+  const r = 88
+  const c = 2 * Math.PI * r
+  return (
+    <div className={`ex-dial${hurry ? ' hurry' : ''}${running ? ' running' : ''}`}>
+      <svg viewBox="0 0 200 200" aria-hidden>
+        <circle cx={100} cy={104} r={r} fill="rgba(122,82,51,.10)" />
+        <circle cx={100} cy={100} r={r} fill="#fff" stroke="var(--cream-edge)" strokeWidth={14} />
+        <circle
+          cx={100}
+          cy={100}
+          r={r}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={14}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - Math.max(0, Math.min(1, ratio)))}
+          transform="rotate(-90 100 100)"
+        />
+      </svg>
+      <div className="ex-dial-face">{children}</div>
+    </div>
+  )
+}
+
 function useNow(on: boolean) {
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
@@ -281,8 +314,11 @@ function Countdown({ startedAt, onEnd, onCancel }: { startedAt: number; onEnd: (
   }, [left, onEnd])
   return (
     <>
-      <div className={`ex-clock${left <= 10 ? ' hurry' : ''}`}>{left}</div>
-      <p className="ex-sub">加油！</p>
+      <Dial ratio={left / COUNTDOWN_SECONDS} hurry={left <= 10}>
+        <span className="ex-clock num">{left}</span>
+        <span className="ex-clock-unit">秒</span>
+      </Dial>
+      <p className="ex-sub">加油！听到“时间到”就停</p>
       <button className="btn btn-ghost" onClick={onCancel}>不做了</button>
     </>
   )
@@ -290,18 +326,21 @@ function Countdown({ startedAt, onEnd, onCancel }: { startedAt: number; onEnd: (
 
 function Stopwatch({ startedAt, onStop }: { startedAt: number; onStop: (seconds: number) => void }) {
   const now = useNow(true)
+  const secs = stopwatchSeconds(startedAt, now)
   return (
     <>
-      <div className="ex-clock">{formatSeconds(stopwatchSeconds(startedAt, now))}</div>
+      <Dial ratio={(secs % 60) / 60} running>
+        <span className="ex-clock num">{formatSeconds(secs)}</span>
+      </Dial>
       <button
-        className="btn btn-primary ex-go"
+        className="btn btn-primary btn-big ex-go ex-stop"
         onClick={() => {
           const s = stopwatchSeconds(startedAt, Date.now())
           cueTick()
           onStop(s)
         }}
       >
-        停
+        ■ 停
       </button>
     </>
   )
@@ -316,13 +355,15 @@ function Result({ def, record, onBack }: { def: ExerciseConfig; record: Exercise
   return (
     <>
       {coins + drops > 0 && <Celebrate />}
-      <p className="ex-big pop">{formatValue(def, record.value)}</p>
+      <p className="ex-big num pop">{formatValue(def, record.value)}</p>
       {record.isPersonalBest && <h3 className="title ex-record">🏆 新纪录！</h3>}
       {reached && <p className="ex-sub">🎯 达到目标啦</p>}
       {record.status === 'pending' && <p className="ex-sub">📹 视频已经交给爸爸妈妈，确认后纪录奖励就到账</p>}
-      <p className="title" style={{ fontSize: 26 }}>
-        {coins + drops > 0 ? `获得 🪙 ${coins}${drops ? ` 💧 ${drops}` : ''}` : '今天这项已经记过奖励啦，多练练也很棒！'}
-      </p>
+      {coins + drops > 0 ? (
+        <p className="ex-got"><span className="title">获得</span> <Reward coins={coins} drops={drops} size="l" /></p>
+      ) : (
+        <p className="ex-sub">今天这项已经记过奖励啦，多练练也很棒！</p>
+      )}
       <button className="btn btn-primary btn-big" onClick={onBack}>好的</button>
     </>
   )

@@ -55,7 +55,7 @@ export function SettingsPanel() {
       {msg && <p>{msg}</p>}
       {pinOpen && (
         <Modal onClose={() => setPinOpen(false)}>
-          <h2 style={{ fontSize: 28, marginBottom: 12 }}>输入新的 4 位密码</h2>
+          <h2 className="modal-title">输入新的 4 位密码</h2>
           <PinPad
             onComplete={async (p) => {
               if (!isValidPin(p)) return

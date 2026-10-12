@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { useStore, act, type Page } from './store'
 import { BalanceBar } from '../ui/BalanceBar'
 import { GardenScene } from '../features/garden/GardenScene'
@@ -13,7 +13,6 @@ import { CoinFly } from '../ui/CoinFly'
 import { DecorateTray } from '../features/decorate/DecorateTray'
 import { useDecorate } from '../features/decorate/useDecorate'
 import { RewardNotices } from './RewardNotices'
-import { UnlockNotices } from './UnlockNotices'
 import { isStandalone } from './standalone'
 import { THEMES } from './themes'
 import { updateChild } from '../db/actions'
@@ -36,14 +35,14 @@ export function Layout() {
   return (
     <div className="layout">
       {!isStandalone() && (
-        <div className="standalone-tip">请从主屏幕上的“小花园”图标打开，数据才不会丢哦</div>
+        <div className="standalone-tip">请从主屏幕上的“小花园”图标打开，这样每次用的都是同一份花园记录</div>
       )}
       <header className="topbar">
         <div className="topbar-left">
           {scene === 'house' && (
             <button className="btn btn-ghost icon-btn" onClick={() => { useDecorate.getState().reset(); setScene('garden') }} aria-label="回到花园">←</button>
           )}
-          <h1 className="garden-name">{scene === 'house' ? `${child.name}的小屋` : child.gardenName}</h1>
+          <h1 className="garden-name"><span>{scene === 'house' ? `${child.name}的小屋` : child.gardenName}</span></h1>
         </div>
         <BalanceBar balance={balance} />
         <div className="topbar-right">
@@ -52,7 +51,7 @@ export function Layout() {
         </div>
       </header>
 
-      <main className="scene-wrap">
+      <main className={`scene-wrap scene-${scene}${decorating ? ' decorating' : ''}`}>
         {scene === 'garden' ? <GardenScene onEnterHouse={() => { useDecorate.getState().reset(); setScene('house') }} /> : <HouseScene />}
       </main>
 
@@ -91,13 +90,13 @@ export function Layout() {
 
       {palette && (
         <Modal onClose={() => setPalette(false)}>
-          <h2 style={{ fontSize: 30, marginBottom: 20 }}>换一个颜色</h2>
-          <div className="modal-actions">
+          <h2 className="modal-title">换一个颜色</h2>
+          <div className="theme-row">
             {THEMES.map((t) => (
               <button
                 key={t.id}
-                className="btn"
-                style={{ background: t.color, borderColor: child.theme === t.id ? 'var(--text)' : t.color }}
+                className={`btn theme-btn${child.theme === t.id ? ' on' : ''}`}
+                style={{ '--swatch': t.color } as CSSProperties}
                 onClick={async () => {
                   await act(() => updateChild(child.id, { theme: t.id }))
                   setPalette(false)
@@ -110,8 +109,7 @@ export function Layout() {
         </Modal>
       )}
 
-      {!parentOpen && <RewardNotices />}
-      {!parentOpen && !decorating && <UnlockNotices />}
+      {!parentOpen && <RewardNotices showUnlocks={!decorating} />}
       <CoinFly />
       <ToastHost />
       {parentOpen && <ParentMode onClose={() => setParentOpen(false)} />}

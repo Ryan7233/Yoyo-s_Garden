@@ -15,15 +15,15 @@ import { usePwa } from '../../app/pwa'
 import './parent.css'
 
 type Tab = 'pending' | 'records' | 'bonus' | 'tasks' | 'exercise' | 'stats' | 'data' | 'settings'
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'pending', label: '待确认' },
-  { id: 'records', label: '今日记录' },
-  { id: 'bonus', label: '加分' },
-  { id: 'tasks', label: '任务配置' },
-  { id: 'exercise', label: '运动目标' },
-  { id: 'stats', label: '统计' },
-  { id: 'data', label: '数据' },
-  { id: 'settings', label: '设置' },
+const TABS: { id: Tab; label: string; icon: string }[] = [
+  { id: 'pending', label: '待确认', icon: '⏳' },
+  { id: 'records', label: '今日记录', icon: '📝' },
+  { id: 'bonus', label: '加分', icon: '🎁' },
+  { id: 'tasks', label: '任务配置', icon: '📋' },
+  { id: 'exercise', label: '运动目标', icon: '🏃' },
+  { id: 'stats', label: '统计', icon: '📊' },
+  { id: 'data', label: '数据', icon: '💾' },
+  { id: 'settings', label: '设置', icon: '⚙️' },
 ]
 
 export function ParentMode({ onClose }: { onClose: () => void }) {
@@ -67,7 +67,7 @@ export function ParentMode({ onClose }: { onClose: () => void }) {
         ) : (
           <>
             <header className="parent-head">
-              <h2 style={{ fontSize: 30 }}>⚙️ 家长模式</h2>
+              <h2 className="modal-title">⚙️ 家长模式</h2>
               <button className="btn btn-ghost" onClick={onClose}>退出</button>
             </header>
             {backupDue && (
@@ -83,15 +83,18 @@ export function ParentMode({ onClose }: { onClose: () => void }) {
             {settings?.clockWentBack && (
               <div className="parent-alert">⏱️ 检测到 iPad 系统时间曾被往回调过，请留意记录是否正常</div>
             )}
-            <nav className="parent-tabs">
+            <div className="parent-main">
+            <nav className="parent-tabs" aria-label="家长模式分类">
               {TABS.map((t) => (
-                <button key={t.id} className={`parent-tab${tab === t.id ? ' active' : ''}`} onClick={() => setTab(t.id)}>
-                  {t.label}
-                  {t.id === 'pending' && pendingCount > 0 && <span className="count">{pendingCount}</span>}
+                <button key={t.id} className={`parent-tab${tab === t.id ? ' active' : ''}`} aria-current={tab === t.id ? 'page' : undefined} onClick={() => setTab(t.id)}>
+                  <span aria-hidden>{t.icon}</span>
+                  <span className="parent-tab-label">{t.label}</span>
+                  {t.id === 'pending' && pendingCount > 0 && <span className="count num">{pendingCount}</span>}
                 </button>
               ))}
             </nav>
             <div className="parent-body">
+              <h3 className="panel-title">{TABS.find((t) => t.id === tab)?.label}</h3>
               {tab === 'pending' && <PendingPanel />}
               {tab === 'records' && <RecordsPanel />}
               {tab === 'bonus' && <BonusPanel />}
@@ -100,6 +103,7 @@ export function ParentMode({ onClose }: { onClose: () => void }) {
               {tab === 'stats' && <StatsPanel />}
               {tab === 'data' && <DataPanel />}
               {tab === 'settings' && <SettingsPanel />}
+            </div>
             </div>
           </>
         )}

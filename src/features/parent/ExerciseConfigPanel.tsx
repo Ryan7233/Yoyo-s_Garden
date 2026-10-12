@@ -42,9 +42,9 @@ export function ExerciseConfigPanel() {
       {editing && <ExerciseEditor def={editing} onClose={() => setEditing(null)} />}
       {history && (
         <Modal wide onClose={() => setHistory(null)}>
-          <h2 style={{ fontSize: 28, marginBottom: 12 }}>{history.icon} {history.name} 历史</h2>
+          <h2 className="modal-title">{history.icon} {history.name} 历史</h2>
           <HistoryList def={history} />
-          <div className="modal-actions" style={{ marginTop: 16 }}>
+          <div className="modal-actions">
             <button className="btn btn-primary" onClick={() => setHistory(null)}>关闭</button>
           </div>
         </Modal>
@@ -92,7 +92,7 @@ function ExerciseEditor({ def, onClose }: { def: ExerciseConfig; onClose: () => 
 
   return (
     <Modal wide onClose={onClose}>
-      <h2 style={{ fontSize: 28, marginBottom: 12 }}>{def.icon} {def.name}</h2>
+      <h2 className="modal-title">{def.icon} {def.name}</h2>
       <div className="form">
         <label>目标（{UNIT_LABEL[def.unit]}，留空表示还没定）
           <input className="input" inputMode={def.unit === 'cm' ? 'decimal' : 'numeric'} value={target} maxLength={5} onChange={(e) => setTarget(e.target.value)} />
@@ -113,7 +113,7 @@ function ExerciseEditor({ def, onClose }: { def: ExerciseConfig; onClose: () => 
         </label>
         {days.length === 0 && <div className="row-sub">一天都不选，这一项就不会出现在孩子的运动打卡里</div>}
       </div>
-      <div className="modal-actions" style={{ marginTop: 20 }}>
+      <div className="modal-actions">
         <button className="btn btn-ghost" onClick={onClose}>取消</button>
         <button className="btn btn-primary" disabled={invalid} onClick={save}>保存</button>
       </div>

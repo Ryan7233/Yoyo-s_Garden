@@ -72,7 +72,7 @@ function TaskEditor({ task, onClose, childId }: { task: TaskDef | null; onClose:
 
   return (
     <Modal wide onClose={onClose}>
-      <h2 style={{ fontSize: 28, marginBottom: 12 }}>{task ? '编辑任务' : '新增任务'}</h2>
+      <h2 className="modal-title">{task ? '编辑任务' : '新增任务'}</h2>
       {!task && (
         <div className="parent-alert">
           💡 只放需要动力的事。孩子本来就喜欢做的事（比如画画、唱歌）不要放进来——挂上奖励后，撤掉奖励反而可能不做了。
@@ -124,7 +124,7 @@ function TaskEditor({ task, onClose, childId }: { task: TaskDef | null; onClose:
         {task && <label className="check"><input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /> 启用</label>}
         <label>达标说明（给家长看）<input className="input" value={hint} maxLength={40} onChange={(e) => setHint(e.target.value)} /></label>
       </div>
-      <div className="modal-actions" style={{ marginTop: 20 }}>
+      <div className="modal-actions">
         <button className="btn btn-ghost" onClick={onClose}>取消</button>
         <button className="btn btn-primary" disabled={!name.trim() || days.length === 0} onClick={save}>保存</button>
       </div>

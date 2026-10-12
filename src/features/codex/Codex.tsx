@@ -36,6 +36,17 @@ export function Codex() {
   )
 }
 
+/** 收集进度：数字 + 一条进度条 */
+function Count({ label, n, total }: { label: string; n: number; total: number }) {
+  return (
+    <div className="codex-count">
+      <span className="title">{label}</span>
+      <span className="codex-meter"><span style={{ width: `${total ? (n / total) * 100 : 0}%` }} /></span>
+      <span className="num">{n} / {total}</span>
+    </div>
+  )
+}
+
 function useSeen(kind: 'codex' | 'visitor' | 'badge') {
   const unlocks = useStore((s) => s.unlocks)
   return new Map(unlocks.filter((u) => u.kind === kind).map((u) => [u.refId, u.at]))
@@ -46,13 +57,13 @@ function PlantsPage() {
   const all = [...SEEDS, ...SPECIAL_SEEDS]
   return (
     <>
-      <p className="codex-count title">种出过的植物 {all.filter((p) => seen.has(p.id)).length} / {all.length}</p>
+      <Count label="种出过的植物" n={all.filter((p) => seen.has(p.id)).length} total={all.length} />
       <div className="codex-grid">
         {all.map((p) => {
           const on = seen.has(p.id)
           return (
-            <div key={p.id} className={`codex-card${on ? '' : ' unknown'}`}>
-              <Icon icon={p.icon} size={56} />
+            <div key={p.id} className={`codex-card${on ? ' got' : ' unknown'}`}>
+              <span className="codex-pic"><Icon icon={p.icon} size={60} /></span>
               <span className="title">{on ? p.name : '？？？'}</span>
             </div>
           )
@@ -67,13 +78,13 @@ function VisitorsPage() {
   const today = useStore((s) => s.today)
   return (
     <>
-      <p className="codex-count title">来过的小客人 {VISITORS.filter((v) => seen.has(v.id)).length} / {VISITORS.length}</p>
+      <Count label="来过的小客人" n={VISITORS.filter((v) => seen.has(v.id)).length} total={VISITORS.length} />
       <div className="codex-grid wide">
         {VISITORS.map((v) => {
           const at = seen.get(v.id)
           return (
-            <div key={v.id} className={`codex-card${at ? '' : ' unknown'}`}>
-              <span style={{ fontSize: 52 }}>{v.icon}</span>
+            <div key={v.id} className={`codex-card${at ? ' got' : ' unknown'}`}>
+              <span className="codex-pic emoji-pic">{v.icon}</span>
               <span className="title">{at ? v.name : '？？？'}</span>
               <span className="codex-sub">{at ? `第一次来：${formatDay(toTaskDay(new Date(at)), today)}` : `怎样才会来：${v.hint}`}</span>
             </div>
@@ -88,7 +99,7 @@ function BadgesPage() {
   const seen = useSeen('badge')
   return (
     <>
-      <p className="codex-count title">获得的徽章 {BADGES.filter((b) => seen.has(b.id)).length} / {BADGES.length}</p>
+      <Count label="获得的徽章" n={BADGES.filter((b) => seen.has(b.id)).length} total={BADGES.length} />
       <div className="codex-grid wide">
         {BADGES.map((b) => {
           const on = seen.has(b.id)
@@ -118,7 +129,7 @@ function CalendarPage() {
     <div className="cal">
       <div className="cal-head">
         <button className="btn btn-ghost" onClick={() => setMonth(shiftMonth(month, -1))} aria-label="上个月">‹</button>
-        <span className="title cal-title">{y} 年 {m} 月 · 全勤 {count} 天</span>
+        <span className="title cal-title">{y} 年 {m} 月<span className="cal-count">⭐ 全勤 <b className="num">{count}</b> 天</span></span>
         <button className="btn btn-ghost" disabled={month >= today.slice(0, 7)} onClick={() => setMonth(shiftMonth(month, 1))} aria-label="下个月">›</button>
       </div>
       <div className="cal-grid">
@@ -127,7 +138,7 @@ function CalendarPage() {
           <span key={i} className={`cal-day${d && stars.has(d) ? ' star' : ''}${d === today ? ' today' : ''}`}>
             {d && (
               <>
-                <span className="cal-num">{Number(d.slice(8))}</span>
+                <span className="cal-num num">{Number(d.slice(8))}</span>
                 {stars.has(d) && <span className="cal-star">⭐</span>}
               </>
             )}
