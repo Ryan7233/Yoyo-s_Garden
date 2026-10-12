@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useStore, act } from '../../app/store'
 import { parentMarkDone, revokeRecord } from '../../db/actions'
 import { editableDays, formatDay } from '../../engine/taskDay'
-import { tasksForDay } from '../../engine/schedule'
+import { planResolver } from '../../engine/plans'
 import { latestRecordByTask } from '../../engine/rewards'
 import { EXERCISE_TASK_ID } from '../../data/tasks'
 import type { ExerciseRecord, TaskRecord } from '../../data/types'
@@ -16,11 +16,13 @@ import { formatValue } from '../tasks/Exercise'
 const STATUS: Record<string, string> = { pending: '⏳ 等确认', done: '✓ 已完成', rejected: '已驳回', revoked: '已撤销' }
 
 export function RecordsPanel() {
-  const { records, tasks, today, settings } = useStore()
+  const { records, tasks, dayPlans, today, settings } = useStore()
   const days = editableDays(today, settings?.backfillDays ?? 2)
   const [day, setDay] = useState(today)
   const [revoking, setRevoking] = useState<TaskRecord | null>(null)
-  const { required, more } = tasksForDay(tasks, day)
+  // 补录过去的日子时，按那天的任务配置列出
+  const { required, more } = planResolver(tasks, dayPlans)(day)
+  const requiredIds = new Set(required.map((t) => t.id))
   const latest = latestRecordByTask(records, day)
   const list = [...required, ...more].filter((t) => t.id !== EXERCISE_TASK_ID)
 
@@ -37,7 +39,7 @@ export function RecordsPanel() {
           <div key={t.id} className="row">
             <span className="row-icon">{t.icon}</span>
             <div className="row-main">
-              <div className="row-title">{t.name}{t.required && <span className="tag">必做</span>}</div>
+              <div className="row-title">{t.name}{requiredIds.has(t.id) && <span className="tag">必做</span>}</div>
               <div className="row-sub">{r ? STATUS[r.status] : '未开始'}{r?.note ? ` · ${r.note}` : ''}</div>
             </div>
             {r?.status === 'done' ? (

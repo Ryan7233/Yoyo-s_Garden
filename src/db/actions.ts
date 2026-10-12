@@ -8,6 +8,7 @@ import { balanceOf } from '../engine/ledger'
 import { dayProgress, latestRecordByTask, reconcileDayAwards, revokeEntries, taskRewardEntries, type NewEntry } from '../engine/rewards'
 import { addDays, diffDays, toTaskDay } from '../engine/taskDay'
 import { hashPin, newSalt } from '../engine/pin'
+import { ensureDayPlans, loadPlanOf } from './plans'
 import { starterPlots } from '../engine/plots'
 
 export interface SetupInput {
@@ -73,13 +74,13 @@ export async function ledgerOf(childId: string): Promise<LedgerEntry[]> {
 }
 
 async function allDoneDaySet(childId: string): Promise<Set<string>> {
-  const [tasks, records] = await Promise.all([
-    db.tasks.where('childId').equals(childId).toArray(),
+  const [planOf, records] = await Promise.all([
+    loadPlanOf(childId),
     db.taskRecords.where('childId').equals(childId).toArray(),
   ])
   const days = new Set(records.map((r) => r.date))
   const out = new Set<string>()
-  for (const d of days) if (dayProgress(tasks, records, d).allDone) out.add(d)
+  for (const d of days) if (dayProgress(planOf, records, d).allDone) out.add(d)
   return out
 }
 
@@ -96,7 +97,7 @@ export async function reconcileFrom(childId: string, day: string, now = new Date
 
 /** 任务打卡相关的读写放进同一个事务：检查状态、写记录、发奖励要么全成，要么全不成 */
 function taskTx<T>(fn: () => Promise<T>): Promise<T> {
-  return db.transaction('rw', [db.tasks, db.taskRecords, db.ledger], fn)
+  return db.transaction('rw', [db.tasks, db.taskRecords, db.ledger, db.dayPlans], fn)
 }
 
 async function finishRecord(childId: string, record: TaskRecord, now: Date) {
@@ -214,17 +215,23 @@ export async function resetAll() {
 
 // ---- 任务配置（家长） ----
 
-export async function updateTask(id: string, patch: Partial<TaskDef>) {
+// 改配置之前先冻结过去的日子，改动只影响今天和以后
+
+export async function updateTask(id: string, patch: Partial<TaskDef>, now = new Date()) {
+  const task = await db.tasks.get(id)
+  if (task) await ensureDayPlans(task.childId, now)
   await db.tasks.update(id, patch)
 }
 
-export async function addTask(childId: string, input: Omit<TaskDef, 'id' | 'childId' | 'order' | 'enabled'>) {
+export async function addTask(childId: string, input: Omit<TaskDef, 'id' | 'childId' | 'order' | 'enabled'>, now = new Date()) {
+  await ensureDayPlans(childId, now)
   const count = await db.tasks.where('childId').equals(childId).count()
   await db.tasks.add({ ...input, id: uid(), childId, order: count, enabled: true })
 }
 
 /** 和相邻任务交换顺序 */
-export async function moveTask(childId: string, id: string, dir: -1 | 1) {
+export async function moveTask(childId: string, id: string, dir: -1 | 1, now = new Date()) {
+  await ensureDayPlans(childId, now)
   const list = await db.tasks.where('childId').equals(childId).sortBy('order')
   const i = list.findIndex((t) => t.id === id)
   const j = i + dir

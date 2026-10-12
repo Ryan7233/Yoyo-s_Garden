@@ -2,8 +2,9 @@ import { create } from 'zustand'
 import { db } from '../db/schema'
 import type { ExerciseConfig } from '../db/schema'
 import { syncProgress } from '../db/progress'
+import { ensureDayPlans } from '../db/plans'
 import type {
-  Child, ExerciseRecord, InventoryItem, LedgerEntry, PlacedItem, PlantInstance, Plot, Settings, TaskDef, TaskRecord, Unlock, Wish,
+  Child, DayPlan, ExerciseRecord, InventoryItem, LedgerEntry, PlacedItem, PlantInstance, Plot, Settings, TaskDef, TaskRecord, Unlock, Wish,
 } from '../data/types'
 import { balanceOf, type Balance } from '../engine/ledger'
 import { toTaskDay } from '../engine/taskDay'
@@ -17,6 +18,8 @@ interface State {
   child: Child | null
   settings: Settings | null
   tasks: TaskDef[]
+  /** 过去每天的任务配置快照（今天用 tasks） */
+  dayPlans: DayPlan[]
   records: TaskRecord[]
   exercises: ExerciseConfig[]
   exerciseRecords: ExerciseRecord[]
@@ -49,6 +52,7 @@ export const useStore = create<State>((set, get) => ({
   child: null,
   settings: null,
   tasks: [],
+  dayPlans: [],
   records: [],
   exercises: [],
   exerciseRecords: [],
@@ -76,12 +80,14 @@ export const useStore = create<State>((set, get) => ({
     const id = child.id
     // 解锁、访客首次来访、徽章、图鉴：每次读数据前先同步（幂等）
     try {
+      await ensureDayPlans(id)
       await syncProgress(id)
     } catch (e) {
       console.error(e)
     }
-    const [tasks, records, exercises, exerciseRecords, ledger, plots, plants, placed, inventory, unlocks, wish] = await Promise.all([
+    const [tasks, dayPlans, records, exercises, exerciseRecords, ledger, plots, plants, placed, inventory, unlocks, wish] = await Promise.all([
       db.tasks.where('childId').equals(id).sortBy('order'),
+      db.dayPlans.where('childId').equals(id).toArray(),
       db.taskRecords.where('childId').equals(id).sortBy('createdAt'),
       db.exercises.where('childId').equals(id).toArray().then(sortExercises),
       db.exerciseRecords.where('childId').equals(id).sortBy('createdAt'),
@@ -94,7 +100,7 @@ export const useStore = create<State>((set, get) => ({
       db.wishes.get(id),
     ])
     set({
-      loaded: true, child, settings, tasks, records, exercises, exerciseRecords, ledger, plots, plants, placed, inventory, unlocks, wish: wish ?? null,
+      loaded: true, child, settings, tasks, dayPlans, records, exercises, exerciseRecords, ledger, plots, plants, placed, inventory, unlocks, wish: wish ?? null,
       balance: balanceOf(ledger),
       today: toTaskDay(new Date()),
     })

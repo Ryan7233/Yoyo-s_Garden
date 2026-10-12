@@ -46,6 +46,14 @@ export interface ExerciseDef {
   tip?: string
 }
 
+/** 某一天的任务配置快照：那天安排了哪些任务（按顺序），过了那天就不再变 */
+export interface DayPlan {
+  childId: string
+  date: string
+  required: string[]
+  more: string[]
+}
+
 export type RecordStatus = 'pending' | 'done' | 'rejected' | 'revoked'
 export interface TaskRecord {
   id: string

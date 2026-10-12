@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useStore } from '../../app/store'
 import type { ExerciseConfig } from '../../db/schema'
 import type { LedgerReason } from '../../data/types'
+import { planResolver } from '../../engine/plans'
 import { coinSummary, dayCompletion, exerciseSeries, lastNDays, taskRates, type DayCompletion } from '../../engine/stats'
 import { formatDay } from '../../engine/taskDay'
 import { formatValue } from '../tasks/Exercise'
@@ -22,12 +23,13 @@ const REASON_LABEL: Partial<Record<LedgerReason, string>> = {
 }
 
 export function StatsPanel() {
-  const { tasks, records, exercises, exerciseRecords, ledger, today } = useStore()
+  const { tasks, dayPlans, records, exercises, exerciseRecords, ledger, today } = useStore()
   const [range, setRange] = useState<7 | 30>(7)
   const [picked, setPicked] = useState<DayCompletion | null>(null)
   const days = lastNDays(today, range)
-  const completion = days.map((d) => dayCompletion(tasks, records, d))
-  const rates = taskRates(tasks, records, days)
+  const planOf = planResolver(tasks, dayPlans)
+  const completion = days.map((d) => dayCompletion(planOf, records, d))
+  const rates = taskRates(planOf, records, days)
   const coins = coinSummary(ledger, days)
   const avg = (() => {
     const list = completion.filter((c) => c.total > 0)

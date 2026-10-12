@@ -1,6 +1,6 @@
 import type { ExerciseDef, LedgerEntry, TaskDef, TaskRecord } from '../data/types'
+import type { PlanOf } from './plans'
 import { BALANCE } from '../data/balance'
-import { tasksForDay } from './schedule'
 import { addDays } from './taskDay'
 import { clampedDeduction, isAwardActive } from './ledger'
 
@@ -21,8 +21,9 @@ export interface DayProgress {
   allDone: boolean
 }
 
-export function dayProgress(tasks: TaskDef[], records: TaskRecord[], day: string): DayProgress {
-  const { required } = tasksForDay(tasks, day)
+/** 当天必做完成情况，按当天的任务配置计算 */
+export function dayProgress(planOf: PlanOf, records: TaskRecord[], day: string): DayProgress {
+  const { required } = planOf(day)
   const latest = latestRecordByTask(records, day)
   const requiredDone = required.filter((t) => latest.get(t.id)?.status === 'done').length
   return {

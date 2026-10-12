@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { defaultTasks } from '../data/tasks'
 import type { ExerciseRecord, LedgerEntry, TaskRecord } from '../data/types'
+import { livePlan } from './plans'
 import { coinSummary, dayCompletion, exerciseSeries, lastNDays, monthGrid, shiftMonth, taskRates } from './stats'
 
 const tasks = defaultTasks('c')
@@ -26,14 +27,14 @@ describe('日期', () => {
 describe('完成率', () => {
   const SAT = '2026-10-17'
   it('当天完成率不含运动卡片，撤销的不算', () => {
-    const c = dayCompletion(tasks, [done('english-reading', SAT), done('drink-water', SAT), done('wash-up', SAT, 'revoked')], SAT)
+    const c = dayCompletion(livePlan(tasks), [done('english-reading', SAT), done('drink-water', SAT), done('wash-up', SAT, 'revoked')], SAT)
     const scheduled = tasks.filter((t) => t.schedule.kind === 'daily' && t.id !== 'sport').length
     expect(c).toMatchObject({ done: 2, total: scheduled, allDone: false })
   })
   it('任务完成率只算安排了它的日子', () => {
     const days = lastNDays('2026-10-18', 7) // 周一到周日
     const records = [done('homework', '2026-10-12'), done('homework', '2026-10-13'), done('english-reading', '2026-10-18')]
-    const rates = taskRates(tasks, records, days)
+    const rates = taskRates(livePlan(tasks), records, days)
     const hw = rates.find((r) => r.task.id === 'homework')!
     expect([hw.done, hw.scheduled]).toEqual([2, 5])
     const reading = rates.find((r) => r.task.id === 'english-reading')!

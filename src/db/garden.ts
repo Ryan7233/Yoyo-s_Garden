@@ -1,5 +1,6 @@
 // 花园操作：购买、种植、浇水、收获、出售、扩建（SPEC 5.2–5.4）
 import { db, uid } from './schema'
+import { loadPlanOf } from './plans'
 import { addInventory, takeInventory } from './inventory'
 import type { LedgerEntry, PlantInstance } from '../data/types'
 import { getCatalogItem } from '../data/catalog'
@@ -23,8 +24,8 @@ async function addLedger(childId: string, e: Omit<LedgerEntry, 'id' | 'childId' 
 
 /** 解锁和访客用的累计数据 */
 export async function progressStats(childId: string): Promise<ProgressStats> {
-  const [tasks, records, exRecords, entries, placed] = await Promise.all([
-    db.tasks.where('childId').equals(childId).toArray(),
+  const [planOf, records, exRecords, entries, placed] = await Promise.all([
+    loadPlanOf(childId),
     db.taskRecords.where('childId').equals(childId).toArray(),
     db.exerciseRecords.where('childId').equals(childId).toArray(),
     ledger(childId),
@@ -32,7 +33,7 @@ export async function progressStats(childId: string): Promise<ProgressStats> {
   ])
   const days = new Set(records.map((r) => r.date))
   let allDoneDays = 0
-  for (const d of days) if (dayProgress(tasks, records, d).allDone) allDoneDays++
+  for (const d of days) if (dayProgress(planOf, records, d).allDone) allDoneDays++
   // 每个任务每天只算一次，以当天最新一条记录为准
   const taskCounts: Record<string, number> = {}
   for (const d of days) {

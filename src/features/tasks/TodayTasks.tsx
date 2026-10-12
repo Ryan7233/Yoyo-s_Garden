@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useStore, act } from '../../app/store'
-import { tasksForDay } from '../../engine/schedule'
+import { livePlan } from '../../engine/plans'
 import { dayProgress, latestRecordByTask } from '../../engine/rewards'
 import { earnedOn } from '../../engine/ledger'
 import { childReportTask } from '../../db/actions'
@@ -20,9 +20,11 @@ export function TodayTasks() {
   const [sportOpen, setSportOpen] = useState(false)
   if (!child) return null
 
-  const { required, more } = tasksForDay(tasks, today)
+  // 今天始终按当前配置
+  const planOf = livePlan(tasks)
+  const { required, more } = planOf(today)
   const latest = latestRecordByTask(records, today)
-  const progress = dayProgress(tasks, records, today)
+  const progress = dayProgress(planOf, records, today)
   const earned = earnedOn(ledger, today)
   const scheduledEx = exercisesForDay(exercises, today)
   const exBest = bestTodayByExercise(exerciseRecords, today)

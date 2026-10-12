@@ -17,7 +17,7 @@ import { toTaskDay } from '../engine/taskDay'
  * 解锁一旦发生就保留（之后撤销记录也不收回），避免孩子得而复失。
  */
 export async function syncProgress(childId: string, now = new Date()): Promise<Grants> {
-  return db.transaction('rw', [db.tasks, db.taskRecords, db.exerciseRecords, db.ledger, db.placed, db.plants, db.unlocks, db.inventory], async () => {
+  return db.transaction('rw', [db.tasks, db.dayPlans, db.taskRecords, db.exerciseRecords, db.ledger, db.placed, db.plants, db.unlocks, db.inventory], async () => {
     const [stats, plants, placed, ledger, unlocks] = await Promise.all([
       progressStats(childId),
       db.plants.where('childId').equals(childId).toArray(),

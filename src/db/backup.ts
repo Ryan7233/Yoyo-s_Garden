@@ -107,6 +107,7 @@ const TABLE_SPECS: Record<BackupTable, TableSpec> = {
     fields: { id: ['settings'], schemaVersion: 'n', sound: 'b', pinHash: 's', pinSalt: 's', requiredCap: 'n', backfillDays: 'n' },
     optional: { lastBackupAt: 's', lastSeenAt: 's', clockWentBack: 'b' },
   },
+  dayPlans: { key: ['childId', 'date'], fields: { childId: 's', date: 's', required: 'a', more: 'a' } },
 }
 
 function typeOk(v: unknown, t: FieldType): boolean {
@@ -163,6 +164,8 @@ export function parseBackup(text: string): BackupFile {
   if (f.schemaVersion > SCHEMA_VERSION) {
     throw new Error('备份来自更新的版本，请先更新应用')
   }
+  // 版本 1 的备份还没有按日期保存的任务配置：导入后按当前配置冻结过去的日子
+  if (f.schemaVersion < 2 && f.tables.dayPlans === undefined) f.tables.dayPlans = []
   validateTables(f.tables as Record<BackupTable, unknown[]>)
   return f as BackupFile
 }

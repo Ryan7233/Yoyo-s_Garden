@@ -5,6 +5,7 @@ import { VISITORS } from '../../data/visitors'
 import { BADGES } from '../../data/badges'
 import { Icon } from '../../ui/Icon'
 import { allDoneDays, monthGrid, shiftMonth } from '../../engine/stats'
+import { planResolver } from '../../engine/plans'
 import { formatDay, toTaskDay } from '../../engine/taskDay'
 import '../shop/shop.css'
 import './codex.css'
@@ -119,9 +120,9 @@ function BadgesPage() {
 const WEEK = ['日', '一', '二', '三', '四', '五', '六']
 
 function CalendarPage() {
-  const { tasks, records, today } = useStore()
+  const { tasks, dayPlans, records, today } = useStore()
   const [month, setMonth] = useState(today.slice(0, 7))
-  const stars = allDoneDays(tasks, records)
+  const stars = allDoneDays(planResolver(tasks, dayPlans), records)
   const weeks = monthGrid(month)
   const [y, m] = month.split('-').map(Number)
   const count = weeks.flat().filter((d) => d && stars.has(d)).length

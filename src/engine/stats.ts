@@ -1,8 +1,8 @@
 // 家长统计与全勤日历（8.2、7.1）：都是对记录的纯计算
 import type { ExerciseRecord, LedgerEntry, LedgerReason, TaskDef, TaskRecord } from '../data/types'
+import type { PlanOf } from './plans'
 import { EXERCISE_TASK_ID } from '../data/tasks'
 import { dayProgress, latestRecordByTask } from './rewards'
-import { tasksForDay } from './schedule'
 import { addDays, parseTaskDay, toTaskDay, weekdayOf } from './taskDay'
 import { countsAsDone } from './exercise'
 
@@ -21,8 +21,8 @@ export interface DayCompletion {
 }
 
 /** 某天安排的任务（不含运动卡片）完成了几项 */
-export function dayCompletion(tasks: TaskDef[], records: TaskRecord[], day: string): DayCompletion {
-  const { required, more } = tasksForDay(tasks, day)
+export function dayCompletion(planOf: PlanOf, records: TaskRecord[], day: string): DayCompletion {
+  const { required, more } = planOf(day)
   const list = [...required, ...more].filter((t) => t.id !== EXERCISE_TASK_ID)
   const latest = latestRecordByTask(records, day)
   const done = list.filter((t) => latest.get(t.id)?.status === 'done').length
@@ -31,7 +31,7 @@ export function dayCompletion(tasks: TaskDef[], records: TaskRecord[], day: stri
     done,
     total: list.length,
     rate: list.length ? done / list.length : null,
-    allDone: dayProgress(tasks, records, day).allDone,
+    allDone: dayProgress(planOf, records, day).allDone,
   }
 }
 
@@ -43,10 +43,10 @@ export interface TaskRate {
 }
 
 /** 每个任务在这些天里的完成率（只算安排了它的日子） */
-export function taskRates(tasks: TaskDef[], records: TaskRecord[], days: string[]): TaskRate[] {
+export function taskRates(planOf: PlanOf, records: TaskRecord[], days: string[]): TaskRate[] {
   const out = new Map<string, TaskRate>()
   for (const day of days) {
-    const { required, more } = tasksForDay(tasks, day)
+    const { required, more } = planOf(day)
     const latest = latestRecordByTask(records, day)
     for (const t of [...required, ...more]) {
       if (t.id === EXERCISE_TASK_ID) continue
@@ -116,8 +116,8 @@ export function shiftMonth(month: string, n: number): string {
 }
 
 /** 所有全勤的日子 */
-export function allDoneDays(tasks: TaskDef[], records: TaskRecord[]): Set<string> {
+export function allDoneDays(planOf: PlanOf, records: TaskRecord[]): Set<string> {
   const out = new Set<string>()
-  for (const d of new Set(records.map((r) => r.date))) if (dayProgress(tasks, records, d).allDone) out.add(d)
+  for (const d of new Set(records.map((r) => r.date))) if (dayProgress(planOf, records, d).allDone) out.add(d)
   return out
 }

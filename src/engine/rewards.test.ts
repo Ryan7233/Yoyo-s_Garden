@@ -3,9 +3,10 @@ import type { LedgerEntry, TaskRecord } from '../data/types'
 import { defaultTasks } from '../data/tasks'
 import { DEFAULT_EXERCISES } from '../data/exercises'
 import { balanceOf, clampedDeduction } from './ledger'
+import { livePlan } from './plans'
 import { dayProgress, earnsStreakBonus, exerciseReward, reconcileDayAwards, revokeEntries, streakEndingAt } from './rewards'
 
-const tasks = defaultTasks('c1')
+const tasks = livePlan(defaultTasks('c1'))
 let n = 0
 const rec = (taskId: string, date: string, status: TaskRecord['status'] = 'done'): TaskRecord => ({
   id: `r${n++}`, childId: 'c1', taskId, date, status, source: 'child', createdAt: new Date(2026, 0, 1, 0, 0, n).toISOString(),
