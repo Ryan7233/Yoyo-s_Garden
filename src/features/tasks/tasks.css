@@ -78,7 +78,7 @@
 .task-meta { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
 .task-meta .badge { font-size: var(--fs-s); padding: 4px 12px; }
 .task-note { color: var(--text-soft); font-size: var(--fs-m); }
-.task-btn { flex: none; min-width: 132px; }
+.task-btn { flex: none; min-width: 156px; padding: 0 28px; }
 
 .task-card.done { background: linear-gradient(180deg, #fff, var(--mint-light)); border-color: var(--mint); box-shadow: var(--hl), 0 5px 0 var(--mint), var(--sh-1); }
 .task-card.done .task-icon { background: #d4f2e4; }

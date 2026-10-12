@@ -103,12 +103,12 @@
   top: 6px;
   right: 6px;
   z-index: 1;
-  width: 56px;
-  height: 56px;
+  width: var(--touch);
+  height: var(--touch);
   border-radius: 50%;
   border: 2px solid var(--cream-edge);
   background: rgba(255, 255, 255, 0.9);
-  font-size: 26px;
+  font-size: 28px;
   box-shadow: var(--sh-1);
 }
 .wish-btn.on { border-color: var(--primary); animation: pop 0.45s ease-out; }

@@ -109,7 +109,7 @@ function TaskCard({ task, record, sport, onReport }: { task: TaskDef; record?: T
         {status === 'rejected' && record?.note && <div className="task-note">💬 {record.note}</div>}
       </div>
       {(!status || status === 'rejected') && (
-        <button className="btn btn-primary task-btn" onClick={onReport}>
+        <button className="btn btn-primary btn-big task-btn" onClick={onReport}>
           {status === 'rejected' ? '再试一次' : '我完成了'}
         </button>
       )}
@@ -132,7 +132,7 @@ function SportCard({ task, sport, onOpen }: { task: TaskDef; sport: SportProgres
           {sport.done === 0 && <Reward coins={2} size="s" />}
         </div>
       </div>
-      <button className={`btn task-btn ${all ? 'btn-ghost' : 'btn-primary'}`} onClick={onOpen}>
+      <button className={`btn btn-big task-btn ${all ? 'btn-ghost' : 'btn-primary'}`} onClick={onOpen}>
         {all ? '看看成绩' : sport.done > 0 ? '继续运动' : '去运动'}
       </button>
     </div>
