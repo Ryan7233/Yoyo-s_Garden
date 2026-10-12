@@ -3,6 +3,7 @@ import { useStore, act } from '../../app/store'
 import { BALANCE } from '../../data/balance'
 import { POND_ID } from '../../data/plants'
 import { Mascot } from '../../ui/Mascot'
+import { ScrollHints } from '../../ui/ScrollHints'
 import { ConfirmDialog } from '../../ui/Modal'
 import { toast } from '../../ui/Toast'
 import { House } from './House'
@@ -72,6 +73,7 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
 
   return (
     <>
+      <ScrollHints />
       <div className="scene-scroll">
         <div className={`garden phase-${phase}`} style={gridStyle}>
           <div className="sky" style={{ background: SKY[phase] }}>

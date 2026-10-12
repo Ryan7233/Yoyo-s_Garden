@@ -1,0 +1,39 @@
+/* 场景滑动提示：边缘渐隐 + 小箭头，不挡点击 */
+.scroll-hints { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
+.scroll-hint {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  --fade: rgba(255, 249, 240, 0.78);
+}
+.scroll-hint.up { top: 0; left: 0; right: 0; height: 40px; background: linear-gradient(to bottom, var(--fade), transparent); }
+.scroll-hint.down { bottom: 0; left: 0; right: 0; height: 40px; background: linear-gradient(to top, var(--fade), transparent); }
+.scroll-hint.left { left: 0; top: 0; bottom: 0; width: 40px; background: linear-gradient(to right, var(--fade), transparent); }
+.scroll-hint.right { right: 0; top: 0; bottom: 0; width: 40px; background: linear-gradient(to left, var(--fade), transparent); }
+.scroll-hint-arrow {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--text-soft);
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid var(--cream-edge);
+  box-shadow: var(--sh-1);
+  animation: hint-nudge 1.6s ease-in-out infinite;
+}
+.scroll-hint.up .scroll-hint-arrow { --nudge: 0 -4px; }
+.scroll-hint.down .scroll-hint-arrow { --nudge: 0 4px; }
+.scroll-hint.left .scroll-hint-arrow { --nudge: -4px 0; }
+.scroll-hint.right .scroll-hint-arrow { --nudge: 4px 0; }
+@keyframes hint-nudge {
+  0%, 100% { translate: 0 0; }
+  50% { translate: var(--nudge); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-hint-arrow { animation: none; }
+}

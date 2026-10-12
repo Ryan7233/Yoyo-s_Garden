@@ -4,6 +4,7 @@ import { BALANCE } from '../../data/balance'
 import { STYLE_CSS } from '../../data/indoor'
 import { harvestInfo } from '../../data/plants'
 import { Icon } from '../../ui/Icon'
+import { ScrollHints } from '../../ui/ScrollHints'
 import { SKY, skyPhase } from '../garden/sky'
 import { PlantArt } from '../garden/PlantArt'
 import { PlantSheet } from '../garden/PlantSheet'
@@ -74,6 +75,7 @@ export function HouseScene() {
 
   return (
     <>
+      <ScrollHints />
       <div className="scene-scroll">
         <div className="room" style={vars}>
           <div className="wall" style={{ background: STYLE_CSS[child.wallStyle ?? 'wall-default'] }}>
