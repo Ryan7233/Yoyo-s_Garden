@@ -1,6 +1,7 @@
 // 运动打卡的业务规则（SPEC 4.3）：计时、数值校验、个人纪录、目标判定、奖励拆分
-import type { ExerciseDef, ExerciseRecord } from '../data/types'
+import type { ExerciseDef, ExerciseRecord, LedgerEntry } from '../data/types'
 import { BALANCE } from '../data/balance'
+import { clampedDeduction, type Balance } from './ledger'
 import { beatsRecord, exerciseReward, type ExerciseReward, type NewEntry } from './rewards'
 import { weekdayOf } from './taskDay'
 
@@ -130,16 +131,63 @@ export function rewardForLog(i: LogInput): ExerciseReward {
   })
 }
 
-/** 把奖励拆成流水：日常练习（含达标、五项全做）记 exercise，破纪录记 personalBest */
+/**
+ * 把一条记录的奖励拆成流水：日常练习（含达标）记 exercise，破纪录记 personalBest。
+ * “五项全做”不挂在记录上，由 reconcileAllFive 按天对账。
+ */
 export function exerciseRewardEntries(record: ExerciseRecord, reward: ExerciseReward): NewEntry[] {
   const out: NewEntry[] = []
   const pb = reward.isPersonalBest ? BALANCE.exercisePersonalBestCoins : 0
-  const practice = reward.coins - pb
+  const practice = reward.coins - pb - (reward.allFive ? BALANCE.exerciseAllFiveCoins : 0)
   const base = { date: record.date, refId: record.id }
   if (practice > 0) out.push({ ...base, currency: 'coin', amount: practice, reason: 'exercise' })
-  if (reward.drops > 0) out.push({ ...base, currency: 'drop', amount: reward.drops, reason: 'exercise' })
   if (pb > 0) out.push({ ...base, currency: 'coin', amount: pb, reason: 'personalBest' })
   return out
+}
+
+/** 当天安排的子项是否都做了（撤销的不算） */
+export function allFiveDone(scheduled: ExerciseDef[], records: ExerciseRecord[], day: string): boolean {
+  if (!scheduled.length) return false
+  const done = new Set(doneIdsOn(records, day))
+  return scheduled.every((d) => done.has(d.id))
+}
+
+/**
+ * 旧数据里“五项全做”挂在凑齐五项的那条记录上（运动的水滴只来自这项奖励）。
+ * 返回仍然有效的那条记录 id。
+ */
+function legacyAllFiveRef(entries: LedgerEntry[], day: string): string | undefined {
+  const drops = entries.filter((e) => e.currency === 'drop' && e.date === day && e.refId && !e.refId.startsWith('allFive:'))
+  const refs = new Set(drops.filter((e) => e.reason === 'exercise').map((e) => e.refId!))
+  for (const refId of refs) if (drops.filter((e) => e.refId === refId).reduce((s, e) => s + e.amount, 0) > 0) return refId
+}
+
+/**
+ * “五项全做”按天对账（refId = allFive:日期）：凑齐时发一次，撤销后不再齐就收回，
+ * 补录凑齐时不重复发。幂等，可重复调用。
+ */
+export function reconcileAllFive(
+  day: string, scheduled: ExerciseDef[], records: ExerciseRecord[], entries: LedgerEntry[], balance: Balance,
+): NewEntry[] {
+  const refId = `allFive:${day}`
+  const wanted = allFiveDone(scheduled, records, day)
+  const legacy = legacyAllFiveRef(entries, day)
+  // 发放和收回成对出现，用次数比较，不依赖同一时刻写入的流水顺序
+  let grants = 0
+  for (const e of entries) if (e.refId === refId && e.currency === 'coin') grants += e.reason === 'revoke' ? -1 : 1
+  const active = grants > 0 || legacy !== undefined
+  const award = { coin: BALANCE.exerciseAllFiveCoins, drop: BALANCE.exerciseAllFiveDrops }
+  if (wanted && !active) {
+    return (['coin', 'drop'] as const).map((currency) => ({ date: day, refId, currency, amount: award[currency], reason: 'exercise' as const }))
+  }
+  if (!wanted && active) {
+    // 扣回额为 0 也写一条，作为“已撤销”的标记
+    const ref = legacy ?? refId
+    return (['coin', 'drop'] as const).map((currency) => ({
+      date: day, refId: ref, currency, amount: 0 - clampedDeduction(balance[currency], award[currency]), reason: 'revoke' as const,
+    }))
+  }
+  return []
 }
 
 /** 家长确认视频后：这条成绩是否仍然是新纪录（等待期间可能已被别的纪录超过） */

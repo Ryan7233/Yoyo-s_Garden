@@ -4,7 +4,7 @@ import { addEntries, ledgerOf } from './actions'
 import type { ExerciseDef, ExerciseRecord } from '../data/types'
 import { balanceOf } from '../engine/ledger'
 import { revokeEntries } from '../engine/rewards'
-import { confirmVideoRecord, exerciseRewardEntries, exercisesForDay, rewardForLog } from '../engine/exercise'
+import { confirmVideoRecord, exerciseRewardEntries, exercisesForDay, reconcileAllFive, rewardForLog } from '../engine/exercise'
 
 async function context(childId: string, exerciseId: string, day: string) {
   const [defs, records] = await Promise.all([
@@ -14,6 +14,16 @@ async function context(childId: string, exerciseId: string, day: string) {
   const def = defs.find((d) => d.id === exerciseId)
   if (!def) throw new Error('运动子项不存在')
   return { def, records, scheduled: exercisesForDay(defs, day) }
+}
+
+/** 当天“五项全做”对账：在记录写入或撤销之后调用 */
+async function syncAllFive(childId: string, day: string, now: Date) {
+  const [defs, records, ledger] = await Promise.all([
+    db.exercises.where('childId').equals(childId).toArray(),
+    db.exerciseRecords.where('childId').equals(childId).toArray(),
+    ledgerOf(childId),
+  ])
+  await addEntries(childId, reconcileAllFive(day, exercisesForDay(defs, day), records, ledger, balanceOf(ledger)), now)
 }
 
 export type Witness = 'none' | 'parent'
@@ -39,6 +49,7 @@ export async function logExercise(
     }
     await db.exerciseRecords.add(record)
     await addEntries(childId, exerciseRewardEntries(record, reward), now)
+    await syncAllFive(childId, day, now)
     return record
   })
 }
@@ -63,6 +74,7 @@ export async function logExerciseWithVideo(
     }
     await db.exerciseRecords.add(record)
     await addEntries(childId, exerciseRewardEntries(record, reward), now)
+    await syncAllFive(childId, day, now)
     return record
   })
 }
@@ -97,12 +109,13 @@ export async function rejectExerciseRecord(recordId: string, note: string | unde
 
 /** 撤销误录的成绩：扣回这条记录发放的奖励，余额最低扣到 0 */
 export async function revokeExerciseRecord(recordId: string, now = new Date()) {
-  await db.transaction('rw', [db.exerciseRecords, db.ledger, db.videos], async () => {
+  await db.transaction('rw', [db.exercises, db.exerciseRecords, db.ledger, db.videos], async () => {
     const r = await db.exerciseRecords.get(recordId)
     if (!r || r.status === 'revoked') return
     await db.exerciseRecords.put({ ...(await dropVideo(r)), status: 'revoked', isPersonalBest: false })
     const ledger = await ledgerOf(r.childId)
     await addEntries(r.childId, revokeEntries(r.id, ledger, balanceOf(ledger), r.date), now)
+    await syncAllFive(r.childId, r.date, now)
   })
 }
 

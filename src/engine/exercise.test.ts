@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_EXERCISES } from '../data/exercises'
-import type { ExerciseRecord } from '../data/types'
+import type { ExerciseRecord, LedgerEntry } from '../data/types'
 import {
-  bestTodayByExercise, canChallengeRecord, confirmVideoRecord, countdownLeft, doneIdsOn, exerciseRewardEntries,
+  bestTodayByExercise, canChallengeRecord, confirmVideoRecord, countdownLeft, doneIdsOn, exerciseRewardEntries, reconcileAllFive,
   exercisesForDay, formatSeconds, parseExerciseValue, personalBestOf, reachesTarget, rewardForLog, stopwatchSeconds,
   suggestRaiseTarget,
 } from './exercise'
@@ -127,15 +127,54 @@ describe('记录成绩的奖励', () => {
     const r = rewardForLog({ def: jump, value: 10, day: DAY, scheduled: [jump, plank], records: [rec({ exerciseId: 'plank' })], witnessed: false })
     expect(r.allFive).toBe(true)
   })
-  it('拆分流水：日常练习记 exercise，纪录奖励记 personalBest', () => {
+  it('拆分流水：日常练习记 exercise，纪录奖励记 personalBest；五项全做按天另算', () => {
     const record = rec({ id: 'x' })
     const entries = exerciseRewardEntries(record, { coins: 11, drops: 2, isPersonalBest: true, reachedTarget: true, allFive: true })
     expect(entries).toEqual([
-      { date: DAY, refId: 'x', currency: 'coin', amount: 6, reason: 'exercise' },
-      { date: DAY, refId: 'x', currency: 'drop', amount: 2, reason: 'exercise' },
+      { date: DAY, refId: 'x', currency: 'coin', amount: 3, reason: 'exercise' },
       { date: DAY, refId: 'x', currency: 'coin', amount: 5, reason: 'personalBest' },
     ])
     expect(exerciseRewardEntries(record, { coins: 0, drops: 0, isPersonalBest: false, reachedTarget: false, allFive: false })).toEqual([])
+  })
+})
+
+describe('五项全做按天对账', () => {
+  const scheduled = DEFAULT_EXERCISES
+  const all = scheduled.map((d) => rec({ id: d.id, exerciseId: d.id }))
+  const entry = (refId: string, currency: LedgerEntry['currency'], amount: number, reason: LedgerEntry['reason'] = 'exercise'): LedgerEntry => ({
+    id: `${refId}${currency}${amount}${reason}`, childId: 'c', at: '', date: DAY, refId, currency, amount, reason,
+  })
+  const bal = { coin: 100, drop: 100 }
+
+  it('凑齐时发一次，refId 是 allFive:日期', () => {
+    expect(reconcileAllFive(DAY, scheduled, all, [], bal)).toEqual([
+      { date: DAY, refId: `allFive:${DAY}`, currency: 'coin', amount: 3, reason: 'exercise' },
+      { date: DAY, refId: `allFive:${DAY}`, currency: 'drop', amount: 2, reason: 'exercise' },
+    ])
+  })
+  it('已经发过就不再发', () => {
+    const ledger = [entry(`allFive:${DAY}`, 'coin', 3), entry(`allFive:${DAY}`, 'drop', 2)]
+    expect(reconcileAllFive(DAY, scheduled, all, ledger, bal)).toEqual([])
+  })
+  it('撤销一项后收回，余额最低扣到 0', () => {
+    const ledger = [entry(`allFive:${DAY}`, 'coin', 3), entry(`allFive:${DAY}`, 'drop', 2)]
+    const records = all.map((r) => (r.exerciseId === 'plank' ? { ...r, status: 'revoked' as const } : r))
+    expect(reconcileAllFive(DAY, scheduled, records, ledger, { coin: 1, drop: 5 })).toEqual([
+      { date: DAY, refId: `allFive:${DAY}`, currency: 'coin', amount: -1, reason: 'revoke' },
+      { date: DAY, refId: `allFive:${DAY}`, currency: 'drop', amount: -2, reason: 'revoke' },
+    ])
+  })
+  it('旧数据：奖励挂在某条记录上也算已发', () => {
+    const ledger = [entry('sit-up', 'coin', 5), entry('sit-up', 'drop', 2)]
+    expect(reconcileAllFive(DAY, scheduled, all, ledger, bal)).toEqual([])
+    const records = all.map((r) => (r.exerciseId === 'plank' ? { ...r, status: 'revoked' as const } : r))
+    expect(reconcileAllFive(DAY, scheduled, records, ledger, bal)).toEqual([
+      { date: DAY, refId: 'sit-up', currency: 'coin', amount: -3, reason: 'revoke' },
+      { date: DAY, refId: 'sit-up', currency: 'drop', amount: -2, reason: 'revoke' },
+    ])
+  })
+  it('当天没安排运动不发', () => {
+    expect(reconcileAllFive(DAY, [], [], [], bal)).toEqual([])
   })
 })
 

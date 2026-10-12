@@ -45,6 +45,55 @@ describe('运动打卡', () => {
     expect(await balance()).toEqual({ coin: 13, drop: 7 })
   })
 
+  it('撤销一项后补录，“五项全做”不重复发', async () => {
+    const ids: Record<string, string> = {}
+    for (const [id, v] of [['jump-rope', 10], ['sit-reach', -3], ['plank', 5], ['hang', 5], ['sit-up', 5]] as const) {
+      ids[id] = (await logExercise(childId, id, DAY, v, 'none', SAT)).id
+    }
+    expect(await balance()).toEqual({ coin: 13, drop: 7 })
+    await revokeExerciseRecord(ids.plank, SAT)
+    // 平板支撑的 2 金币和“五项全做”的 3 金币 2 水滴一起收回
+    expect(await balance()).toEqual({ coin: 8, drop: 5 })
+    await logExercise(childId, 'plank', DAY, 5, 'none', SAT)
+    expect(await balance()).toEqual({ coin: 13, drop: 7 })
+  })
+
+  it('撤销凑齐五项的那一条再补录，同样只发一次', async () => {
+    let last = ''
+    for (const [id, v] of [['jump-rope', 10], ['sit-reach', -3], ['plank', 5], ['hang', 5], ['sit-up', 5]] as const) {
+      last = (await logExercise(childId, id, DAY, v, 'none', SAT)).id
+    }
+    await revokeExerciseRecord(last, SAT)
+    expect(await balance()).toEqual({ coin: 8, drop: 5 })
+    await logExercise(childId, 'sit-up', DAY, 5, 'none', SAT)
+    expect(await balance()).toEqual({ coin: 13, drop: 7 })
+  })
+
+  it('旧数据（奖励挂在第五条记录上）：撤销别的项再补录也不重复发', async () => {
+    const ids: Record<string, string> = {}
+    for (const [id, v] of [['jump-rope', 10], ['sit-reach', -3], ['plank', 5], ['hang', 5], ['sit-up', 5]] as const) {
+      ids[id] = (await logExercise(childId, id, DAY, v, 'none', SAT)).id
+    }
+    // 改写成升级前的样子：五项全做的金币并进第五条记录的练习金币，水滴也挂在这条记录上
+    const rows = await db.ledger.where('childId').equals(childId).toArray()
+    for (const e of rows.filter((e) => e.refId === `allFive:${DAY}`)) {
+      await db.ledger.delete(e.id)
+      if (e.currency === 'drop') await db.ledger.add({ ...e, refId: ids['sit-up'] })
+      else {
+        const coin = rows.find((x) => x.refId === ids['sit-up'] && x.currency === 'coin')!
+        await db.ledger.update(coin.id, { amount: coin.amount + e.amount })
+      }
+    }
+    expect(await balance()).toEqual({ coin: 13, drop: 7 })
+    await revokeExerciseRecord(ids.plank, SAT)
+    expect(await balance()).toEqual({ coin: 8, drop: 5 })
+    await logExercise(childId, 'plank', DAY, 5, 'none', SAT)
+    expect(await balance()).toEqual({ coin: 13, drop: 7 })
+    // 之后再撤销第五条记录，余额也对
+    await revokeExerciseRecord(ids['sit-up'], SAT)
+    expect(await balance()).toEqual({ coin: 8, drop: 5 })
+  })
+
   it('录视频：日常奖励先到账，纪录待确认；确认后发纪录奖励并删除视频', async () => {
     const r = await logExerciseWithVideo(childId, 'hang', DAY, 12, new Blob(['v']), SAT)
     expect(r.status).toBe('pending')
