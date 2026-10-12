@@ -9,7 +9,8 @@ export function audioContext(): AudioContext | null {
   try {
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
     if (!ctx && AC) ctx = new AC()
-    if (ctx?.state === 'suspended') void ctx.resume()
+    // iPad 上录完视频、锁屏回来后是 'interrupted'（不只是 'suspended'），也要在点按里恢复
+    if (ctx && ctx.state !== 'running' && ctx.state !== 'closed') void ctx.resume()
     return ctx
   } catch {
     return null
@@ -17,11 +18,9 @@ export function audioContext(): AudioContext | null {
 }
 
 export function installAudioUnlock() {
-  const unlock = () => {
-    audioContext()
-    window.removeEventListener('pointerdown', unlock)
-  }
-  window.addEventListener('pointerdown', unlock)
+  // 一直挂着：音频被系统打断（录视频、锁屏、来电）后，下一次点按就能恢复；
+  // 很多音效在数据库写完后才播，那时已不在点按里，Safari 不允许在那里恢复
+  window.addEventListener('pointerdown', () => audioContext())
 }
 
 type Wave = OscillatorType
