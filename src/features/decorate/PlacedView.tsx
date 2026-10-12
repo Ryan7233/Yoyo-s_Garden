@@ -45,7 +45,7 @@ export function PlacedView({
   return (
     <div
       className={`${className}${tile ? ' tile' : ''}${interactive ? ' tappable' : ''}${menuId === id ? ' selected' : ''}${moving ? ' moving' : ''}`}
-      style={{ ...cellStyle(x, y, w, h), '--span-e': Math.min(w, h) + (Math.max(w, h) - Math.min(w, h)) * 0.45 } as CSSProperties}
+      style={{ ...cellStyle(x, y, w, h), '--span-e': Math.min(w, h) + (Math.max(w, h) - Math.min(w, h)) * 0.45, '--row': y } as CSSProperties}
       onPointerDown={
         decorating && !holding
           ? (e) => startPress(e, { kind: 'move', id, catalogId }, dropAt, () => useDecorate.getState().openMenu(id))

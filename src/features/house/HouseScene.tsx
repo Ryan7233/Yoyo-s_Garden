@@ -108,6 +108,7 @@ export function HouseScene() {
           </div>
           <div className="floor" style={{ background: STYLE_CSS[child.floorStyle ?? 'floor-wood'] }}>
             <div className="floor-shade" aria-hidden />
+            <div className="floor-sides" aria-hidden />
             <div className="floor-grid">
               {floor.map((p) => {
                 const flower = p.content ? harvestInfo(p.content) : undefined
