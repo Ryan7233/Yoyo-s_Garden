@@ -17,7 +17,7 @@ export function ItemMenu() {
   if (!item || !catalogId) return null
 
   return (
-    <div className="item-menu pop">
+    <div className="item-menu">
       <span className="item-menu-icon"><Icon icon={item.icon} size={40} /></span>
       <span className="title item-menu-name">{item.name}</span>
       <button className="btn" onClick={() => hold({ kind: 'move', id: menuId, catalogId })}>✋ 移动</button>
