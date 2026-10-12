@@ -94,6 +94,11 @@ export async function reconcileFrom(childId: string, day: string, now = new Date
   }
 }
 
+/** 任务打卡相关的读写放进同一个事务：检查状态、写记录、发奖励要么全成，要么全不成 */
+function taskTx<T>(fn: () => Promise<T>): Promise<T> {
+  return db.transaction('rw', [db.tasks, db.taskRecords, db.ledger], fn)
+}
+
 async function finishRecord(childId: string, record: TaskRecord, now: Date) {
   const task = await db.tasks.get(record.taskId)
   if (!task) return
@@ -102,65 +107,75 @@ async function finishRecord(childId: string, record: TaskRecord, now: Date) {
 }
 
 /** 孩子点“我完成了” */
-export async function childReportTask(childId: string, taskId: string, day: string, now = new Date()): Promise<TaskRecord> {
-  const task = await db.tasks.get(taskId)
-  if (!task) throw new Error('任务不存在')
-  const records = await db.taskRecords.where('[childId+date]').equals([childId, day]).toArray()
-  const existing = latestRecordByTask(records, day).get(taskId)
-  if (existing && (existing.status === 'done' || existing.status === 'pending')) return existing
-  const record: TaskRecord = {
-    id: uid(),
-    childId,
-    taskId,
-    date: day,
-    status: task.confirmMode === 'parent' ? 'pending' : 'done',
-    source: 'child',
-    createdAt: now.toISOString(),
-  }
-  if (record.status === 'done') record.confirmedAt = record.createdAt
-  await db.taskRecords.add(record)
-  if (record.status === 'done') await finishRecord(childId, record, now)
-  return record
+export function childReportTask(childId: string, taskId: string, day: string, now = new Date()): Promise<TaskRecord> {
+  return taskTx(async () => {
+    const task = await db.tasks.get(taskId)
+    if (!task) throw new Error('任务不存在')
+    const records = await db.taskRecords.where('[childId+date]').equals([childId, day]).toArray()
+    const existing = latestRecordByTask(records, day).get(taskId)
+    if (existing && (existing.status === 'done' || existing.status === 'pending')) return existing
+    const record: TaskRecord = {
+      id: uid(),
+      childId,
+      taskId,
+      date: day,
+      status: task.confirmMode === 'parent' ? 'pending' : 'done',
+      source: 'child',
+      createdAt: now.toISOString(),
+    }
+    if (record.status === 'done') record.confirmedAt = record.createdAt
+    await db.taskRecords.add(record)
+    if (record.status === 'done') await finishRecord(childId, record, now)
+    return record
+  })
 }
 
 /** 家长确认待确认记录 */
-export async function confirmRecord(recordId: string, now = new Date()) {
-  const r = await db.taskRecords.get(recordId)
-  if (!r || r.status !== 'pending') return
-  const next = { ...r, status: 'done' as const, confirmedAt: now.toISOString() }
-  await db.taskRecords.put(next)
-  await finishRecord(r.childId, next, now)
+export function confirmRecord(recordId: string, now = new Date()) {
+  return taskTx(async () => {
+    const r = await db.taskRecords.get(recordId)
+    if (!r || r.status !== 'pending') return
+    const next = { ...r, status: 'done' as const, confirmedAt: now.toISOString() }
+    await db.taskRecords.put(next)
+    await finishRecord(r.childId, next, now)
+  })
 }
 
 /** 家长驳回：不扣分，只是不发放，可附一句话 */
-export async function rejectRecord(recordId: string, note: string | undefined, now = new Date()) {
-  const r = await db.taskRecords.get(recordId)
-  if (!r || r.status !== 'pending') return
-  await db.taskRecords.put({ ...r, status: 'rejected', note: note?.trim() || undefined, confirmedAt: now.toISOString() })
+export function rejectRecord(recordId: string, note: string | undefined, now = new Date()) {
+  return taskTx(async () => {
+    const r = await db.taskRecords.get(recordId)
+    if (!r || r.status !== 'pending') return
+    await db.taskRecords.put({ ...r, status: 'rejected', note: note?.trim() || undefined, confirmedAt: now.toISOString() })
+  })
 }
 
 /** 家长直接勾选孩子没点的任务 */
-export async function parentMarkDone(childId: string, taskId: string, day: string, now = new Date()) {
-  const records = await db.taskRecords.where('[childId+date]').equals([childId, day]).toArray()
-  const existing = latestRecordByTask(records, day).get(taskId)
-  if (existing?.status === 'done') return
-  if (existing?.status === 'pending') return confirmRecord(existing.id, now)
-  const record: TaskRecord = {
-    id: uid(), childId, taskId, date: day, status: 'done', source: 'parent',
-    createdAt: now.toISOString(), confirmedAt: now.toISOString(),
-  }
-  await db.taskRecords.add(record)
-  await finishRecord(childId, record, now)
+export function parentMarkDone(childId: string, taskId: string, day: string, now = new Date()) {
+  return taskTx(async () => {
+    const records = await db.taskRecords.where('[childId+date]').equals([childId, day]).toArray()
+    const existing = latestRecordByTask(records, day).get(taskId)
+    if (existing?.status === 'done') return
+    if (existing?.status === 'pending') return confirmRecord(existing.id, now)
+    const record: TaskRecord = {
+      id: uid(), childId, taskId, date: day, status: 'done', source: 'parent',
+      createdAt: now.toISOString(), confirmedAt: now.toISOString(),
+    }
+    await db.taskRecords.add(record)
+    await finishRecord(childId, record, now)
+  })
 }
 
 /** 撤销一条已完成的记录：扣回奖励，余额最低扣到 0 */
-export async function revokeRecord(recordId: string, now = new Date()) {
-  const r = await db.taskRecords.get(recordId)
-  if (!r || r.status !== 'done') return
-  await db.taskRecords.put({ ...r, status: 'revoked' })
-  const ledger = await ledgerOf(r.childId)
-  await addEntries(r.childId, revokeEntries(r.id, ledger, balanceOf(ledger), r.date), now)
-  await reconcileFrom(r.childId, r.date, now)
+export function revokeRecord(recordId: string, now = new Date()) {
+  return taskTx(async () => {
+    const r = await db.taskRecords.get(recordId)
+    if (!r || r.status !== 'done') return
+    await db.taskRecords.put({ ...r, status: 'revoked' })
+    const ledger = await ledgerOf(r.childId)
+    await addEntries(r.childId, revokeEntries(r.id, ledger, balanceOf(ledger), r.date), now)
+    await reconcileFrom(r.childId, r.date, now)
+  })
 }
 
 /** 家长加分 */
