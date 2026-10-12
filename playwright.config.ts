@@ -14,7 +14,7 @@ export default defineConfig({
     locale: 'zh-CN',
     timezoneId: 'Asia/Shanghai',
     trace: 'retain-on-failure',
-    // 测试里不需要 Service Worker，避免缓存干扰“刷新后状态保持”的检查
+    // 默认不开 Service Worker，避免缓存干扰“刷新后状态保持”的检查；e2e/sw.spec.ts 单独打开
     serviceWorkers: 'block',
   },
   projects: [
