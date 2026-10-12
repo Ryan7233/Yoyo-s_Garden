@@ -34,10 +34,10 @@
   align-items: center;
   gap: 6px;
   text-align: center;
-  box-shadow: var(--hl), 0 5px 0 var(--cream-edge), var(--sh-1);
+  box-shadow: var(--hl), 0 var(--depth-sub) 0 var(--cream-edge), var(--sh-1);
   margin-bottom: 5px;
 }
-.shop-card.wished { border-color: var(--primary); box-shadow: var(--hl), 0 5px 0 var(--primary), var(--sh-1); }
+.shop-card.wished { border-color: var(--primary); box-shadow: var(--hl), 0 var(--depth-sub) 0 var(--primary), var(--sh-1); }
 .shop-card.locked { background: linear-gradient(180deg, #fbf9fb, var(--mist-light)); }
 .shop-card.locked .shop-icon { filter: grayscale(0.85) opacity(0.55); }
 

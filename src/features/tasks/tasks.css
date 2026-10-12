@@ -1,7 +1,7 @@
 .today { display: flex; flex-direction: column; gap: var(--sp-3); }
 
 /* 顶部：必做进度条 + 今天得到 */
-.today-summary { display: flex; align-items: center; gap: var(--sp-5); padding: var(--sp-4) var(--sp-5); flex-wrap: wrap; }
+.today-summary { display: flex; align-items: center; gap: var(--sp-5); padding: var(--sp-4) var(--sp-5); flex-wrap: wrap; box-shadow: var(--hl), 0 var(--depth-sub) 0 var(--cream-edge), var(--sh-1); }
 .today-progress { flex: 1 1 320px; display: flex; flex-direction: column; gap: 10px; }
 .today-progress-label { display: flex; align-items: baseline; justify-content: space-between; font-size: var(--fs-l); }
 .today-count { font-size: 30px; }
@@ -57,7 +57,7 @@
   background: linear-gradient(180deg, #fff, var(--cream));
   border-radius: var(--r-l);
   border: var(--bw) solid var(--cream-edge);
-  box-shadow: var(--hl), 0 5px 0 var(--cream-edge), var(--sh-1);
+  box-shadow: var(--hl), 0 var(--depth-sub) 0 var(--cream-edge), var(--sh-1);
   margin-bottom: 5px;
 }
 /* 左边一颗“钉子”，像挂着的小任务牌 */
@@ -80,9 +80,9 @@
 .task-note { color: var(--text-soft); font-size: var(--fs-m); }
 .task-btn { flex: none; min-width: 156px; padding: 0 28px; }
 
-.task-card.done { background: linear-gradient(180deg, #fff, var(--mint-light)); border-color: var(--mint); box-shadow: var(--hl), 0 5px 0 var(--mint), var(--sh-1); }
+.task-card.done { background: linear-gradient(180deg, #fff, var(--mint-light)); border-color: var(--mint); box-shadow: var(--hl), 0 var(--depth-sub) 0 var(--mint), var(--sh-1); }
 .task-card.done .task-icon { background: #d4f2e4; }
-.task-card.pending { background: linear-gradient(180deg, #fff, var(--coin-light)); border-color: var(--coin); box-shadow: var(--hl), 0 5px 0 var(--coin), var(--sh-1); }
+.task-card.pending { background: linear-gradient(180deg, #fff, var(--coin-light)); border-color: var(--coin); box-shadow: var(--hl), 0 var(--depth-sub) 0 var(--coin), var(--sh-1); }
 .task-card.pending .task-icon { background: #fff0bf; }
 .task-card.rejected .task-icon { background: var(--mist-light); }
 .task-card.sport .task-icon { background: var(--sky-light); }

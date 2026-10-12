@@ -24,7 +24,7 @@
 .codex-card.got {
   background: linear-gradient(180deg, #fff, var(--cream));
   border: var(--bw) solid var(--lavender);
-  box-shadow: var(--hl), 0 4px 0 var(--lavender), var(--sh-1);
+  box-shadow: var(--hl), 0 var(--depth-sub) 0 var(--lavender), var(--sh-1);
   margin-bottom: 4px;
 }
 .codex-card.got::after {

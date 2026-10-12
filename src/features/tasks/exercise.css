@@ -17,12 +17,12 @@
   background: linear-gradient(180deg, #fff, var(--cream));
   border-radius: var(--r-l);
   border: var(--bw) solid var(--cream-edge);
-  box-shadow: var(--hl), 0 5px 0 var(--cream-edge), var(--sh-1);
+  box-shadow: var(--hl), 0 var(--depth-sub) 0 var(--cream-edge), var(--sh-1);
   margin-bottom: 5px;
   transition: transform var(--dur-fast);
 }
 .ex-card:active { transform: translateY(3px); }
-.ex-card.done { border-color: var(--mint); box-shadow: var(--hl), 0 5px 0 var(--mint), var(--sh-1); background: linear-gradient(180deg, #fff, var(--mint-light)); }
+.ex-card.done { border-color: var(--mint); box-shadow: var(--hl), 0 var(--depth-sub) 0 var(--mint), var(--sh-1); background: linear-gradient(180deg, #fff, var(--mint-light)); }
 .ex-icon {
   width: 72px;
   height: 72px;
