@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useStore } from '../../app/store'
 import type { ExerciseConfig } from '../../db/schema'
 import type { LedgerReason } from '../../data/types'
-import { planResolver } from '../../engine/plans'
+import { firstDataDay, planResolver } from '../../engine/plans'
 import { coinSummary, dayCompletion, exerciseSeries, lastNDays, taskRates, type DayCompletion } from '../../engine/stats'
 import { formatDay } from '../../engine/taskDay'
 import { formatValue } from '../tasks/Exercise'
@@ -23,11 +23,12 @@ const REASON_LABEL: Partial<Record<LedgerReason, string>> = {
 }
 
 export function StatsPanel() {
-  const { tasks, dayPlans, records, exercises, exerciseRecords, ledger, today } = useStore()
+  const { child, tasks, dayPlans, records, exercises, exerciseRecords, ledger, today } = useStore()
   const [range, setRange] = useState<7 | 30>(7)
   const [picked, setPicked] = useState<DayCompletion | null>(null)
   const days = lastNDays(today, range)
-  const planOf = planResolver(tasks, dayPlans)
+  // 建园之前的日子是“无数据”，不计入完成率
+  const planOf = planResolver(tasks, dayPlans, child ? firstDataDay(child, records) : undefined)
   const completion = days.map((d) => dayCompletion(planOf, records, d))
   const rates = taskRates(planOf, records, days)
   const coins = coinSummary(ledger, days)
@@ -60,19 +61,20 @@ export function StatsPanel() {
           {completion.map((c) => (
             <button
               key={c.day}
-              className={`heat-cell${picked?.day === c.day ? ' picked' : ''}`}
+              className={`heat-cell${c.noData ? ' no-data' : ''}${picked?.day === c.day ? ' picked' : ''}`}
               style={{ background: heatColor(c.rate), color: c.rate !== null && heatStep(c.rate) === HEAT.length - 1 ? '#fff' : undefined }}
               onClick={() => setPicked(picked?.day === c.day ? null : c)}
-              aria-label={`${formatDay(c.day, today)} 完成 ${c.done}/${c.total}`}
+              aria-label={c.noData ? `${formatDay(c.day, today)} 无数据` : `${formatDay(c.day, today)} 完成 ${c.done}/${c.total}`}
             >
               <span className="heat-day">{Number(c.day.slice(8))}</span>
+              {c.noData && range === 7 && <span className="heat-nodata">无数据</span>}
               {c.allDone && <span className="heat-star">⭐</span>}
             </button>
           ))}
         </div>
         <div className="heat-foot">
           <span className="row-sub">
-            {picked ? `${formatDay(picked.day, today)}：完成 ${picked.done} / ${picked.total} 项（${pct(picked.rate)}）${picked.allDone ? '，全勤 ⭐' : ''}` : '点一个格子看当天详情'}
+            {picked?.noData ? `${formatDay(picked.day, today)}：无数据（那天还没有花园）` : picked ? `${formatDay(picked.day, today)}：完成 ${picked.done} / ${picked.total} 项（${pct(picked.rate)}）${picked.allDone ? '，全勤 ⭐' : ''}` : '点一个格子看当天详情'}
           </span>
           <span className="heat-legend" aria-hidden>
             0%{HEAT.map((h) => <i key={h} style={{ background: h }} />)}100%

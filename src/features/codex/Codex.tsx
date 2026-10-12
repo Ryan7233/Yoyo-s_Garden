@@ -5,7 +5,7 @@ import { VISITORS } from '../../data/visitors'
 import { BADGES } from '../../data/badges'
 import { Icon } from '../../ui/Icon'
 import { allDoneDays, monthGrid, shiftMonth } from '../../engine/stats'
-import { planResolver } from '../../engine/plans'
+import { firstDataDay, planResolver } from '../../engine/plans'
 import { formatDay, toTaskDay } from '../../engine/taskDay'
 import '../shop/shop.css'
 import './codex.css'
@@ -120,9 +120,11 @@ function BadgesPage() {
 const WEEK = ['日', '一', '二', '三', '四', '五', '六']
 
 function CalendarPage() {
-  const { tasks, dayPlans, records, today } = useStore()
+  const { child, tasks, dayPlans, records, today } = useStore()
   const [month, setMonth] = useState(today.slice(0, 7))
   const stars = allDoneDays(planResolver(tasks, dayPlans), records)
+  // 建园之前的日子显示“无数据”
+  const first = child ? firstDataDay(child, records) : today
   const weeks = monthGrid(month)
   const [y, m] = month.split('-').map(Number)
   const count = weeks.flat().filter((d) => d && stars.has(d)).length
@@ -136,11 +138,12 @@ function CalendarPage() {
       <div className="cal-grid">
         {WEEK.map((w) => <span key={w} className="cal-week">{w}</span>)}
         {weeks.flat().map((d, i) => (
-          <span key={i} className={`cal-day${d && stars.has(d) ? ' star' : ''}${d === today ? ' today' : ''}`}>
+          <span key={i} className={`cal-day${d && stars.has(d) ? ' star' : ''}${d && d < first ? ' no-data' : ''}${d === today ? ' today' : ''}`}>
             {d && (
               <>
                 <span className="cal-num num">{Number(d.slice(8))}</span>
                 {stars.has(d) && <span className="cal-star">⭐</span>}
+                {d < first && <span className="cal-nodata">无数据</span>}
               </>
             )}
           </span>

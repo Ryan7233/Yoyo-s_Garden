@@ -15,14 +15,16 @@ export interface DayCompletion {
   day: string
   done: number
   total: number
-  /** 0–1；当天没有安排任务时为 null */
+  /** 0–1；当天没有安排任务或无数据时为 null */
   rate: number | null
   allDone: boolean
+  /** 建园之前，没有数据 */
+  noData: boolean
 }
 
 /** 某天安排的任务（不含运动卡片）完成了几项 */
 export function dayCompletion(planOf: PlanOf, records: TaskRecord[], day: string): DayCompletion {
-  const { required, more } = planOf(day)
+  const { required, more, noData = false } = planOf(day)
   const list = [...required, ...more].filter((t) => t.id !== EXERCISE_TASK_ID)
   const latest = latestRecordByTask(records, day)
   const done = list.filter((t) => latest.get(t.id)?.status === 'done').length
@@ -32,6 +34,7 @@ export function dayCompletion(planOf: PlanOf, records: TaskRecord[], day: string
     total: list.length,
     rate: list.length ? done / list.length : null,
     allDone: dayProgress(planOf, records, day).allDone,
+    noData,
   }
 }
 

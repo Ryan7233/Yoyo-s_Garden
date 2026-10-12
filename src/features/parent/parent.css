@@ -178,6 +178,8 @@
   color: var(--text);
   padding: 0;
 }
+.heat-cell.no-data { background: transparent !important; border: 2px dashed var(--cream-edge); color: var(--text-soft); }
+.heat-nodata { font-family: var(--font-body); font-size: 11px; line-height: 1.1; }
 .heat-cell.picked { outline: 3px solid var(--text); outline-offset: 1px; }
 .heat-star { font-size: 13px; line-height: 1; }
 .heat-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap; }

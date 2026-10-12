@@ -47,3 +47,20 @@ describe('按日期保存的任务配置', () => {
     expect(daysToFreeze('2026-10-18', '2026-10-18', new Set())).toEqual([])
   })
 })
+
+describe('建园之前的日子', () => {
+  const of = planResolver(tasks, [], SAT)
+  it('没有任务、标记为无数据', () => {
+    expect(of('2026-10-16')).toEqual({ required: [], more: [], noData: true })
+    expect(of(SAT).noData).toBeFalsy()
+    expect(of(SAT).required.length).toBe(3)
+  })
+  it('不计入完成率和各任务完成率', () => {
+    const days = ['2026-10-11', '2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15', '2026-10-16', SAT]
+    const c = dayCompletion(of, [], '2026-10-16')
+    expect(c).toMatchObject({ noData: true, rate: null, total: 0, allDone: false })
+    expect(dayCompletion(of, [], SAT).noData).toBe(false)
+    const reading = taskRates(of, [done('english-reading', SAT)], days).find((r) => r.task.id === 'english-reading')!
+    expect([reading.done, reading.scheduled]).toEqual([1, 1])
+  })
+})

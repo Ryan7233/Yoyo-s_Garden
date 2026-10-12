@@ -100,4 +100,6 @@
 .cal-day:empty { background: none; border: none; }
 .cal-day.star { background: var(--coin-light); border-color: var(--coin-dark); box-shadow: 0 3px 0 var(--coin); }
 .cal-day.today { outline: 3px solid var(--primary-dark); outline-offset: 1px; }
+.cal-day.no-data { background: transparent; border-style: dashed; color: var(--text-soft); }
+.cal-nodata { font-size: 11px; line-height: 1.1; }
 .cal-star { font-size: 20px; line-height: 1; }
