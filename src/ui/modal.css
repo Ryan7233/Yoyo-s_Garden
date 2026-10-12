@@ -9,6 +9,7 @@
   /* 弹出键盘时（--kb）把弹窗往上让，输入框不被挡住 */
   padding: calc(16px + var(--safe-top)) 16px calc(16px + max(var(--safe-bottom), var(--kb, 0px)));
 }
+.modal:focus { outline: none; }
 .modal {
   width: min(540px, 100%);
   max-height: 100%;
