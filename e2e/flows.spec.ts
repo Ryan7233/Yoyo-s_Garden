@@ -11,7 +11,7 @@ test('收获、插花、运动计时、拖拽摆放与刷新后恢复', async ({
     ledger: [{ id: 'gift-test', at: now, currency: 'coin', amount: 100, reason: 'bonus', note: '测试' }],
     inventory: [{ id: 'inv-bench', catalogId: 'out-bench', count: 1 }],
   })
-  await dismissNotices(page)
+  await dismissNotices(page, ['收下啦', '太好啦'])
 
   // 收获：点成熟的向日葵
   await page.getByRole('button', { name: '地块' }).first().click()
@@ -19,7 +19,7 @@ test('收获、插花、运动计时、拖拽摆放与刷新后恢复', async ({
   await expect(page.locator('.plant')).toHaveCount(0)
   // 第一次收获会得到徽章，先看完“好消息”
   await expect(page.getByText('第一次收获')).toBeVisible()
-  await dismissNotices(page)
+  await dismissNotices(page, ['太好啦'])
   await page.getByRole('button', { name: /背包/ }).click()
   await expect(page.locator('.bag-card', { hasText: '向日葵' }).filter({ hasNotText: '种子' })).toContainText('×1')
   await closeSheet(page)

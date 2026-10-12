@@ -46,14 +46,15 @@ export async function seedDb(page: Page, rows: Record<string, Record<string, unk
   await expect(page.locator('.garden-name')).toBeVisible()
 }
 
-/** 依次关掉“到账”“好消息”提示（一次只弹一个） */
-export async function dismissNotices(page: Page) {
-  const btn = page.getByRole('button', { name: /收下啦|太好啦/ })
-  for (let i = 0; i < 4; i++) {
-    try {
-      await btn.first().click({ timeout: 2500 })
-    } catch {
-      return
-    }
+/**
+ * 依次关掉预期的提示（一次只弹一个）：每个都等它的对话框出现、点按钮、再等它消失，
+ * 不靠超时猜。buttons 是每个提示的按钮名，比如 ['收下啦', '太好啦']。
+ */
+export async function dismissNotices(page: Page, buttons: (string | RegExp)[]) {
+  for (const name of buttons) {
+    const dialog = page.getByRole('dialog').filter({ has: page.getByRole('button', { name }) })
+    await expect(dialog).toBeVisible()
+    await dialog.getByRole('button', { name }).click()
+    await expect(dialog).toHaveCount(0)
   }
 }

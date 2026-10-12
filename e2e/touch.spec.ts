@@ -133,5 +133,5 @@ for (const [device, viewport] of [['iPad Pro 11', null], ['iPad mini', { width: 
   await page.getByRole('button', { name: '退出' }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await expectAllBig(page, '到账提示')
-  await dismissNotices(page)
+  await dismissNotices(page, ['收下啦'])
 })
