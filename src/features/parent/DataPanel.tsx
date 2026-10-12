@@ -77,9 +77,13 @@ export function DataPanel() {
           confirmText="覆盖导入"
           onCancel={() => setPending(null)}
           onConfirm={async () => {
-            await act(() => importBackup(pending))
+            try {
+              await act(() => importBackup(pending))
+              setMsg('✓ 导入完成')
+            } catch (e) {
+              setMsg(`✗ 导入失败，原来的数据没有改动：${(e as Error).message}`)
+            }
             setPending(null)
-            setMsg('✓ 导入完成')
           }}
         />
       )}
