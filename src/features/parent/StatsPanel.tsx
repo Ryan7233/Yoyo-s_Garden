@@ -7,6 +7,7 @@ import { firstDataDay, planResolver } from '../../engine/plans'
 import { coinSummary, dayCompletion, exerciseSeries, lastNDays, taskRates, type DayCompletion } from '../../engine/stats'
 import { formatDay } from '../../engine/taskDay'
 import { formatValue } from '../tasks/Exercise'
+import { RaiseHistory } from '../courage/RaiseHistory'
 
 // 完成率用一种绿色由浅到深（顺序色阶），没有安排任务的日子用灰色
 const HEAT = ['#eef8f3', '#c4ead8', '#8fd5b6', '#52b98f', '#2a8a65']
@@ -100,6 +101,8 @@ export function StatsPanel() {
           {exercises.map((d) => <ExerciseChart key={d.id} def={d} days={days} values={exerciseSeries(exerciseRecords, d.id, days)} />)}
         </div>
       </section>
+
+      <RaiseHistory />
 
       <section className="stats-card">
         <h3 className="panel-day">金币流水</h3>

@@ -1,7 +1,7 @@
 // 家长统计与全勤日历（8.2、7.1）：都是对记录的纯计算
 import type { ExerciseRecord, LedgerEntry, LedgerReason, TaskDef, TaskRecord } from '../data/types'
 import type { PlanOf } from './plans'
-import { EXERCISE_TASK_ID } from '../data/tasks'
+import { EXERCISE_TASK_ID, RAISE_HAND_TASK_ID } from '../data/tasks'
 import { dayProgress, latestRecordByTask } from './rewards'
 import { addDays, parseTaskDay, toTaskDay, weekdayOf } from './taskDay'
 import { countsAsDone } from './exercise'
@@ -22,10 +22,13 @@ export interface DayCompletion {
   noData: boolean
 }
 
-/** 某天安排的任务（不含运动卡片）完成了几项 */
+/** 不算完成率的任务：运动卡片单独统计；举手没记录的日子不算“没完成” */
+const NOT_RATED = [EXERCISE_TASK_ID, RAISE_HAND_TASK_ID]
+
+/** 某天安排的任务（不含运动卡片和举手）完成了几项 */
 export function dayCompletion(planOf: PlanOf, records: TaskRecord[], day: string): DayCompletion {
   const { required, more, noData = false } = planOf(day)
-  const list = [...required, ...more].filter((t) => t.id !== EXERCISE_TASK_ID)
+  const list = [...required, ...more].filter((t) => !NOT_RATED.includes(t.id))
   const latest = latestRecordByTask(records, day)
   const done = list.filter((t) => latest.get(t.id)?.status === 'done').length
   return {
@@ -52,7 +55,7 @@ export function taskRates(planOf: PlanOf, records: TaskRecord[], days: string[])
     const { required, more } = planOf(day)
     const latest = latestRecordByTask(records, day)
     for (const t of [...required, ...more]) {
-      if (t.id === EXERCISE_TASK_ID) continue
+      if (NOT_RATED.includes(t.id)) continue
       const r = out.get(t.id) ?? { task: t, done: 0, scheduled: 0, rate: null }
       r.scheduled++
       if (latest.get(t.id)?.status === 'done') r.done++

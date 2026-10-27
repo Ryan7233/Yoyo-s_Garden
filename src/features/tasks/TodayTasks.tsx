@@ -4,11 +4,12 @@ import { livePlan } from '../../engine/plans'
 import { dayProgress, latestRecordByTask } from '../../engine/rewards'
 import { earnedOn } from '../../engine/ledger'
 import { childReportTask } from '../../db/actions'
-import { EXERCISE_TASK_ID, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../../data/tasks'
+import { EXERCISE_TASK_ID, RAISE_HAND_TASK_ID, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../../data/tasks'
 import type { TaskDef, TaskRecord } from '../../data/types'
 import { spellQueue, weekQuizWords } from '../../engine/spelling'
 import { submitSpellSession, type SubmittedResult } from '../../db/spelling'
 import { SpellingSheet, type DictationItem } from '../spelling/SpellingSheet'
+import { RaiseHandSheet } from '../courage/RaiseHandSheet'
 import { Celebrate } from '../../ui/Celebrate'
 import { ExerciseSheet } from './Exercise'
 import { bestTodayByExercise, exercisesForDay } from '../../engine/exercise'
@@ -22,6 +23,7 @@ export function TodayTasks() {
   const [celebrate, setCelebrate] = useState(0)
   const [sportOpen, setSportOpen] = useState(false)
   const [dictation, setDictation] = useState<{ taskId: string; items: DictationItem[] } | null>(null)
+  const [raising, setRaising] = useState(false)
   if (!child) return null
 
   // 今天始终按当前配置
@@ -64,6 +66,10 @@ export function TodayTasks() {
   const report = async (task: TaskDef) => {
     if (task.id === EXERCISE_TASK_ID) {
       setSportOpen(true)
+      return
+    }
+    if (task.id === RAISE_HAND_TASK_ID) {
+      setRaising(true)
       return
     }
     const spelling = spellingOf(task)
@@ -121,6 +127,7 @@ export function TodayTasks() {
 
       {celebrate > 0 && <Celebrate key={celebrate} />}
       {sportOpen && <ExerciseSheet onClose={() => setSportOpen(false)} />}
+      {raising && <RaiseHandSheet onClose={() => setRaising(false)} />}
       {dictation && (
         <SpellingSheet
           items={dictation.items}
@@ -147,6 +154,7 @@ function TaskCard({ task, record, sport, spelling, onReport }: {
   onReport: () => void
 }) {
   if (task.id === EXERCISE_TASK_ID) return <SportCard task={task} sport={sport} onOpen={onReport} />
+  if (task.id === RAISE_HAND_TASK_ID) return <RaiseCard task={task} onOpen={onReport} />
   const status = record?.status === 'revoked' ? undefined : record?.status
   return (
     <div className={`task-card ${status ?? 'todo'}`}>
@@ -187,6 +195,26 @@ function SportCard({ task, sport, onOpen }: { task: TaskDef; sport: SportProgres
       <button className={`btn btn-big task-btn ${all ? 'btn-ghost' : 'btn-primary'}`} onClick={onOpen}>
         {all ? '看看成绩' : sport.done > 0 ? '继续运动' : '去运动'}
       </button>
+    </div>
+  )
+}
+
+/** 举手牌：一天可以记好几次，没记的日子什么都不提示 */
+function RaiseCard({ task, onOpen }: { task: TaskDef; onOpen: () => void }) {
+  const { handRaises, today } = useStore()
+  const times = handRaises.filter((r) => r.date === today).length
+  return (
+    <div className={`task-card ${times ? 'done' : 'todo'}`}>
+      <span className="task-icon" aria-hidden>{task.icon}</span>
+      <div className="task-body">
+        <div className="task-name">{task.name}</div>
+        <div className="task-meta">
+          {times
+            ? <span className="badge done">✓ 今天记了 <span className="num">{times}</span> 次 · 🌻 +1</span>
+            : <span className="hint">举手一次，得 🌻 勇气种子</span>}
+        </div>
+      </div>
+      <button className="btn btn-primary btn-big task-btn" onClick={onOpen}>{times ? '又举手了' : '我举手了'}</button>
     </div>
   )
 }

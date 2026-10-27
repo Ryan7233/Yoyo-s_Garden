@@ -1,0 +1,33 @@
+/* 向日葵举手 */
+.raise-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); margin: var(--sp-4) 0; }
+.raise-choice { flex-direction: column; min-height: 132px; padding: var(--sp-3); white-space: normal; }
+.raise-icon { font-size: 44px; line-height: 1; }
+.raise-done { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--sp-2); }
+.raise-grow { font-family: var(--font-title); font-size: var(--fs-l); color: #b07408; }
+
+/* 鼓励小动画：向日葵轻轻点头；答错时冒出小心心 */
+.raise-cheer-art { position: relative; height: 130px; display: flex; align-items: flex-end; justify-content: center; }
+.raise-sway { display: inline-block; transform-origin: 50% 100%; animation: raise-nod 1.4s ease-in-out 2; }
+.raise-heart { position: absolute; bottom: 60px; font-size: 28px; opacity: 0; animation: raise-float 1.6s ease-out forwards; }
+.raise-heart.h0 { left: 30%; }
+.raise-heart.h1 { left: 44%; animation-delay: 0.2s; }
+.raise-heart.h2 { left: 58%; animation-delay: 0.4s; }
+.raise-heart.h3 { left: 68%; animation-delay: 0.6s; }
+@keyframes raise-nod { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-8deg); } 60% { transform: rotate(6deg); } }
+@keyframes raise-float { 0% { opacity: 0; transform: translateY(0) scale(0.6); } 25% { opacity: 1; } 100% { opacity: 0; transform: translateY(-70px) scale(1.1); } }
+@media (prefers-reduced-motion: reduce) { .raise-sway, .raise-heart { animation: none; } .raise-heart { opacity: 1; } }
+
+/* 花园里的勇气向日葵：长在小屋左下角，不占地块 */
+.courage-spot { position: relative; pointer-events: none; z-index: 2; }
+.courage-flower { position: absolute; left: -6%; bottom: 2%; pointer-events: auto; background: none; border: 0; padding: 0; transform-origin: 50% 100%; }
+.courage-flower:active { transform: scale(0.96); }
+.courage-flower.lv1 { width: 30%; }
+.courage-flower.lv2 { width: 36%; }
+.courage-flower.lv3 { width: 42%; }
+.courage-flower svg { width: 100%; height: auto; display: block; }
+
+.courage-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); text-align: center; }
+.courage-stats b { display: block; font-family: var(--font-title); font-size: 34px; }
+.courage-week { display: flex; gap: 8px; justify-content: center; font-size: 30px; }
+/* 孩子会点：不小于 64px */
+.courage-goal .chip { min-height: var(--touch); padding: 0 24px; font-size: var(--fs-m); }

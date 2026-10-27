@@ -105,7 +105,7 @@ const TABLE_SPECS: Record<BackupTable, TableSpec> = {
   settings: {
     key: ['id'],
     fields: { id: ['settings'], schemaVersion: 'n', sound: 'b', pinHash: 's', pinSalt: 's', requiredCap: 'n', backfillDays: 'n' },
-    optional: { lastBackupAt: 's', lastSeenAt: 's', clockWentBack: 'b' },
+    optional: { lastBackupAt: 's', lastSeenAt: 's', clockWentBack: 'b', raiseGoal: 'n', courageWeeks: 'a', raiseChallengeAt: 's' },
   },
   dayPlans: { key: ['childId', 'date'], fields: { childId: 's', date: 's', required: 'a', more: 'a' } },
   spellWords: {
@@ -120,6 +120,7 @@ const TABLE_SPECS: Record<BackupTable, TableSpec> = {
     fields: { id: 's', childId: 's', date: 's', mode: ['daily', 'quiz', 'baseline'], at: 's', results: 'a' },
     optional: { recordId: 's', graded: 'b' },
   },
+  handRaises: { key: ['id'], fields: { id: 's', childId: 's', date: 's', result: ['right', 'wrong', 'notCalled'], at: 's' } },
 }
 
 function typeOk(v: unknown, t: FieldType): boolean {
@@ -183,6 +184,8 @@ export function parseBackup(text: string): BackupFile {
     f.tables.spellWords ??= []
     f.tables.spellSessions ??= []
   }
+  // 版本 6 之前没有举手记录
+  if (f.schemaVersion < 6) f.tables.handRaises ??= []
   validateTables(f.tables as Record<BackupTable, unknown[]>)
   return f as BackupFile
 }

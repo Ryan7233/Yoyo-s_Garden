@@ -67,7 +67,7 @@ describe('数据库升级', () => {
     useDatabase(next)
     await next.open()
     const snaps = (await next.snapshots.toArray()).sort((a, b) => a.schemaVersion - b.schemaVersion)
-    expect(snaps.map((s) => s.schemaVersion)).toEqual([1, 2])
+    expect(snaps.map((s) => s.schemaVersion)).toEqual([1, 2, 5])
     expect(JSON.parse(snaps[0].data).ledger).toHaveLength(1)
     expect(await next.ledger.get('l1')).toMatchObject({ amount: 7 })
     expect(await next.dayPlans.count()).toBeGreaterThanOrEqual(3)

@@ -1,13 +1,13 @@
 import Dexie, { type EntityTable, type Transaction } from 'dexie'
 import type {
-  Child, DayPlan, ExerciseDef, ExerciseRecord, InventoryItem, LedgerEntry, PlacedItem,
+  Child, DayPlan, ExerciseDef, ExerciseRecord, HandRaise, InventoryItem, LedgerEntry, PlacedItem,
   PlantInstance, Plot, Settings, SpellInk, SpellSession, SpellWord, TaskDef, TaskRecord, Unlock, Wish,
 } from '../data/types'
-import { SPELLING_HINT, SPELLING_HINT_V3, SPELLING_TASK_ID, spellingTasks } from '../data/tasks'
+import { RAISE_HAND_TASK_ID, SPELLING_HINT, SPELLING_HINT_V3, SPELLING_TASK_ID, raiseHandTask, spellingTasks } from '../data/tasks'
 import { daysToFreeze, freezePlan } from '../engine/plans'
 import { toTaskDay } from '../engine/taskDay'
 
-export const SCHEMA_VERSION = 5
+export const SCHEMA_VERSION = 6
 
 export interface VideoBlob { id: string; blob: Blob; createdAt: string }
 export interface Snapshot { id: string; schemaVersion: number; at: string; data: string }
@@ -33,6 +33,7 @@ export class GardenDB extends Dexie {
   spellWords!: EntityTable<SpellWord, 'id'>
   spellSessions!: EntityTable<SpellSession, 'id'>
   spellInks!: EntityTable<SpellInk, 'id'>
+  handRaises!: EntityTable<HandRaise, 'id'>
 
   constructor(name = 'little-garden') {
     super(name)
@@ -87,6 +88,19 @@ export class GardenDB extends Dexie {
         if (t.hint === SPELLING_HINT_V3) t.hint = SPELLING_HINT
       })
     })
+    // 6：向日葵举手。老档案补上“我今天举手了”，和版本 3 一样先按旧配置冻结过去的日子
+    this.version(6).stores({ handRaises: 'id, childId, date' }).upgrade(async (tx) => {
+      await snapshotBeforeMigration(tx, 5, [...V1_TABLES, 'dayPlans', 'spellWords', 'spellSessions'])
+      const today = toTaskDay(new Date())
+      for (const child of await tx.table<Child>('children').toArray()) {
+        const tasks = await tx.table<TaskDef>('tasks').where('childId').equals(child.id).toArray()
+        if (tasks.some((t) => t.id === RAISE_HAND_TASK_ID)) continue
+        const frozen = await tx.table<DayPlan>('dayPlans').where('childId').equals(child.id).toArray()
+        const days = daysToFreeze(toTaskDay(new Date(child.createdAt)), today, new Set(frozen.map((p) => p.date)))
+        await tx.table<DayPlan>('dayPlans').bulkPut(days.map((d) => freezePlan(tasks, child.id, d)))
+        await tx.table<TaskDef>('tasks').add(raiseHandTask(child.id, tasks.length))
+      }
+    })
   }
 }
 
@@ -104,7 +118,7 @@ const V1_TABLES = [
 ] as const
 
 /** 进入备份的数据表（视频、默写笔迹和迁移快照不进备份） */
-export const BACKUP_TABLES = [...V1_TABLES, 'dayPlans', 'spellWords', 'spellSessions'] as const
+export const BACKUP_TABLES = [...V1_TABLES, 'dayPlans', 'spellWords', 'spellSessions', 'handRaises'] as const
 export type BackupTable = (typeof BACKUP_TABLES)[number]
 
 export let db = new GardenDB()

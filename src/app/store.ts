@@ -5,7 +5,7 @@ import { syncProgress } from '../db/progress'
 import { ensureDayPlans } from '../db/plans'
 import { topUpSpellWords } from '../db/spelling'
 import type {
-  Child, DayPlan, ExerciseRecord, InventoryItem, LedgerEntry, PlacedItem, PlantInstance, Plot, Settings, SpellSession, SpellWord, TaskDef, TaskRecord, Unlock, Wish,
+  Child, DayPlan, ExerciseRecord, HandRaise, InventoryItem, LedgerEntry, PlacedItem, PlantInstance, Plot, Settings, SpellSession, SpellWord, TaskDef, TaskRecord, Unlock, Wish,
 } from '../data/types'
 import { balanceOf, type Balance } from '../engine/ledger'
 import { toTaskDay } from '../engine/taskDay'
@@ -33,6 +33,7 @@ interface State {
   wish: Wish | null
   spellWords: SpellWord[]
   spellSessions: SpellSession[]
+  handRaises: HandRaise[]
   balance: Balance
   today: string
 
@@ -68,6 +69,7 @@ export const useStore = create<State>((set, get) => ({
   wish: null,
   spellWords: [],
   spellSessions: [],
+  handRaises: [],
   balance: { coin: 0, drop: 0 },
   today: toTaskDay(new Date()),
   page: null,
@@ -92,7 +94,7 @@ export const useStore = create<State>((set, get) => ({
     } catch (e) {
       console.error(e)
     }
-    const [tasks, dayPlans, records, exercises, exerciseRecords, ledger, plots, plants, placed, inventory, unlocks, wish, spellWords, spellSessions] = await Promise.all([
+    const [tasks, dayPlans, records, exercises, exerciseRecords, ledger, plots, plants, placed, inventory, unlocks, wish, spellWords, spellSessions, handRaises] = await Promise.all([
       db.tasks.where('childId').equals(id).sortBy('order'),
       db.dayPlans.where('childId').equals(id).toArray(),
       db.taskRecords.where('childId').equals(id).sortBy('createdAt'),
@@ -107,9 +109,10 @@ export const useStore = create<State>((set, get) => ({
       db.wishes.get(id),
       db.spellWords.where('childId').equals(id).sortBy('addedAt'),
       db.spellSessions.where('childId').equals(id).sortBy('at'),
+      db.handRaises.where('childId').equals(id).sortBy('at'),
     ])
     set({
-      loaded: true, child, settings, tasks, dayPlans, records, exercises, exerciseRecords, ledger, plots, plants, placed, inventory, unlocks, wish: wish ?? null, spellWords, spellSessions,
+      loaded: true, child, settings, tasks, dayPlans, records, exercises, exerciseRecords, ledger, plots, plants, placed, inventory, unlocks, wish: wish ?? null, spellWords, spellSessions, handRaises,
       balance: balanceOf(ledger),
       today: toTaskDay(new Date()),
     })

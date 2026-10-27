@@ -19,6 +19,7 @@ import { PlacementLayer } from '../decorate/PlacementLayer'
 import { Visitors } from './Visitors'
 import { WishBar } from './WishBar'
 import { Horizon, GroundDecor } from './Scenery'
+import { CourageSunflower } from '../courage/CourageSunflower'
 import './garden.css'
 
 type Fx = { id: string; kind: 'water' | 'grow' }
@@ -89,6 +90,7 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
               <button className="house-cell" style={cell(HOUSE_RECT.x, HOUSE_RECT.y, HOUSE_RECT.w, HOUSE_RECT.h)} onClick={onEnterHouse} aria-label="进入小屋">
                 <House roof={child.houseColor} fluid />
               </button>
+              {!decorating && <CourageSunflower />}
 
               {plots.map((p) => (
                 <button

@@ -183,6 +183,12 @@ export interface Settings {
   /** 最近一次看到的系统时间，用于检测时间倒退 */
   lastSeenAt?: string
   clockWentBack?: boolean
+  /** 向日葵举手：每周目标（几天举过手），默认 2 */
+  raiseGoal?: number
+  /** 达到过周目标的周（周一的日期），只增不减 */
+  courageWeeks?: string[]
+  /** 上次问“要不要挑战每周 3 次”是哪一周（周一的日期） */
+  raiseChallengeAt?: string
 }
 
 /** 拼写本里的一个词。phonics：符合拼读规律；sight：高频词；other：认识会说就够了，家长坚持要拼 */
@@ -240,5 +246,15 @@ export interface SpellInk {
   sessionId: string
   word: string
   dataUrl: string
+  at: string
+}
+
+/** 向日葵举手的一次记录。答对、答错、没叫到奖励一样 */
+export type RaiseResult = 'right' | 'wrong' | 'notCalled'
+export interface HandRaise {
+  id: string
+  childId: string
+  date: string
+  result: RaiseResult
   at: string
 }
