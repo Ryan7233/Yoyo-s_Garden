@@ -203,6 +203,10 @@ export interface SpellWord {
   /** 周末听写里写错、放回下周的次数 */
   misses: number
   addedAt: string
+  /** auto：按 Words 词库自动给的；parent：家长加的（老数据没有这个字段，当作家长加的） */
+  source?: 'auto' | 'parent'
+  /** 家长点了“会写，跳过” */
+  known?: boolean
 }
 export interface SpellResult {
   word: string

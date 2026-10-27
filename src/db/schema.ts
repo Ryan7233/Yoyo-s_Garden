@@ -3,11 +3,11 @@ import type {
   Child, DayPlan, ExerciseDef, ExerciseRecord, InventoryItem, LedgerEntry, PlacedItem,
   PlantInstance, Plot, Settings, SpellInk, SpellSession, SpellWord, TaskDef, TaskRecord, Unlock, Wish,
 } from '../data/types'
-import { spellingTasks } from '../data/tasks'
+import { SPELLING_HINT, SPELLING_HINT_V3, SPELLING_TASK_ID, spellingTasks } from '../data/tasks'
 import { daysToFreeze, freezePlan } from '../engine/plans'
 import { toTaskDay } from '../engine/taskDay'
 
-export const SCHEMA_VERSION = 4
+export const SCHEMA_VERSION = 5
 
 export interface VideoBlob { id: string; blob: Blob; createdAt: string }
 export interface Snapshot { id: string; schemaVersion: number; at: string; data: string }
@@ -81,6 +81,12 @@ export class GardenDB extends Dexie {
     })
     // 4：默写笔迹（和纪录视频一样单独存，不进备份）。只加新表，原数据不变
     this.version(4).stores({ spellInks: 'id, childId, sessionId, at' })
+    // 5：拼写词改成自动给，换掉“拼 3 个词”的旧说明（家长自己改过的不动）。只改这一条文字
+    this.version(5).stores({}).upgrade(async (tx) => {
+      await tx.table<TaskDef>('tasks').where('id').equals(SPELLING_TASK_ID).modify((t) => {
+        if (t.hint === SPELLING_HINT_V3) t.hint = SPELLING_HINT
+      })
+    })
   }
 }
 

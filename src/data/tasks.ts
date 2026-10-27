@@ -13,6 +13,9 @@ export const EXERCISE_TASK_ID = 'sport'
 export const SPELLING_TASK_ID = 'spelling'
 export const SPELLING_QUIZ_TASK_ID = 'spelling-quiz'
 export const SPELLING_TASK_IDS = [SPELLING_TASK_ID, SPELLING_QUIZ_TASK_ID]
+/** 版本 3 时“拼 3 个词”的说明（那时要家长加词），版本 5 升级时换成新说明 */
+export const SPELLING_HINT_V3 = '牛津树里挑的词：看、读、盖住、写、对照，再听写复习词'
+export const SPELLING_HINT = '每天 3 个新词，自动从易到难，也可以在拼写本里加书里的词：看、读、盖住、写、对照，再听写复习词'
 
 type Seed = Omit<TaskDef, 'childId' | 'order' | 'enabled'>
 
@@ -35,7 +38,7 @@ const SEEDS: Seed[] = [
   { id: 'pack-bag', name: '整理书包', icon: '🎒', category: 'habit', confirmMode: 'self', schedule: BEFORE_SCHOOL, coins: 2, drops: 1, required: false, hint: '准备好第二天的东西' },
   { id: 'tidy-up', name: '收拾书桌和玩具', icon: '🧹', category: 'habit', confirmMode: 'parent', schedule: DAILY, coins: 2, drops: 1, required: false, hint: '睡前收好' },
   { id: 'wash-up', name: '自己洗澡刷牙', icon: '🪥', category: 'habit', confirmMode: 'self', schedule: DAILY, coins: 2, drops: 1, required: false, hint: '不用大人催' },
-  { id: SPELLING_TASK_ID, name: '拼 3 个词', icon: '✍️', category: 'study', confirmMode: 'parent', schedule: SCHOOL_DAYS, coins: 3, drops: 1, required: false, hint: '牛津树里挑的词：看、读、盖住、写、对照，再听写复习词' },
+  { id: SPELLING_TASK_ID, name: '拼 3 个词', icon: '✍️', category: 'study', confirmMode: 'parent', schedule: SCHOOL_DAYS, coins: 3, drops: 1, required: false, hint: SPELLING_HINT },
   { id: SPELLING_QUIZ_TASK_ID, name: '周末小听写', icon: '📝', category: 'study', confirmMode: 'parent', schedule: { kind: 'weekdays', days: [6] }, coins: 5, drops: 1, required: false, hint: '本周学过的词听写一遍，错的放进下周' },
 ]
 

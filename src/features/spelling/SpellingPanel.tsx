@@ -6,12 +6,12 @@ import {
 } from '../../data/spelling'
 import { SPELL_DONE_STEP, SPELL_NEW_PER_DAY, addedOn, spellQueue, toSchoolDay } from '../../engine/spelling'
 import { formatDay } from '../../engine/taskDay'
-import { addSpellWords, removeSpellWord, requeueSpellWord, submitSpellSession, type SubmittedResult } from '../../db/spelling'
+import { addSpellWords, markSpellKnown, removeSpellWord, requeueSpellWord, submitSpellSession, type SubmittedResult } from '../../db/spelling'
 import { SpellingSheet } from './SpellingSheet'
 
 const MODE_LABEL: Record<SpellSession['mode'], string> = { daily: '每日拼写', quiz: '周末小听写', baseline: '摸底' }
 
-/** 家长：拼写本。牛津树读完挑 3 个词加进来，复习和周末听写自动排 */
+/** 家长：拼写本。每天按 Words 幼儿词库从易到难自动给 3 个新词，家长可以补充书里的词（优先）；复习和周末听写自动排 */
 export function SpellingPanel() {
   const { child, spellWords, spellSessions, today } = useStore()
   const [word, setWord] = useState('')
@@ -54,10 +54,10 @@ export function SpellingPanel() {
       <p className="modal-text">
         新词 <b className="num">{queue.fresh.length}</b> 个{queue.fresh.length ? `（${queue.fresh.map((w) => w.word).join('、')}）` : ''}，
         复习 <b className="num">{queue.review.length}</b> 个{queue.review.length ? `（${queue.review.map((w) => w.word).join('、')}）` : ''}。
-        孩子点“拼 3 个词”会打开 YoYo Words 的手写默写。
+        每天自动从易到难给 3 个新词（Words 幼儿词库，从 cat、dog、red 开始），孩子点“拼 3 个词”会打开 YoYo Words 的手写默写。
       </p>
 
-      <h3 className="panel-day">加词（今天已加 <span className="num">{addedToday}</span> 个，每天 {SPELL_NEW_PER_DAY} 个就够）</h3>
+      <h3 className="panel-day">补充书里的词（可选，你加的优先，会顶替今天自动给的）</h3>
       <div className="spell-add">
         <input className="input" value={word} maxLength={20} placeholder="英文，比如 sunny" autoCapitalize="none" autoCorrect="off" spellCheck={false}
           onChange={(e) => { setWord(e.target.value); setKind(null) }} />
@@ -75,15 +75,15 @@ export function SpellingPanel() {
       {!exists && finalKind === 'other' && (
         <p className="spell-warn">这个词不太符合拼读规律，也不是高频词：认识、会说就够了，确定要拼吗？确定的话照样点“加入”。</p>
       )}
-      {addedToday >= SPELL_NEW_PER_DAY && <p className="spell-warn">今天已经有 {addedToday} 个新词了，再多会挤掉阅读和口语的时间。</p>}
+      {addedToday >= SPELL_NEW_PER_DAY && <p className="spell-warn">今天你已经加了 {addedToday} 个新词，再多会挤掉阅读和口语的时间。</p>}
       {msg && <p className="pop">✓ {msg}</p>}
       <div className="chips" aria-label="常用高频词">
         {suggestions.map((w) => <button key={w} className="chip" onClick={() => { setWord(w); setKind(null) }}>{w}</button>)}
       </div>
 
-      <h3 className="panel-day">摸底</h3>
+      <h3 className="panel-day">摸底（可选）</h3>
       <p className="modal-text">
-        念 10 个简单词（{BASELINE_WORDS.join('、')}）让孩子写，家长在旁边看着点对错。
+        不做也可以：自动给词从最简单的开始，头一周写得怎么样就能看出底子。想先测一下的话，念 10 个简单词（{BASELINE_WORDS.join('、')}）让孩子写，家长在旁边看着点对错。
         {lastBaseline && (
           <> 上次（{formatDay(lastBaseline.date, today)}）写对 <b className="num">{lastBaseline.results.filter((r) => r.firstTry).length} / {lastBaseline.results.length}</b>：
             {baselineAdvice(lastBaseline.results.filter((r) => r.firstTry).length, lastBaseline.results.length)}</>
@@ -109,21 +109,26 @@ export function SpellingPanel() {
       )}
 
       <h3 className="panel-day">拼写本（{spellWords.length} 个词）</h3>
-      {words.length === 0 && <p className="empty-state">还没有词。读完牛津树，挑 3 个符合拼读规律的短词或高频词加进来。</p>}
+      {words.length === 0 && <p className="empty-state">还没有词。上学日打开花园会自动给今天的 3 个词。</p>}
       {words.map((w) => (
         <div key={w.id} className="row">
           <div className="row-main">
-            <div className="row-title">{w.word}{w.zh && <span className="hint"> {w.zh}</span>} <span className={`spell-kind ${w.kind}`}>{SPELL_KIND_LABEL[w.kind]}</span></div>
+            <div className="row-title">
+              {w.word}{w.zh && <span className="hint"> {w.zh}</span>} <span className={`spell-kind ${w.kind}`}>{SPELL_KIND_LABEL[w.kind]}</span>
+              {w.source === 'auto' && <span className="spell-kind">自动</span>}
+            </div>
             <div className="row-sub">
               <span className="spell-steps" aria-label={`第 ${Math.min(w.step, SPELL_DONE_STEP)} 步`}>
                 {Array.from({ length: SPELL_DONE_STEP }, (_, i) => (i < w.step ? '●' : '○')).join('')}
               </span>
-              {' '}{w.step >= SPELL_DONE_STEP ? '学完了' : w.step === 0 ? `${formatDay(w.due, today)}学新词` : `${formatDay(w.due, today)}复习`}
+              {' '}{w.known ? '会写，跳过了' : w.step >= SPELL_DONE_STEP ? '学完了' : w.step === 0 ? `${formatDay(w.due, today)}学新词` : `${formatDay(w.due, today)}复习`}
               {w.misses > 0 && ` · 听写错过 ${w.misses} 次`}
             </div>
           </div>
-          <button className="btn btn-ghost" onClick={() => act(() => requeueSpellWord(w.id, today))}>放回下周</button>
-          <button className="btn btn-ghost" aria-label={`删除 ${w.word}`} onClick={() => act(() => removeSpellWord(w.id))}>删除</button>
+          {w.step < SPELL_DONE_STEP && <button className="btn btn-ghost" onClick={() => act(() => markSpellKnown(w.id, today))}>会写，跳过</button>}
+          <button className="btn btn-ghost" onClick={() => act(() => requeueSpellWord(w.id, today))}>{w.known ? '还是要练' : '放回下周'}</button>
+          {/* 自动给的词删了还会按顺序再来，所以只给“会写，跳过” */}
+          {w.source !== 'auto' && <button className="btn btn-ghost" aria-label={`删除 ${w.word}`} onClick={() => act(() => removeSpellWord(w.id))}>删除</button>}
         </div>
       ))}
 

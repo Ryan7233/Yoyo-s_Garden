@@ -50,7 +50,7 @@ export function TodayTasks() {
     const label = task.id === SPELLING_TASK_ID
       ? [fresh && `新词 ${fresh} 个`, items.length - fresh && `复习 ${items.length - fresh} 个`].filter(Boolean).join(' · ')
       : `本周的 ${items.length} 个词`
-    return { count: items.length ? label : '爸爸妈妈还没加词', items }
+    return { count: items.length ? label : '今天的词还没准备好', items }
   }
 
   const finishDictation = async (results: SubmittedResult[]) => {

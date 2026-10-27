@@ -3,6 +3,7 @@
 // 周六小听写本周的词，写错的放回下周当新词重新学。错了不扣分。
 import type { SpellResult, SpellWord } from '../data/types'
 import { addDays, diffDays, weekdayOf } from './taskDay'
+import { isDecodable } from '../data/spelling'
 
 /** 第 2、4、7 天：相对第 1 天加 1、3、6 天 */
 export const REVIEW_OFFSETS = [1, 3, 6] as const
@@ -65,22 +66,74 @@ export function applySpellResult(word: SpellWord, result: SpellResult | undefine
 /** 周末小听写：最近 7 天里学的新词（已经开始学的） */
 export function weekQuizWords(words: SpellWord[], today: string): SpellWord[] {
   return words
-    .filter((w) => w.step > 0 && diffDays(today, w.startDay) >= 0 && diffDays(today, w.startDay) <= 6)
+    .filter((w) => w.step > 0 && !w.known && diffDays(today, w.startDay) >= 0 && diffDays(today, w.startDay) <= 6)
     .sort((a, b) => a.startDay.localeCompare(b.startDay) || a.addedAt.localeCompare(b.addedAt))
 }
 
 /** 写错的词放回下周：下个上学日当新词重新学 */
 export function requeueWord(word: SpellWord, today: string): SpellWord {
   const start = toSchoolDay(addDays(today, 1))
-  return { ...word, startDay: start, step: 0, due: start, misses: word.misses + 1 }
+  return { ...word, startDay: start, step: 0, due: start, misses: word.misses + 1, known: false }
 }
 
-/** 某天已经加了几个新词（提示家长每天 3 个就够） */
+/** 家长某天自己加了几个新词（提示每天 3 个就够；自动给的不算） */
 export function addedOn(words: SpellWord[], day: string): number {
-  return words.filter((w) => w.startDay === toSchoolDay(day) && w.misses === 0).length
+  return words.filter((w) => w.startDay === toSchoolDay(day) && w.misses === 0 && w.source !== 'auto').length
 }
 
 /** 家长改判：回到这次默写之前的那一步，按改过的结果重新排期 */
 export function regradeSpellResult(word: SpellWord, result: SpellResult, day: string): SpellWord {
   return applySpellResult({ ...word, step: result.stepBefore ?? word.step }, result, day)
+}
+
+// ---- 自动给词：Words 幼儿词库按拼写难度重排 ----
+
+export interface PathWord { word: string; zh?: string; emoji?: string }
+
+/** 三个字母的短元音规律词：cat、dog、red */
+const CVC = /^[bcdfghjklmnpqrstvwz][aeiou][bcdfgklmnprstxz]$/
+
+/**
+ * 从易到难的拼写顺序（同一档里保持 Words 的顺序：萌芽 → Starters → Movers）：
+ * 1. 三个字母的短元音规律词（cat、dog、red）
+ * 2. 四个字母以内的其他规律词（fish、duck、milk），每两个插一个高频词（the、said）
+ * 3. 六个字母以内的规律词，每两个插一个高频词
+ * 4. 其他（rabbit、banana、elephant），按长短
+ */
+export function spellPath(kids: readonly PathWord[], sight: readonly string[]): PathWord[] {
+  const seen = new Set<string>()
+  const uniq = (list: readonly PathWord[]) => list.filter((w) => !seen.has(w.word) && seen.add(w.word))
+  const byWord = new Map(kids.map((w) => [w.word, w]))
+  const t0 = uniq(kids.filter((w) => CVC.test(w.word)))
+  const t1 = uniq(kids.filter((w) => w.word.length <= 4 && isDecodable(w.word)))
+  const t2 = uniq(kids.filter((w) => w.word.length <= 6 && isDecodable(w.word)))
+  const sights = uniq(sight.filter((w) => w.length >= 2).map((w) => byWord.get(w) ?? { word: w }))
+  const t3 = uniq([...kids].sort((a, b) => a.word.length - b.word.length))
+  const out: PathWord[] = [...t0]
+  let s = 0
+  for (const tier of [t1, t2]) {
+    tier.forEach((w, i) => {
+      out.push(w)
+      if (i % 2 === 1 && s < sights.length) out.push(sights[s++])
+    })
+  }
+  return [...out, ...sights.slice(s), ...t3]
+}
+
+/**
+ * 今天还要自动补几个新词：今天（下个上学日）的新词凑够 3 个就不补。
+ * 前几天没写的新词还在队里也算，不会越积越多。
+ */
+export function autoPick(words: SpellWord[], path: readonly PathWord[], today: string, perDay = SPELL_NEW_PER_DAY): PathWord[] {
+  const day = toSchoolDay(today)
+  const pendingNew = words.filter((w) => w.step === 0 && w.due <= day).length
+  const need = perDay - pendingNew
+  if (need <= 0) return []
+  const inBook = new Set(words.map((w) => w.word))
+  return path.filter((w) => !inBook.has(w.word)).slice(0, need)
+}
+
+/** 她早就会写：直接算学完，以后不再出现，也不进周末听写 */
+export function markKnownWord(word: SpellWord, today: string): SpellWord {
+  return { ...word, step: SPELL_DONE_STEP, due: today, known: true }
 }

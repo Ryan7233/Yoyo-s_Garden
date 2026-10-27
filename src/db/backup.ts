@@ -113,7 +113,7 @@ const TABLE_SPECS: Record<BackupTable, TableSpec> = {
     fields: {
       id: 's', childId: 's', word: 's', kind: ['phonics', 'sight', 'other'], startDay: 's', step: 'n', due: 's', misses: 'n', addedAt: 's',
     },
-    optional: { zh: 's' },
+    optional: { zh: 's', source: ['auto', 'parent'], known: 'b' },
   },
   spellSessions: {
     key: ['id'],

@@ -24,7 +24,7 @@
 .spell-add { display: flex; gap: var(--sp-2); flex-wrap: wrap; align-items: center; }
 .spell-add .input { flex: 1 1 180px; width: auto; }
 .spell-add .input.zh { flex: 1 1 140px; }
-.spell-kind { font-size: var(--fs-xs); padding: 2px 10px; border-radius: var(--r-pill); background: var(--mist-light); white-space: nowrap; }
+.spell-kind { margin-left: 6px; font-size: var(--fs-xs); padding: 2px 10px; border-radius: var(--r-pill); background: var(--mist-light); white-space: nowrap; }
 .spell-kind.other { background: var(--coin-light); }
 .spell-steps { letter-spacing: 2px; color: var(--primary-dark); }
 .spell-warn { font-size: var(--fs-s); color: var(--text-soft); background: var(--coin-light); border-radius: var(--r-m); padding: 10px 14px; }

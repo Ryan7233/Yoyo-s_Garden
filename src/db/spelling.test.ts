@@ -3,10 +3,11 @@ import Dexie from 'dexie'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { GardenDB, db, useDatabase } from './schema'
 import { confirmRecord, setupChild } from './actions'
-import { addSpellWords, correctSpellResult, gradeSpellQuiz, inksOf, submitSpellSession } from './spelling'
+import { addSpellWords, correctSpellResult, gradeSpellQuiz, inksOf, markSpellKnown, submitSpellSession, topUpSpellWords } from './spelling'
+import { updateTask } from './actions'
 import { exportBackup, parseBackup } from './backup'
 import { balanceOf } from '../engine/ledger'
-import { defaultTasks, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID, SPELLING_TASK_IDS } from '../data/tasks'
+import { defaultTasks, SPELLING_HINT, SPELLING_HINT_V3, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID, SPELLING_TASK_IDS } from '../data/tasks'
 import { addDays, toTaskDay } from '../engine/taskDay'
 
 const MON = new Date(2026, 9, 19, 18, 0)
@@ -126,6 +127,62 @@ describe('看笔迹确认和批改', () => {
     await submitSpellSession(childId, 'baseline', [{ word: 'dog', kind: 'review', firstTry: true, done: true, attempts: 1, ink: INK }], '2026-11-19', later)
     expect((await inksOf(old.id)).size).toBe(0)
     expect(await db.spellInks.count()).toBe(1)
+  })
+})
+
+describe('自动给词', () => {
+  const book = async () => (await db.spellWords.where('childId').equals(childId).sortBy('addedAt'))
+
+  it('上学日补够 3 个，同一天再打开不重复补；周末和关掉任务时不补', async () => {
+    expect(await topUpSpellWords(childId, MON_DAY, MON)).toEqual(['cat', 'dog', 'red'])
+    expect(await topUpSpellWords(childId, MON_DAY, MON)).toEqual([])
+    expect((await book()).map((w) => [w.word, w.source, w.zh])).toEqual([['cat', 'auto', '猫'], ['dog', 'auto', '狗'], ['red', 'auto', '红色']])
+    expect(await topUpSpellWords(childId, SAT_DAY, MON)).toEqual([])
+    await updateTask(SPELLING_TASK_ID, { enabled: false }, MON)
+    await db.spellWords.clear()
+    expect(await topUpSpellWords(childId, MON_DAY, MON)).toEqual([])
+  })
+
+  it('家长加的词优先：顶替今天自动给、还没练的词', async () => {
+    await topUpSpellWords(childId, MON_DAY, MON)
+    await addSpellWords(childId, [{ word: 'sunny', kind: 'phonics' }], MON_DAY, MON)
+    expect((await book()).map((w) => w.word).sort()).toEqual(['cat', 'dog', 'sunny'])
+    // 已经练过的自动词不会被顶掉
+    await submitSpellSession(childId, 'daily', [{ word: 'cat', kind: 'new', firstTry: true, done: true, attempts: 1 }], MON_DAY, MON)
+    await addSpellWords(childId, [{ word: 'said', kind: 'sight' }, { word: 'jump', kind: 'phonics' }], MON_DAY, MON)
+    expect((await book()).map((w) => w.word).sort()).toEqual(['cat', 'jump', 'said', 'sunny'])
+  })
+
+  it('会写，跳过以后，下一个上学日照样补够 3 个新词', async () => {
+    await topUpSpellWords(childId, MON_DAY, MON)
+    const cat = (await book()).find((w) => w.word === 'cat')!
+    await markSpellKnown(cat.id, MON_DAY)
+    expect(await topUpSpellWords(childId, MON_DAY, MON)).toEqual(['six'])
+  })
+})
+
+describe('数据库升级到版本 5', () => {
+  it('“拼 3 个词”的旧说明换成新说明，家长改过的不动', async () => {
+    const make = async (hint: string) => {
+      const name = `v4-${Math.random()}`
+      const v4 = new Dexie(name)
+      v4.version(4).stores({
+        children: 'id', tasks: 'id, childId, order', exercises: 'id, childId',
+        taskRecords: 'id, childId, taskId, date, status, [childId+date]', exerciseRecords: 'id, childId, exerciseId, date, status',
+        ledger: 'id, childId, at, date, refId, reason', inventory: 'id, childId, catalogId, [childId+catalogId]',
+        placed: 'id, childId, scene', plants: 'id, childId, scene', plots: '[childId+x+y], childId',
+        unlocks: 'id, childId, kind, refId, [childId+kind+refId]', wishes: 'childId', settings: 'id', videos: 'id', snapshots: 'id, at',
+        dayPlans: '[childId+date], childId', spellWords: 'id, childId, [childId+word]', spellSessions: 'id, childId, date',
+        spellInks: 'id, childId, sessionId, at',
+      })
+      await v4.table('tasks').bulkAdd(defaultTasks('c').map((t) => (t.id === SPELLING_TASK_ID ? { ...t, hint } : t)))
+      v4.close()
+      const next = new GardenDB(name)
+      await next.open()
+      return (await next.tasks.get(SPELLING_TASK_ID))!.hint
+    }
+    expect(await make(SPELLING_HINT_V3)).toBe(SPELLING_HINT)
+    expect(await make('我自己写的说明')).toBe('我自己写的说明')
   })
 })
 

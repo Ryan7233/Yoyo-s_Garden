@@ -2,7 +2,12 @@
 import { db, uid } from './schema'
 import type { SpellKind, SpellResult, SpellSession } from '../data/types'
 import { SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../data/tasks'
-import { applySpellResult, newSpellWord, regradeSpellResult, requeueWord } from '../engine/spelling'
+import { SIGHT_WORDS, classifySpellWord } from '../data/spelling'
+import { WORDS_KIDS } from '../data/wordsKids'
+import {
+  SPELL_NEW_PER_DAY, applySpellResult, autoPick, markKnownWord, newSpellWord, regradeSpellResult, requeueWord, spellPath, toSchoolDay,
+} from '../engine/spelling'
+import { isScheduledOn } from '../engine/schedule'
 import { childReportTask, confirmRecord } from './actions'
 
 export interface NewSpellWord { word: string; kind: SpellKind; zh?: string }
@@ -12,7 +17,13 @@ export type SubmittedResult = SpellResult & { ink?: string }
 /** 笔迹留 30 天 */
 const INK_KEEP_DAYS = 30
 
-/** 加词；已经在拼写本里的词跳过，返回实际加上的词 */
+/** 自动给词的顺序：Words 幼儿词库按拼写难度重排 */
+export const SPELL_PATH = spellPath(WORDS_KIDS.map(([word, zh, emoji]) => ({ word, zh, emoji })), SIGHT_WORDS)
+
+/**
+ * 家长加词；已经在拼写本里的词跳过，返回实际加上的词。
+ * 家长加的词优先：今天的新词超过 3 个时，去掉今天自动给、还没练的词（以后还会按顺序再给）。
+ */
 export async function addSpellWords(childId: string, list: NewSpellWord[], today: string, now = new Date()): Promise<string[]> {
   return db.transaction('rw', db.spellWords, async () => {
     const added: string[] = []
@@ -21,11 +32,43 @@ export async function addSpellWords(childId: string, list: NewSpellWord[], today
       if (exists) continue
       const zh = item.zh?.trim()
       await db.spellWords.add(newSpellWord({
-        id: uid(), childId, word: item.word, kind: item.kind, addedAt: now.toISOString(), ...(zh ? { zh } : {}),
+        id: uid(), childId, word: item.word, kind: item.kind, source: 'parent', addedAt: now.toISOString(), ...(zh ? { zh } : {}),
       }, today))
       added.push(item.word)
     }
+    const day = toSchoolDay(today)
+    const words = await db.spellWords.where('childId').equals(childId).toArray()
+    const fresh = words.filter((w) => w.step === 0 && w.due <= day)
+    const spare = fresh
+      .filter((w) => w.source === 'auto' && w.startDay === day)
+      .sort((a, b) => b.addedAt.localeCompare(a.addedAt))
+    const extra = Math.min(spare.length, fresh.length - SPELL_NEW_PER_DAY)
+    if (extra > 0) await db.spellWords.bulkDelete(spare.slice(0, extra).map((w) => w.id))
     return added
+  })
+}
+
+/** 上学日打开花园时，今天的新词不够 3 个就按顺序自动补上（“拼 3 个词”关掉或今天没安排时不补） */
+export async function topUpSpellWords(childId: string, today: string, now = new Date()): Promise<string[]> {
+  return db.transaction('rw', [db.tasks, db.spellWords], async () => {
+    const task = await db.tasks.get(SPELLING_TASK_ID)
+    if (!task || task.childId !== childId || !isScheduledOn(task, today)) return []
+    const words = await db.spellWords.where('childId').equals(childId).toArray()
+    const picks = autoPick(words, SPELL_PATH, today)
+    // 同一时刻加的几个词，用毫秒错开，保持顺序
+    await db.spellWords.bulkAdd(picks.map((p, i) => newSpellWord({
+      id: uid(), childId, word: p.word, kind: classifySpellWord(p.word), source: 'auto',
+      addedAt: new Date(now.getTime() + i).toISOString(), ...(p.zh ? { zh: p.zh } : {}),
+    }, today)))
+    return picks.map((p) => p.word)
+  })
+}
+
+/** 她早就会写：算学完，以后不再出现 */
+export async function markSpellKnown(id: string, today: string) {
+  await db.transaction('rw', db.spellWords, async () => {
+    const w = await db.spellWords.get(id)
+    if (w) await db.spellWords.put(markKnownWord(w, today))
   })
 }
 

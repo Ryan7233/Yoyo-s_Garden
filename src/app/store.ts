@@ -3,6 +3,7 @@ import { db } from '../db/schema'
 import type { ExerciseConfig } from '../db/schema'
 import { syncProgress } from '../db/progress'
 import { ensureDayPlans } from '../db/plans'
+import { topUpSpellWords } from '../db/spelling'
 import type {
   Child, DayPlan, ExerciseRecord, InventoryItem, LedgerEntry, PlacedItem, PlantInstance, Plot, Settings, SpellSession, SpellWord, TaskDef, TaskRecord, Unlock, Wish,
 } from '../data/types'
@@ -86,6 +87,8 @@ export const useStore = create<State>((set, get) => ({
     try {
       await ensureDayPlans(id)
       await syncProgress(id)
+      // 上学日自动补够今天的 3 个拼写新词
+      await topUpSpellWords(id, toTaskDay(new Date()))
     } catch (e) {
       console.error(e)
     }

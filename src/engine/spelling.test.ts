@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { SpellResult, SpellWord } from '../data/types'
 import { classifySpellWord, baselineAdvice } from '../data/spelling'
-import { applySpellResult, newSpellWord, requeueWord, spellQueue, toSchoolDay, weekQuizWords, SPELL_DONE_STEP } from './spelling'
+import { applySpellResult, autoPick, markKnownWord, newSpellWord, requeueWord, spellPath, spellQueue, toSchoolDay, weekQuizWords, SPELL_DONE_STEP } from './spelling'
+import { SIGHT_WORDS } from '../data/spelling'
+import { WORDS_KIDS } from '../data/wordsKids'
 
 // 2026-10-19 是周一
 const MON = '2026-10-19'
@@ -89,5 +91,38 @@ describe('周末小听写', () => {
     ]
     expect(weekQuizWords(words, SAT).map((w) => w.word)).toEqual(['hot'])
     expect(requeueWord(words[0], SAT)).toMatchObject({ startDay: NEXT_MON, step: 0, due: NEXT_MON, misses: 1 })
+  })
+})
+
+describe('自动给词：Words 幼儿词库按拼写难度排', () => {
+  const path = spellPath(WORDS_KIDS.map(([word, zh, emoji]) => ({ word, zh, emoji })), SIGHT_WORDS)
+
+  it('从三个字母的规律词开始，长词放最后，高频词穿插，不重复', () => {
+    expect(path.slice(0, 3).map((w) => w.word)).toEqual(['cat', 'dog', 'red'])
+    const at = (w: string) => path.findIndex((p) => p.word === w)
+    expect(at('fish')).toBeGreaterThan(at('sun'))
+    expect(at('the')).toBeLessThan(at('rabbit'))
+    expect(at('elephant')).toBeGreaterThan(path.length - 60)
+    expect(new Set(path.map((w) => w.word)).size).toBe(path.length)
+    expect(path.find((w) => w.word === 'cat')).toMatchObject({ zh: '猫', emoji: '🐱' })
+  })
+
+  it('今天的新词不够 3 个才补；前几天没写的新词也算', () => {
+    expect(autoPick([], path, MON).map((w) => w.word)).toEqual(['cat', 'dog', 'red'])
+    const parentWord = word('sunny', MON)
+    expect(autoPick([parentWord], path, MON).map((w) => w.word)).toEqual(['cat', 'dog'])
+    const leftover = [word('cat', MON), word('dog', MON), word('red', MON)]
+    expect(autoPick(leftover, path, TUE)).toEqual([])
+    // 已经学过的词不再给
+    const learned = [word('cat', MON, { step: 1, due: TUE })]
+    expect(autoPick(learned, path, TUE).map((w) => w.word)).toEqual(['dog', 'red', 'six'])
+  })
+
+  it('会写，跳过：算学完，不进周末听写；放回下周会恢复', () => {
+    const w = markKnownWord(word('cat', MON, { step: 1, due: TUE }), MON)
+    expect(w).toMatchObject({ step: SPELL_DONE_STEP, known: true })
+    expect(spellQueue([w], TUE)).toEqual({ fresh: [], review: [] })
+    expect(weekQuizWords([w], SAT)).toEqual([])
+    expect(requeueWord(w, SAT)).toMatchObject({ step: 0, known: false })
   })
 })
