@@ -12,7 +12,7 @@ import { Reward } from '../../ui/Reward'
 import './shop.css'
 
 export function Bag() {
-  const { child, inventory, go } = useStore()
+  const { child, inventory, go, setDecorating } = useStore()
   const [selling, setSelling] = useState<string | null>(null)
   const [sellingItem, setSellingItem] = useState<string | null>(null)
   if (!child) return null
@@ -25,10 +25,10 @@ export function Bag() {
   })
   const sellInfo = selling ? harvestInfo(selling) : undefined
 
-  const section = (title: string, hint: string, list: typeof owned, render: (i: (typeof owned)[number]) => ReactNode) =>
+  const section = (title: string, hint: string, list: typeof owned, render: (i: (typeof owned)[number]) => ReactNode, action?: ReactNode) =>
     list.length > 0 && (
       <section className="bag-bin">
-        <h3 className="bag-section">{title}<span className="hint">{hint}</span></h3>
+        <h3 className="bag-section">{title}<span className="hint">{hint}</span>{action}</h3>
         <div className="shop-grid">{list.map(render)}</div>
       </section>
     )
@@ -68,14 +68,15 @@ export function Bag() {
           <span className="shop-note">进小屋点花瓶，就能插上</span>
         ))
       })}
-      {section('🪑 家具和装饰', '点下面的“装扮”就能摆出来', things, (i) => {
+      {/* 背包盖住了底部的“装扮”按钮，所以在这里直接放一个 */}
+      {section('🪑 家具和装饰', '点“去装扮”就能摆出来', things, (i) => {
         const item = getCatalogItem(i.catalogId)!
         return card(i.id, item.icon, item.name, i.count, !item.starter && item.price > 0 ? (
           <button className="btn" onClick={() => setSellingItem(i.catalogId)}>卖 <Reward coins={sellPriceOf(item)} size="s" /></button>
         ) : (
           <span className="shop-note">去装扮里摆放</span>
         ))
-      })}
+      }, <button className="btn btn-soft bag-decorate" onClick={() => setDecorating(true)}>🎨 去装扮</button>)}
       {sellingItem && (
         <ConfirmDialog
           title={`把${getCatalogItem(sellingItem)?.name}卖回商店？`}

@@ -136,3 +136,6 @@
   font-size: 18px;
   box-shadow: 0 3px 0 var(--primary-edge);
 }
+
+/* 家具和装饰：直接去装扮（底部的“装扮”按钮被背包盖住了） */
+.bag-section .bag-decorate { margin-left: auto; margin-bottom: 4px; }
