@@ -28,3 +28,15 @@
 .spell-kind.other { background: var(--coin-light); }
 .spell-steps { letter-spacing: 2px; color: var(--primary-dark); }
 .spell-warn { font-size: var(--fs-s); color: var(--text-soft); background: var(--coin-light); border-radius: var(--r-m); padding: 10px 14px; }
+
+/* 家长确认：看默写笔迹 */
+.spell-review { min-width: 0; display: flex; flex-direction: column; gap: var(--sp-3); margin: 0 0 var(--sp-3) 64px; }
+.spell-review-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: var(--sp-3); }
+.spell-ink { min-width: 0; padding: 10px; display: flex; flex-direction: column; gap: 6px; border: 3px solid transparent; }
+.spell-ink.ok { border-color: #9fd9b4; }
+.spell-ink.no { border-color: #f2a7a7; }
+.spell-ink img { display: block; width: 100%; max-width: 100%; height: auto; border-radius: var(--r-m); background: #fff; border: 2px solid var(--cream-edge); }
+.spell-ink-empty { aspect-ratio: 2 / 1; display: flex; align-items: center; justify-content: center; border-radius: var(--r-m); background: var(--mist-light); font-size: var(--fs-xs); color: var(--text-soft); }
+.spell-ink-word { font-family: var(--font-title); font-size: 26px; }
+.spell-ink-who { font-size: var(--fs-xs); color: var(--text-soft); }
+.spell-ink .chip { min-height: 48px; }

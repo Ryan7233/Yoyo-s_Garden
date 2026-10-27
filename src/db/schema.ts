@@ -1,13 +1,13 @@
 import Dexie, { type EntityTable, type Transaction } from 'dexie'
 import type {
   Child, DayPlan, ExerciseDef, ExerciseRecord, InventoryItem, LedgerEntry, PlacedItem,
-  PlantInstance, Plot, Settings, SpellSession, SpellWord, TaskDef, TaskRecord, Unlock, Wish,
+  PlantInstance, Plot, Settings, SpellInk, SpellSession, SpellWord, TaskDef, TaskRecord, Unlock, Wish,
 } from '../data/types'
 import { spellingTasks } from '../data/tasks'
 import { daysToFreeze, freezePlan } from '../engine/plans'
 import { toTaskDay } from '../engine/taskDay'
 
-export const SCHEMA_VERSION = 3
+export const SCHEMA_VERSION = 4
 
 export interface VideoBlob { id: string; blob: Blob; createdAt: string }
 export interface Snapshot { id: string; schemaVersion: number; at: string; data: string }
@@ -32,6 +32,7 @@ export class GardenDB extends Dexie {
   dayPlans!: Dexie.Table<DayPlan, [string, string]>
   spellWords!: EntityTable<SpellWord, 'id'>
   spellSessions!: EntityTable<SpellSession, 'id'>
+  spellInks!: EntityTable<SpellInk, 'id'>
 
   constructor(name = 'little-garden') {
     super(name)
@@ -78,6 +79,8 @@ export class GardenDB extends Dexie {
         await tx.table<TaskDef>('tasks').bulkAdd(missing)
       }
     })
+    // 4：默写笔迹（和纪录视频一样单独存，不进备份）。只加新表，原数据不变
+    this.version(4).stores({ spellInks: 'id, childId, sessionId, at' })
   }
 }
 
@@ -94,7 +97,7 @@ const V1_TABLES = [
   'inventory', 'placed', 'plants', 'plots', 'unlocks', 'wishes', 'settings',
 ] as const
 
-/** 进入备份的数据表（视频和迁移快照不进备份） */
+/** 进入备份的数据表（视频、默写笔迹和迁移快照不进备份） */
 export const BACKUP_TABLES = [...V1_TABLES, 'dayPlans', 'spellWords', 'spellSessions'] as const
 export type BackupTable = (typeof BACKUP_TABLES)[number]
 

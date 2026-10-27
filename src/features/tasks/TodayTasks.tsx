@@ -5,9 +5,9 @@ import { dayProgress, latestRecordByTask } from '../../engine/rewards'
 import { earnedOn } from '../../engine/ledger'
 import { childReportTask } from '../../db/actions'
 import { EXERCISE_TASK_ID, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../../data/tasks'
-import type { SpellResult, TaskDef, TaskRecord } from '../../data/types'
+import type { TaskDef, TaskRecord } from '../../data/types'
 import { spellQueue, weekQuizWords } from '../../engine/spelling'
-import { submitSpellSession } from '../../db/spelling'
+import { submitSpellSession, type SubmittedResult } from '../../db/spelling'
 import { SpellingSheet, type DictationItem } from '../spelling/SpellingSheet'
 import { Celebrate } from '../../ui/Celebrate'
 import { ExerciseSheet } from './Exercise'
@@ -53,7 +53,7 @@ export function TodayTasks() {
     return { count: items.length ? label : '爸爸妈妈还没加词', items }
   }
 
-  const finishDictation = async (results: SpellResult[]) => {
+  const finishDictation = async (results: SubmittedResult[]) => {
     const open = dictation
     setDictation(null)
     if (!open) return
@@ -121,7 +121,15 @@ export function TodayTasks() {
 
       {celebrate > 0 && <Celebrate key={celebrate} />}
       {sportOpen && <ExerciseSheet onClose={() => setSportOpen(false)} />}
-      {dictation && <SpellingSheet items={dictation.items} onResult={finishDictation} onClose={() => setDictation(null)} />}
+      {dictation && (
+        <SpellingSheet
+          items={dictation.items}
+          selfCheck={dictation.taskId === SPELLING_TASK_ID}
+          finishLabel={dictation.taskId === SPELLING_TASK_ID ? '🌷 回花园' : '✋ 交给爸爸妈妈'}
+          onResult={finishDictation}
+          onClose={() => setDictation(null)}
+        />
+      )}
     </div>
   )
 }

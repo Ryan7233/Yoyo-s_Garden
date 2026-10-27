@@ -118,6 +118,7 @@ const TABLE_SPECS: Record<BackupTable, TableSpec> = {
   spellSessions: {
     key: ['id'],
     fields: { id: 's', childId: 's', date: 's', mode: ['daily', 'quiz', 'baseline'], at: 's', results: 'a' },
+    optional: { recordId: 's', graded: 'b' },
   },
 }
 

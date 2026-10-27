@@ -7,9 +7,10 @@ import { formatValue } from '../tasks/Exercise'
 import { formatDay, isEditable } from '../../engine/taskDay'
 import type { TaskRecord } from '../../data/types'
 import { Modal } from '../../ui/Modal'
+import { SpellReview, needsGrading, sessionOfRecord } from '../spelling/SpellReview'
 
 export function PendingPanel() {
-  const { records, tasks, today, settings, exerciseRecords, exercises } = useStore()
+  const { records, tasks, today, settings, exerciseRecords, exercises, spellSessions } = useStore()
   const [rejecting, setRejecting] = useState<TaskRecord | null>(null)
   const [rejectingEx, setRejectingEx] = useState<ExerciseRecord | null>(null)
   const videos = exerciseRecords.filter((r) => r.status === 'pending')
@@ -23,9 +24,12 @@ export function PendingPanel() {
 
   if (!pending.length && !videos.length) return <p className="empty">没有待确认的任务 🎉</p>
 
+  // 周末小听写要先批改，不跟着“全部确认”
+  const ungraded = (r: TaskRecord) => needsGrading(sessionOfRecord(r, spellSessions))
+  const confirmable = pending.filter((r) => !ungraded(r))
   const confirmAll = () =>
     act(async () => {
-      for (const r of pending) if (isEditable(r.date, today, backfill)) await confirmRecord(r.id)
+      for (const r of confirmable) if (isEditable(r.date, today, backfill)) await confirmRecord(r.id)
     })
 
   return (
@@ -49,7 +53,8 @@ export function PendingPanel() {
           })}
         </>
       )}
-      {pending.length > 0 && <button className="btn btn-primary btn-big" onClick={confirmAll}>✓ 全部确认任务（{pending.length}）</button>}
+      {confirmable.length > 0 && <button className="btn btn-primary btn-big" onClick={confirmAll}>✓ 全部确认任务（{confirmable.length}）</button>}
+      {confirmable.length < pending.length && <p className="row-sub">周末小听写要先在下面批改，批改完会自动确认。</p>}
       {days.map((d) => {
         const editable = isEditable(d, today, backfill)
         return (
@@ -57,8 +62,10 @@ export function PendingPanel() {
             <h3 className="panel-day">{formatDay(d, today)}{!editable && '（已过补录期，只读）'}</h3>
             {byDay.get(d)!.map((r) => {
               const t = taskOf(r.taskId)
+              const spell = sessionOfRecord(r, spellSessions)
               return (
-                <div key={r.id} className="row">
+                <div key={r.id}>
+                <div className="row">
                   <span className="row-icon">{t?.icon}</span>
                   <div className="row-main">
                     <div className="row-title">{t?.name ?? r.taskId}</div>
@@ -67,9 +74,11 @@ export function PendingPanel() {
                   {editable && (
                     <>
                       <button className="btn btn-ghost" onClick={() => { setRejecting(r); setNote('') }}>驳回</button>
-                      <button className="btn btn-primary" onClick={() => act(() => confirmRecord(r.id))}>确认</button>
+                      {!needsGrading(spell) && <button className="btn btn-primary" onClick={() => act(() => confirmRecord(r.id))}>确认</button>}
                     </>
                   )}
+                </div>
+                {spell && <SpellReview session={spell} editable={editable} />}
                 </div>
               )
             })}

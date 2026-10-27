@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useStore, act } from '../../app/store'
-import type { SpellKind, SpellResult, SpellSession } from '../../data/types'
+import type { SpellKind, SpellSession } from '../../data/types'
 import {
   BASELINE_WORDS, SIGHT_WORDS, SPELL_KIND_LABEL, baselineAdvice, classifySpellWord, normalizeSpellWord,
 } from '../../data/spelling'
 import { SPELL_DONE_STEP, SPELL_NEW_PER_DAY, addedOn, spellQueue, toSchoolDay } from '../../engine/spelling'
 import { formatDay } from '../../engine/taskDay'
-import { addSpellWords, removeSpellWord, requeueSpellWord, submitSpellSession } from '../../db/spelling'
+import { addSpellWords, removeSpellWord, requeueSpellWord, submitSpellSession, type SubmittedResult } from '../../db/spelling'
 import { SpellingSheet } from './SpellingSheet'
 
 const MODE_LABEL: Record<SpellSession['mode'], string> = { daily: '每日拼写', quiz: '周末小听写', baseline: '摸底' }
@@ -43,7 +43,7 @@ export function SpellingPanel() {
     setTimeout(() => setMsg(''), 2000)
   }
 
-  const finishBaseline = async (results: SpellResult[]) => {
+  const finishBaseline = async (results: SubmittedResult[]) => {
     setBaseline(false)
     await act(() => submitSpellSession(child.id, 'baseline', results, today))
   }

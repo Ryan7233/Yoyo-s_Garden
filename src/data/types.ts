@@ -210,6 +210,10 @@ export interface SpellResult {
   firstTry: boolean
   done: boolean
   attempts: number
+  /** 谁判的对错：self 孩子自查；parent 家长判过或改过；none 还没判（周末小听写交卷后） */
+  checkedBy?: 'self' | 'parent' | 'none'
+  /** 这次默写之前这个词在第几步，家长改判时用它重新排期 */
+  stepBefore?: number
 }
 /** 一次默写（每日拼写、周末小听写或摸底） */
 export interface SpellSession {
@@ -219,4 +223,18 @@ export interface SpellSession {
   mode: 'daily' | 'quiz' | 'baseline'
   at: string
   results: SpellResult[]
+  /** 对应的任务打卡记录（等家长确认的那条） */
+  recordId?: string
+  /** 周末小听写：家长批改完了 */
+  graded?: boolean
+}
+/** 孩子默写时第一次写的笔迹（缩略图），给家长确认时看。不进备份，30 天后清理 */
+export interface SpellInk {
+  /** sessionId + ':' + word */
+  id: string
+  childId: string
+  sessionId: string
+  word: string
+  dataUrl: string
+  at: string
 }

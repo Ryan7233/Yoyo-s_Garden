@@ -79,3 +79,8 @@ export function requeueWord(word: SpellWord, today: string): SpellWord {
 export function addedOn(words: SpellWord[], day: string): number {
   return words.filter((w) => w.startDay === toSchoolDay(day) && w.misses === 0).length
 }
+
+/** 家长改判：回到这次默写之前的那一步，按改过的结果重新排期 */
+export function regradeSpellResult(word: SpellWord, result: SpellResult, day: string): SpellWord {
+  return applySpellResult({ ...word, step: result.stepBefore ?? word.step }, result, day)
+}

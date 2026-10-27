@@ -3,7 +3,7 @@ import Dexie from 'dexie'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { GardenDB, db, useDatabase } from './schema'
 import { confirmRecord, setupChild } from './actions'
-import { addSpellWords, submitSpellSession } from './spelling'
+import { addSpellWords, correctSpellResult, gradeSpellQuiz, inksOf, submitSpellSession } from './spelling'
 import { exportBackup, parseBackup } from './backup'
 import { balanceOf } from '../engine/ledger'
 import { defaultTasks, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID, SPELLING_TASK_IDS } from '../data/tasks'
@@ -70,6 +70,62 @@ describe('拼写本', () => {
     const bad = structuredClone(file)
     ;(bad.tables.spellWords[0] as { step: unknown }).step = 'x'
     expect(() => parseBackup(JSON.stringify(bad))).toThrow(/spellWords/)
+  })
+})
+
+describe('看笔迹确认和批改', () => {
+  const INK = 'data:image/jpeg;base64,AAAA'
+
+  it('笔迹单独存、不进备份；家长改判后按改过的结果重新排期', async () => {
+    await addSpellWords(childId, [{ word: 'sunny', kind: 'phonics' }], MON_DAY, MON)
+    const s = await submitSpellSession(childId, 'daily', [
+      { word: 'sunny', kind: 'new', firstTry: true, done: true, attempts: 1, checkedBy: 'self', ink: INK },
+    ], MON_DAY, MON)
+    expect(s.recordId).toBeTruthy()
+    expect(s.results[0]).toMatchObject({ stepBefore: 0 })
+    expect('ink' in s.results[0]).toBe(false)
+    expect(await inksOf(s.id)).toEqual(new Map([['sunny', INK]]))
+    expect('spellInks' in (await exportBackup(MON)).tables).toBe(false)
+    expect(await db.spellWords.where('[childId+word]').equals([childId, 'sunny']).first()).toMatchObject({ step: 1, due: '2026-10-20' })
+
+    // 她自己判对了，家长看笔迹其实不对：回到新词，明天再学
+    await correctSpellResult(s.id, 'sunny', false)
+    expect(await db.spellWords.where('[childId+word]').equals([childId, 'sunny']).first()).toMatchObject({ step: 0, due: '2026-10-20' })
+    expect((await db.spellSessions.get(s.id))!.results[0]).toMatchObject({ firstTry: false, checkedBy: 'parent' })
+    // 再改回来
+    await correctSpellResult(s.id, 'sunny', true)
+    expect(await db.spellWords.where('[childId+word]').equals([childId, 'sunny']).first()).toMatchObject({ step: 1, due: '2026-10-20' })
+  })
+
+  it('周末小听写交卷时不判对错；家长批改后写错的放回下周并自动确认发奖励', async () => {
+    await addSpellWords(childId, [{ word: 'hot', kind: 'phonics' }, { word: 'jump', kind: 'phonics' }], MON_DAY, MON)
+    const s = await submitSpellSession(childId, 'quiz', [
+      { word: 'hot', kind: 'review', firstTry: false, done: false, attempts: 1, checkedBy: 'none', ink: INK },
+      { word: 'jump', kind: 'review', firstTry: false, done: false, attempts: 1, checkedBy: 'none' },
+    ], SAT_DAY, MON)
+    expect(s.graded).toBe(false)
+    expect((await db.spellWords.where('[childId+word]').equals([childId, 'jump']).first())!.misses).toBe(0)
+    expect(await db.taskRecords.get(s.recordId!)).toMatchObject({ status: 'pending' })
+
+    const before = balanceOf(await db.ledger.toArray()).coin
+    await gradeSpellQuiz(s.id, { hot: true, jump: false }, MON)
+    expect(await db.spellWords.where('[childId+word]').equals([childId, 'jump']).first()).toMatchObject({ step: 0, startDay: '2026-10-26', misses: 1 })
+    expect((await db.spellWords.where('[childId+word]').equals([childId, 'hot']).first())!.misses).toBe(0)
+    expect(await db.spellSessions.get(s.id)).toMatchObject({ graded: true })
+    expect(await db.taskRecords.get(s.recordId!)).toMatchObject({ status: 'done' })
+    expect(balanceOf(await db.ledger.toArray()).coin).toBe(before + 5)
+    // 重复批改不会再放一次
+    await gradeSpellQuiz(s.id, { hot: false, jump: false }, MON)
+    expect((await db.spellWords.where('[childId+word]').equals([childId, 'hot']).first())!.misses).toBe(0)
+  })
+
+  it('笔迹 30 天后清理', async () => {
+    await addSpellWords(childId, [{ word: 'hot', kind: 'phonics' }], MON_DAY, MON)
+    const old = await submitSpellSession(childId, 'baseline', [{ word: 'cat', kind: 'review', firstTry: true, done: true, attempts: 1, ink: INK }], MON_DAY, MON)
+    const later = new Date(MON.getTime() + 31 * 86_400_000)
+    await submitSpellSession(childId, 'baseline', [{ word: 'dog', kind: 'review', firstTry: true, done: true, attempts: 1, ink: INK }], '2026-11-19', later)
+    expect((await inksOf(old.id)).size).toBe(0)
+    expect(await db.spellInks.count()).toBe(1)
   })
 })
 
