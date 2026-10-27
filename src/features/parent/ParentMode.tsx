@@ -12,12 +12,15 @@ import { DataPanel } from './DataPanel'
 import { SettingsPanel } from './SettingsPanel'
 import { diffDays, toTaskDay } from '../../engine/taskDay'
 import { usePwa } from '../../app/pwa'
+import { SpellingPanel } from '../spelling/SpellingPanel'
+import { useDictationOpen } from '../spelling/SpellingSheet'
 import './parent.css'
 
-type Tab = 'pending' | 'records' | 'bonus' | 'tasks' | 'exercise' | 'stats' | 'data' | 'settings'
+type Tab = 'pending' | 'records' | 'spelling' | 'bonus' | 'tasks' | 'exercise' | 'stats' | 'data' | 'settings'
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'pending', label: '待确认', icon: '⏳' },
   { id: 'records', label: '今日记录', icon: '📝' },
+  { id: 'spelling', label: '拼写本', icon: '✍️' },
   { id: 'bonus', label: '加分', icon: '🎁' },
   { id: 'tasks', label: '任务配置', icon: '📋' },
   { id: 'exercise', label: '运动目标', icon: '🏃' },
@@ -36,10 +39,11 @@ export function ParentMode({ onClose }: { onClose: () => void }) {
   const needRefresh = usePwa((s) => s.needRefresh)
   const child = useStore((s) => s.child)
   const idle = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const dictating = useDictationOpen()
 
-  // 2 分钟无操作自动退出
+  // 2 分钟无操作自动退出（摸底默写进行中不算）
   useEffect(() => {
-    if (!unlocked) return
+    if (!unlocked || dictating) return
     const reset = () => {
       clearTimeout(idle.current)
       idle.current = setTimeout(onClose, BALANCE.parentIdleMs)
@@ -52,7 +56,7 @@ export function ParentMode({ onClose }: { onClose: () => void }) {
       window.removeEventListener('pointerdown', reset)
       window.removeEventListener('keydown', reset)
     }
-  }, [unlocked, onClose])
+  }, [unlocked, dictating, onClose])
 
   const today = toTaskDay(new Date())
   // 每 7 天提醒一次导出备份（从上次备份或首次启动算起）
@@ -97,6 +101,7 @@ export function ParentMode({ onClose }: { onClose: () => void }) {
               <h3 className="panel-title">{TABS.find((t) => t.id === tab)?.label}</h3>
               {tab === 'pending' && <PendingPanel />}
               {tab === 'records' && <RecordsPanel />}
+              {tab === 'spelling' && <SpellingPanel />}
               {tab === 'bonus' && <BonusPanel />}
               {tab === 'tasks' && <TaskConfigPanel />}
               {tab === 'exercise' && <ExerciseConfigPanel />}

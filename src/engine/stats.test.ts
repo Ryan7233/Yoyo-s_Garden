@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { defaultTasks } from '../data/tasks'
 import type { ExerciseRecord, LedgerEntry, TaskRecord } from '../data/types'
 import { livePlan } from './plans'
+import { isScheduledOn } from './schedule'
 import { coinSummary, dayCompletion, exerciseSeries, lastNDays, monthGrid, shiftMonth, taskRates } from './stats'
 
 const tasks = defaultTasks('c')
@@ -28,7 +29,7 @@ describe('完成率', () => {
   const SAT = '2026-10-17'
   it('当天完成率不含运动卡片，撤销的不算', () => {
     const c = dayCompletion(livePlan(tasks), [done('english-reading', SAT), done('drink-water', SAT), done('wash-up', SAT, 'revoked')], SAT)
-    const scheduled = tasks.filter((t) => t.schedule.kind === 'daily' && t.id !== 'sport').length
+    const scheduled = tasks.filter((t) => isScheduledOn(t, SAT) && t.id !== 'sport').length
     expect(c).toMatchObject({ done: 2, total: scheduled, allDone: false })
   })
   it('任务完成率只算安排了它的日子', () => {

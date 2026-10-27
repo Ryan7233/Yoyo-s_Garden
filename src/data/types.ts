@@ -184,3 +184,39 @@ export interface Settings {
   lastSeenAt?: string
   clockWentBack?: boolean
 }
+
+/** 拼写本里的一个词。phonics：符合拼读规律；sight：高频词；other：认识会说就够了，家长坚持要拼 */
+export type SpellKind = 'phonics' | 'sight' | 'other'
+export interface SpellWord {
+  id: string
+  childId: string
+  /** 小写 */
+  word: string
+  kind: SpellKind
+  zh?: string
+  /** 第 1 天：学这个新词的那天（上学日） */
+  startDay: string
+  /** 0 = 还没学；1~3 = 已完成第几次复习前的练习；4 = 第 7 天也复习过了 */
+  step: number
+  /** 下一次该练的日子 */
+  due: string
+  /** 周末听写里写错、放回下周的次数 */
+  misses: number
+  addedAt: string
+}
+export interface SpellResult {
+  word: string
+  kind: 'new' | 'review'
+  firstTry: boolean
+  done: boolean
+  attempts: number
+}
+/** 一次默写（每日拼写、周末小听写或摸底） */
+export interface SpellSession {
+  id: string
+  childId: string
+  date: string
+  mode: 'daily' | 'quiz' | 'baseline'
+  at: string
+  results: SpellResult[]
+}

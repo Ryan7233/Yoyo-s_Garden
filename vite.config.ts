@@ -8,6 +8,12 @@ const BASE = '/Yoyo-s_Garden/'
 
 export default defineConfig({
   base: BASE,
+  // 开发时把 /yoyo-words/ 转到本地的 YoYo Words（python3 serve.py），和线上一样同源，默写页才能嵌进来
+  server: {
+    proxy: {
+      '/yoyo-words': { target: 'http://localhost:8377', rewrite: (path) => path.replace(/^\/yoyo-words/, '') },
+    },
+  },
   plugins: [
     react(),
     VitePWA({

@@ -108,6 +108,17 @@ const TABLE_SPECS: Record<BackupTable, TableSpec> = {
     optional: { lastBackupAt: 's', lastSeenAt: 's', clockWentBack: 'b' },
   },
   dayPlans: { key: ['childId', 'date'], fields: { childId: 's', date: 's', required: 'a', more: 'a' } },
+  spellWords: {
+    key: ['id'],
+    fields: {
+      id: 's', childId: 's', word: 's', kind: ['phonics', 'sight', 'other'], startDay: 's', step: 'n', due: 's', misses: 'n', addedAt: 's',
+    },
+    optional: { zh: 's' },
+  },
+  spellSessions: {
+    key: ['id'],
+    fields: { id: 's', childId: 's', date: 's', mode: ['daily', 'quiz', 'baseline'], at: 's', results: 'a' },
+  },
 }
 
 function typeOk(v: unknown, t: FieldType): boolean {
@@ -166,6 +177,11 @@ export function parseBackup(text: string): BackupFile {
   }
   // 版本 1 的备份还没有按日期保存的任务配置：导入后按当前配置冻结过去的日子
   if (f.schemaVersion < 2 && f.tables.dayPlans === undefined) f.tables.dayPlans = []
+  // 版本 3 之前没有拼写本
+  if (f.schemaVersion < 3) {
+    f.tables.spellWords ??= []
+    f.tables.spellSessions ??= []
+  }
   validateTables(f.tables as Record<BackupTable, unknown[]>)
   return f as BackupFile
 }

@@ -4,8 +4,11 @@ import { livePlan } from '../../engine/plans'
 import { dayProgress, latestRecordByTask } from '../../engine/rewards'
 import { earnedOn } from '../../engine/ledger'
 import { childReportTask } from '../../db/actions'
-import { EXERCISE_TASK_ID } from '../../data/tasks'
-import type { TaskDef, TaskRecord } from '../../data/types'
+import { EXERCISE_TASK_ID, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../../data/tasks'
+import type { SpellResult, TaskDef, TaskRecord } from '../../data/types'
+import { spellQueue, weekQuizWords } from '../../engine/spelling'
+import { submitSpellSession } from '../../db/spelling'
+import { SpellingSheet, type DictationItem } from '../spelling/SpellingSheet'
 import { Celebrate } from '../../ui/Celebrate'
 import { ExerciseSheet } from './Exercise'
 import { bestTodayByExercise, exercisesForDay } from '../../engine/exercise'
@@ -14,10 +17,11 @@ import { play } from '../../ui/sfx'
 import { Reward } from '../../ui/Reward'
 
 export function TodayTasks() {
-  const { child, tasks, records, ledger, today, exercises, exerciseRecords } = useStore()
+  const { child, tasks, records, ledger, today, exercises, exerciseRecords, spellWords } = useStore()
   const [showMore, setShowMore] = useState(false)
   const [celebrate, setCelebrate] = useState(0)
   const [sportOpen, setSportOpen] = useState(false)
+  const [dictation, setDictation] = useState<{ taskId: string; items: DictationItem[] } | null>(null)
   if (!child) return null
 
   // 今天始终按当前配置
@@ -30,9 +34,41 @@ export function TodayTasks() {
   const exBest = bestTodayByExercise(exerciseRecords, today)
   const sport = { done: scheduledEx.filter((d) => exBest.has(d.id)).length, total: scheduledEx.length }
 
+  // 每日拼写：今天的新词 + 到期的复习词；周末小听写：本周学过的词
+  const queue = spellQueue(spellWords, today)
+  const spellItems: Record<string, DictationItem[]> = {
+    [SPELLING_TASK_ID]: [
+      ...queue.fresh.map((w) => ({ word: w.word, kind: 'new' as const, zh: w.zh })),
+      ...queue.review.map((w) => ({ word: w.word, kind: 'review' as const, zh: w.zh })),
+    ],
+    [SPELLING_QUIZ_TASK_ID]: weekQuizWords(spellWords, today).map((w) => ({ word: w.word, kind: 'review' as const, zh: w.zh })),
+  }
+  const spellingOf = (task: TaskDef) => {
+    const items = spellItems[task.id]
+    if (!items) return undefined
+    const fresh = items.filter((i) => i.kind === 'new').length
+    const label = task.id === SPELLING_TASK_ID
+      ? [fresh && `新词 ${fresh} 个`, items.length - fresh && `复习 ${items.length - fresh} 个`].filter(Boolean).join(' · ')
+      : `本周的 ${items.length} 个词`
+    return { count: items.length ? label : '爸爸妈妈还没加词', items }
+  }
+
+  const finishDictation = async (results: SpellResult[]) => {
+    const open = dictation
+    setDictation(null)
+    if (!open) return
+    await act(() => submitSpellSession(child.id, open.taskId === SPELLING_TASK_ID ? 'daily' : 'quiz', results, today))
+    play('done')
+  }
+
   const report = async (task: TaskDef) => {
     if (task.id === EXERCISE_TASK_ID) {
       setSportOpen(true)
+      return
+    }
+    const spelling = spellingOf(task)
+    if (spelling) {
+      if (spelling.items.length) setDictation({ taskId: task.id, items: spelling.items })
       return
     }
     const r = await act(() => childReportTask(child.id, task.id, today))
@@ -71,7 +107,7 @@ export function TodayTasks() {
 
       <h3 className="section-title">⭐ 今日必做</h3>
       <div className="task-grid">
-        {required.map((t) => <TaskCard key={t.id} task={t} record={latest.get(t.id)} sport={sport} onReport={() => report(t)} />)}
+        {required.map((t) => <TaskCard key={t.id} task={t} record={latest.get(t.id)} sport={sport} spelling={spellingOf(t)} onReport={() => report(t)} />)}
       </div>
 
       <button className="more-toggle btn btn-ghost" aria-expanded={showMore} onClick={() => setShowMore(!showMore)}>
@@ -79,12 +115,13 @@ export function TodayTasks() {
       </button>
       {showMore && (
         <div className="task-grid">
-          {more.map((t) => <TaskCard key={t.id} task={t} record={latest.get(t.id)} sport={sport} onReport={() => report(t)} />)}
+          {more.map((t) => <TaskCard key={t.id} task={t} record={latest.get(t.id)} sport={sport} spelling={spellingOf(t)} onReport={() => report(t)} />)}
         </div>
       )}
 
       {celebrate > 0 && <Celebrate key={celebrate} />}
       {sportOpen && <ExerciseSheet onClose={() => setSportOpen(false)} />}
+      {dictation && <SpellingSheet items={dictation.items} onResult={finishDictation} onClose={() => setDictation(null)} />}
     </div>
   )
 }
@@ -94,7 +131,13 @@ interface SportProgress { done: number; total: number }
 const STATUS_TEXT = { done: '✓ 已完成', pending: '⏳ 等爸爸妈妈确认', rejected: '↺ 可以再试一次' } as const
 
 /** 任务牌：图标、名字、奖励、状态、按钮。状态都有图标和文字，不只靠颜色 */
-function TaskCard({ task, record, sport, onReport }: { task: TaskDef; record?: TaskRecord; sport: SportProgress; onReport: () => void }) {
+function TaskCard({ task, record, sport, spelling, onReport }: {
+  task: TaskDef
+  record?: TaskRecord
+  sport: SportProgress
+  spelling?: { count: string; items: DictationItem[] }
+  onReport: () => void
+}) {
   if (task.id === EXERCISE_TASK_ID) return <SportCard task={task} sport={sport} onOpen={onReport} />
   const status = record?.status === 'revoked' ? undefined : record?.status
   return (
@@ -106,11 +149,12 @@ function TaskCard({ task, record, sport, onReport }: { task: TaskDef; record?: T
           <Reward coins={task.coins} drops={task.drops} size="s" />
           {status && <span className={`badge ${status}`}>{STATUS_TEXT[status]}</span>}
         </div>
+        {spelling && !status && <div className="spell-count">{spelling.count}</div>}
         {status === 'rejected' && record?.note && <div className="task-note">💬 {record.note}</div>}
       </div>
       {(!status || status === 'rejected') && (
-        <button className="btn btn-primary btn-big task-btn" onClick={onReport}>
-          {status === 'rejected' ? '再试一次' : '我完成了'}
+        <button className="btn btn-primary btn-big task-btn" disabled={spelling && !spelling.items.length} onClick={onReport}>
+          {spelling ? (status === 'rejected' ? '再写一次' : '去默写 ✍️') : status === 'rejected' ? '再试一次' : '我完成了'}
         </button>
       )}
     </div>

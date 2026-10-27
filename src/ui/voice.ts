@@ -58,3 +58,19 @@ export function cueEnd() {
 export function cueTick() {
   beep(740, 120)
 }
+
+/** 读英文单词（默写的纸笔备用模式用） */
+export function speakEnglish(text: string) {
+  try {
+    const synth = window.speechSynthesis
+    if (!synth) return
+    synth.cancel()
+    const u = new SpeechSynthesisUtterance(text)
+    u.lang = 'en-GB'
+    u.rate = 0.85
+    // iPad 上 cancel() 后立刻 speak() 可能没声音，稍等一下
+    setTimeout(() => synth.speak(u), 60)
+  } catch {
+    /* 不支持语音 */
+  }
+}
