@@ -3,7 +3,8 @@ import type { ExerciseRecord, LedgerEntry, LedgerReason, TaskDef, TaskRecord } f
 import type { PlanOf } from './plans'
 import { EXERCISE_TASK_ID, RAISE_HAND_TASK_ID } from '../data/tasks'
 import { dayProgress, latestRecordByTask } from './rewards'
-import { addDays, parseTaskDay, toTaskDay, weekdayOf } from './taskDay'
+import { addDays, parseTaskDay, toTaskDay, weekStart, weekdayOf } from './taskDay'
+import { isWeekly } from './schedule'
 import { countsAsDone } from './exercise'
 
 /** 截至 today（含）的最近 n 天，从早到晚 */
@@ -22,13 +23,14 @@ export interface DayCompletion {
   noData: boolean
 }
 
-/** 不算完成率的任务：运动卡片单独统计；举手没记录的日子不算“没完成” */
+/** 不算每天完成率的任务：运动卡片单独统计；举手没记录的日子不算“没完成”；每周一次的任务不属于某一天 */
 const NOT_RATED = [EXERCISE_TASK_ID, RAISE_HAND_TASK_ID]
+const notRated = (t: TaskDef) => NOT_RATED.includes(t.id) || isWeekly(t)
 
 /** 某天安排的任务（不含运动卡片和举手）完成了几项 */
 export function dayCompletion(planOf: PlanOf, records: TaskRecord[], day: string): DayCompletion {
   const { required, more, noData = false } = planOf(day)
-  const list = [...required, ...more].filter((t) => !NOT_RATED.includes(t.id))
+  const list = [...required, ...more].filter((t) => !notRated(t))
   const latest = latestRecordByTask(records, day)
   const done = list.filter((t) => latest.get(t.id)?.status === 'done').length
   return {
@@ -48,14 +50,28 @@ export interface TaskRate {
   rate: number | null
 }
 
-/** 每个任务在这些天里的完成率（只算安排了它的日子） */
+/** 每个任务在这些天里的完成率（只算安排了它的日子）；每周一次的任务按周算：这几天跨了几周、做了几周 */
 export function taskRates(planOf: PlanOf, records: TaskRecord[], days: string[]): TaskRate[] {
   const out = new Map<string, TaskRate>()
+  const weeksSeen = new Map<string, Set<string>>()
   for (const day of days) {
     const { required, more } = planOf(day)
     const latest = latestRecordByTask(records, day)
     for (const t of [...required, ...more]) {
-      if (NOT_RATED.includes(t.id)) continue
+      if (isWeekly(t) && !NOT_RATED.includes(t.id)) {
+        const week = weekStart(day)
+        const seen = weeksSeen.get(t.id) ?? new Set<string>()
+        if (seen.has(week)) continue
+        seen.add(week)
+        weeksSeen.set(t.id, seen)
+        const r = out.get(t.id) ?? { task: t, done: 0, scheduled: 0, rate: null }
+        r.scheduled++
+        const inRange = records.some((x) => x.taskId === t.id && x.status === 'done' && weekStart(x.date) === week && days.includes(x.date))
+        if (inRange) r.done++
+        out.set(t.id, r)
+        continue
+      }
+      if (notRated(t)) continue
       const r = out.get(t.id) ?? { task: t, done: 0, scheduled: 0, rate: null }
       r.scheduled++
       if (latest.get(t.id)?.status === 'done') r.done++

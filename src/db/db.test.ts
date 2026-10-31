@@ -46,16 +46,16 @@ describe('任务流程', () => {
   })
 
   it('全勤奖励，撤销后扣回且余额不为负', async () => {
-    for (const t of ['start-on-time', 'english-reading', 'drink-water']) await parentMarkDone(childId, t, DAY, SAT)
-    // 5 + 5 + 3 + 全勤 5
-    expect(await balance(childId)).toEqual({ coin: 18, drop: 10 })
+    for (const t of ['start-on-time', 'english-speaking', 'english-reading', 'drink-water']) await parentMarkDone(childId, t, DAY, SAT)
+    // 5 + 5 + 5 + 3 + 全勤 5
+    expect(await balance(childId)).toEqual({ coin: 23, drop: 11 })
     // 花掉一些
-    await db.ledger.add({ id: 'spend', childId, at: SAT.toISOString(), currency: 'coin', amount: -16, reason: 'purchase' })
+    await db.ledger.add({ id: 'spend', childId, at: SAT.toISOString(), currency: 'coin', amount: -21, reason: 'purchase' })
     const rec = (await db.taskRecords.toArray()).find((r) => r.taskId === 'drink-water')!
     await revokeRecord(rec.id, SAT)
     const b = await balance(childId)
     expect(b.coin).toBe(0)
-    expect(b.drop).toBe(7)
+    expect(b.drop).toBe(8)
   })
 
   it('连续 3 天全勤 +3', async () => {

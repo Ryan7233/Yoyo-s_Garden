@@ -5,7 +5,8 @@ import { defaultTasks } from '../data/tasks'
 import { DEFAULT_EXERCISES } from '../data/exercises'
 import { BALANCE } from '../data/balance'
 import { balanceOf } from '../engine/ledger'
-import { dayProgress, latestRecordByTask, reconcileDayAwards, revokeEntries, taskRewardEntries, type NewEntry } from '../engine/rewards'
+import { dayProgress, latestRecordByTask, latestThisWeek, reconcileDayAwards, revokeEntries, taskRewardEntries, type NewEntry } from '../engine/rewards'
+import { isWeekly } from '../engine/schedule'
 import { addDays, diffDays, toTaskDay } from '../engine/taskDay'
 import { hashPin, newSalt } from '../engine/pin'
 import { ensureDayPlans, loadPlanOf } from './plans'
@@ -107,13 +108,22 @@ async function finishRecord(childId: string, record: TaskRecord, now: Date) {
   await reconcileFrom(childId, record.date, now)
 }
 
+/** 这个任务已有的记录：普通任务看当天，每周一次的任务看这一周（做过就不能再领一次） */
+async function existingRecord(childId: string, task: TaskDef, day: string): Promise<TaskRecord | undefined> {
+  if (isWeekly(task)) {
+    const records = await db.taskRecords.where('childId').equals(childId).toArray()
+    return latestThisWeek(records, task.id, day)
+  }
+  const records = await db.taskRecords.where('[childId+date]').equals([childId, day]).toArray()
+  return latestRecordByTask(records, day).get(task.id)
+}
+
 /** 孩子点“我完成了” */
 export function childReportTask(childId: string, taskId: string, day: string, now = new Date()): Promise<TaskRecord> {
   return taskTx(async () => {
     const task = await db.tasks.get(taskId)
     if (!task) throw new Error('任务不存在')
-    const records = await db.taskRecords.where('[childId+date]').equals([childId, day]).toArray()
-    const existing = latestRecordByTask(records, day).get(taskId)
+    const existing = await existingRecord(childId, task, day)
     if (existing && (existing.status === 'done' || existing.status === 'pending')) return existing
     const record: TaskRecord = {
       id: uid(),
@@ -154,8 +164,8 @@ export function rejectRecord(recordId: string, note: string | undefined, now = n
 /** 家长直接勾选孩子没点的任务 */
 export function parentMarkDone(childId: string, taskId: string, day: string, now = new Date()) {
   return taskTx(async () => {
-    const records = await db.taskRecords.where('[childId+date]').equals([childId, day]).toArray()
-    const existing = latestRecordByTask(records, day).get(taskId)
+    const task = await db.tasks.get(taskId)
+    const existing = task ? await existingRecord(childId, task, day) : undefined
     if (existing?.status === 'done') return
     if (existing?.status === 'pending') return confirmRecord(existing.id, now)
     const record: TaskRecord = {

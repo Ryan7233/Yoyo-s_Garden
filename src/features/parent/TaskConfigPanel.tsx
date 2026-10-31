@@ -10,9 +10,11 @@ const WEEK = ['日', '一', '二', '三', '四', '五', '六']
 
 function describeSchedule(s: TaskSchedule): string {
   if (s.kind === 'daily') return '每天'
+  if (s.kind === 'weekly') return '每周一次（这周哪天都行）'
   const d = [...s.days].sort()
   if (d.join() === '1,2,3,4,5') return '上学日'
   if (d.join() === '0,1,2,3,4') return '上学日前一天'
+  if (d.join() === '0,6') return '周末（周六、周日各一次）'
   return `每周${d.map((x) => WEEK[x]).join('、')}`
 }
 
@@ -56,6 +58,7 @@ function TaskEditor({ task, onClose, childId }: { task: TaskDef | null; onClose:
   const [category, setCategory] = useState<TaskCategory>(task?.category ?? 'habit')
   const [confirmMode, setConfirmMode] = useState<ConfirmMode>(task?.confirmMode ?? 'parent')
   const [days, setDays] = useState<number[]>(task?.schedule.kind === 'weekdays' ? task.schedule.days : [0, 1, 2, 3, 4, 5, 6])
+  const [weekly, setWeekly] = useState(task?.schedule.kind === 'weekly')
   const [coins, setCoins] = useState(task?.coins ?? 3)
   const [drops, setDrops] = useState(task?.drops ?? 1)
   const [required, setRequired] = useState(task?.required ?? false)
@@ -64,8 +67,8 @@ function TaskEditor({ task, onClose, childId }: { task: TaskDef | null; onClose:
   const isSport = task?.id === EXERCISE_TASK_ID
 
   const save = async () => {
-    const schedule: TaskSchedule = days.length === 7 ? { kind: 'daily' } : { kind: 'weekdays', days: [...days].sort() }
-    const data = { name: name.trim(), icon, category, confirmMode, schedule, coins, drops, required, hint: hint.trim() || undefined }
+    const schedule: TaskSchedule = weekly ? { kind: 'weekly' } : days.length === 7 ? { kind: 'daily' } : { kind: 'weekdays', days: [...days].sort() }
+    const data = { name: name.trim(), icon, category, confirmMode, schedule, coins, drops, required: required && !weekly, hint: hint.trim() || undefined }
     await act(() => (task ? updateTask(task.id, { ...data, enabled }) : addTask(childId, data)))
     onClose()
   }
@@ -105,7 +108,10 @@ function TaskEditor({ task, onClose, childId }: { task: TaskDef | null; onClose:
             </label>
           </>
         )}
-        <label>哪几天
+        {!isSport && (
+          <label className="check"><input type="checkbox" checked={weekly} onChange={(e) => setWeekly(e.target.checked)} /> 每周做一次就行（这周哪天做都算，比如课后作业）</label>
+        )}
+        {!weekly && <label>哪几天
           <div className="chips">
             {WEEK.map((w, d) => (
               <button
@@ -117,8 +123,8 @@ function TaskEditor({ task, onClose, childId }: { task: TaskDef | null; onClose:
               </button>
             ))}
           </div>
-        </label>
-        {!isSport && (
+        </label>}
+        {!isSport && !weekly && (
           <label className="check"><input type="checkbox" checked={required} onChange={(e) => setRequired(e.target.checked)} /> 今日必做（计入全勤）</label>
         )}
         {task && <label className="check"><input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /> 启用</label>}
@@ -126,7 +132,7 @@ function TaskEditor({ task, onClose, childId }: { task: TaskDef | null; onClose:
       </div>
       <div className="modal-actions">
         <button className="btn btn-ghost" onClick={onClose}>取消</button>
-        <button className="btn btn-primary" disabled={!name.trim() || days.length === 0} onClick={save}>保存</button>
+        <button className="btn btn-primary" disabled={!name.trim() || (!weekly && days.length === 0)} onClick={save}>保存</button>
       </div>
     </Modal>
   )

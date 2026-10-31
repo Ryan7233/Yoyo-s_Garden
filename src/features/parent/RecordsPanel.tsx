@@ -3,7 +3,7 @@ import { useStore, act } from '../../app/store'
 import { parentMarkDone, revokeRecord } from '../../db/actions'
 import { editableDays, formatDay } from '../../engine/taskDay'
 import { planResolver } from '../../engine/plans'
-import { latestRecordByTask } from '../../engine/rewards'
+import { cardRecords } from '../../engine/rewards'
 import { EXERCISE_TASK_ID } from '../../data/tasks'
 import type { ExerciseRecord, TaskRecord } from '../../data/types'
 import { ConfirmDialog, Modal } from '../../ui/Modal'
@@ -23,7 +23,7 @@ export function RecordsPanel() {
   // 补录过去的日子时，按那天的任务配置列出
   const { required, more } = planResolver(tasks, dayPlans)(day)
   const requiredIds = new Set(required.map((t) => t.id))
-  const latest = latestRecordByTask(records, day)
+  const latest = cardRecords(records, tasks, day)
   const list = [...required, ...more].filter((t) => t.id !== EXERCISE_TASK_ID)
 
   return (

@@ -3,11 +3,14 @@ import type {
   Child, DayPlan, ExerciseDef, ExerciseRecord, HandRaise, InventoryItem, LedgerEntry, PlacedItem,
   PlantInstance, Plot, Settings, SpellInk, SpellSession, SpellWord, TaskDef, TaskRecord, Unlock, Wish,
 } from '../data/types'
-import { RAISE_HAND_TASK_ID, SPELLING_HINT, SPELLING_HINT_V3, SPELLING_TASK_ID, raiseHandTask, spellingTasks } from '../data/tasks'
+import {
+  ENGLISH_CLASS_HINT, ENGLISH_CLASS_NAME, ENGLISH_CLASS_TASK_ID, ENGLISH_CLASS_V6, RAISE_HAND_TASK_ID, SPELLING_HINT, SPELLING_HINT_V3,
+  SPELLING_TASK_ID, raiseHandTask, spellingTasks, week7Tasks,
+} from '../data/tasks'
 import { daysToFreeze, freezePlan } from '../engine/plans'
 import { toTaskDay } from '../engine/taskDay'
 
-export const SCHEMA_VERSION = 6
+export const SCHEMA_VERSION = 7
 
 export interface VideoBlob { id: string; blob: Blob; createdAt: string }
 export interface Snapshot { id: string; schemaVersion: number; at: string; data: string }
@@ -99,6 +102,30 @@ export class GardenDB extends Dexie {
         const days = daysToFreeze(toTaskDay(new Date(child.createdAt)), today, new Set(frozen.map((p) => p.date)))
         await tx.table<DayPlan>('dayPlans').bulkPut(days.map((d) => freezePlan(tasks, child.id, d)))
         await tx.table<TaskDef>('tasks').add(raiseHandTask(child.id, tasks.length))
+      }
+    })
+    // 7：英语口语课改成每天的美森英语外教课（必做）；加周末棒球、周一伊顿英语课、伊顿作业（这周做完就行）。
+    // 先按旧配置冻结过去的日子，过去的全勤不变；家长自己改过的名字和说明不动
+    this.version(7).stores({}).upgrade(async (tx) => {
+      await snapshotBeforeMigration(tx, 6, [...V1_TABLES, 'dayPlans', 'spellWords', 'spellSessions', 'handRaises'])
+      const today = toTaskDay(new Date())
+      for (const child of await tx.table<Child>('children').toArray()) {
+        const tasks = await tx.table<TaskDef>('tasks').where('childId').equals(child.id).toArray()
+        const frozen = await tx.table<DayPlan>('dayPlans').where('childId').equals(child.id).toArray()
+        const days = daysToFreeze(toTaskDay(new Date(child.createdAt)), today, new Set(frozen.map((p) => p.date)))
+        await tx.table<DayPlan>('dayPlans').bulkPut(days.map((d) => freezePlan(tasks, child.id, d)))
+        const english = tasks.find((t) => t.id === ENGLISH_CLASS_TASK_ID)
+        if (english) {
+          await tx.table<TaskDef>('tasks').put({
+            ...english,
+            name: english.name === ENGLISH_CLASS_V6.name ? ENGLISH_CLASS_NAME : english.name,
+            hint: english.hint === ENGLISH_CLASS_V6.hint ? ENGLISH_CLASS_HINT : english.hint,
+            schedule: { kind: 'daily' },
+            required: true,
+          })
+        }
+        const missing = week7Tasks(child.id, tasks.length).filter((t) => !tasks.some((x) => x.id === t.id))
+        await tx.table<TaskDef>('tasks').bulkAdd(missing)
       }
     })
   }

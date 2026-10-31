@@ -16,8 +16,8 @@ export type ThemeName = 'sakura' | 'lavender' | 'mint'
 
 export type TaskCategory = 'study' | 'health' | 'sport' | 'habit'
 export type ConfirmMode = 'parent' | 'self' | 'value'
-/** 0 = 周日 */
-export type TaskSchedule = { kind: 'daily' } | { kind: 'weekdays'; days: number[] }
+/** 0 = 周日。weekly：这一周（周一到周日）哪天做都行，做一次就算完成 */
+export type TaskSchedule = { kind: 'daily' } | { kind: 'weekdays'; days: number[] } | { kind: 'weekly' }
 
 export interface TaskDef {
   id: string

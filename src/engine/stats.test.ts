@@ -29,7 +29,8 @@ describe('完成率', () => {
   const SAT = '2026-10-17'
   it('当天完成率不含运动卡片，撤销的不算', () => {
     const c = dayCompletion(livePlan(tasks), [done('english-reading', SAT), done('drink-water', SAT), done('wash-up', SAT, 'revoked')], SAT)
-    const scheduled = tasks.filter((t) => isScheduledOn(t, SAT) && t.id !== 'sport').length
+    // 运动卡片和每周一次的任务（伊顿作业）不算每天的完成率
+    const scheduled = tasks.filter((t) => isScheduledOn(t, SAT) && t.id !== 'sport' && t.schedule.kind !== 'weekly').length
     expect(c).toMatchObject({ done: 2, total: scheduled, allDone: false })
   })
   it('任务完成率只算安排了它的日子', () => {

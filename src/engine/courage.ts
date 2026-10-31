@@ -2,18 +2,14 @@
 // 每天第一次记录得 1 颗勇气种子；一周（周一到周日）有几天举过手，达到周目标（默认 2）这周就算达标。
 // 达标的周累计越多，花园里的勇气向日葵越高、花越多。没记录的日子不提示失败，没达标的周也不会让向日葵变小。
 import type { HandRaise } from '../data/types'
-import { addDays, weekdayOf } from './taskDay'
+import { addDays, weekStart } from './taskDay'
+
+export { weekStart }
 
 export const RAISE_GOAL_DEFAULT = 2
 export const RAISE_GOAL_CHALLENGE = 3
 /** 累计达标几周长到第 1、2、3 级 */
 export const SUNFLOWER_LEVELS = [1, 3, 6] as const
-
-/** 这一周的周一 */
-export function weekStart(day: string): string {
-  const wd = weekdayOf(day)
-  return addDays(day, wd === 0 ? -6 : 1 - wd)
-}
 
 /** 这周有几天举过手 */
 export function raiseDaysInWeek(raises: HandRaise[], day: string): number {

@@ -15,7 +15,7 @@ const done = (taskId: string, date: string): TaskRecord => ({
 describe('按日期保存的任务配置', () => {
   it('冻结当天安排的任务，按顺序分必做和更多', () => {
     const p = freezePlan(tasks, 'c', SAT)
-    expect(p).toMatchObject({ childId: 'c', date: SAT, required: ['start-on-time', 'english-reading', 'drink-water'] })
+    expect(p).toMatchObject({ childId: 'c', date: SAT, required: ['start-on-time', 'english-speaking', 'english-reading', 'drink-water'] })
     expect(p.more).not.toContain('homework')
     expect(p.more[0]).toBe('sport')
   })
@@ -29,15 +29,15 @@ describe('按日期保存的任务配置', () => {
   })
 
   it('改了任务配置后，过去的全勤和统计不变', () => {
-    const records = ['start-on-time', 'english-reading', 'drink-water'].map((t) => done(t, SAT))
+    const records = ['start-on-time', 'english-speaking', 'english-reading', 'drink-water'].map((t) => done(t, SAT))
     const frozen = [freezePlan(tasks, 'c', SAT)]
     // 之后家长把“数学”改成必做
     const changed = tasks.map((t) => (t.id === 'math' ? { ...t, required: true } : t))
     expect(dayProgress(livePlan(changed), records, SAT).allDone).toBe(false)
     const of = planResolver(changed, frozen)
-    expect(dayProgress(of, records, SAT)).toEqual({ requiredDone: 3, requiredTotal: 3, allDone: true })
+    expect(dayProgress(of, records, SAT)).toEqual({ requiredDone: 4, requiredTotal: 4, allDone: true })
     expect(allDoneDays(of, records).has(SAT)).toBe(true)
-    expect(dayCompletion(of, records, SAT)).toMatchObject({ done: 3, allDone: true })
+    expect(dayCompletion(of, records, SAT)).toMatchObject({ done: 4, allDone: true })
     expect(dayCompletion(of, records, SAT).total).toBe(dayCompletion(livePlan(tasks), records, SAT).total)
     expect(taskRates(of, records, [SAT]).find((r) => r.task.id === 'math')?.scheduled).toBe(1)
   })
@@ -53,7 +53,7 @@ describe('建园之前的日子', () => {
   it('没有任务、标记为无数据', () => {
     expect(of('2026-10-16')).toEqual({ required: [], more: [], noData: true })
     expect(of(SAT).noData).toBeFalsy()
-    expect(of(SAT).required.length).toBe(3)
+    expect(of(SAT).required.length).toBe(4)
   })
   it('不计入完成率和各任务完成率', () => {
     const days = ['2026-10-11', '2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15', '2026-10-16', SAT]

@@ -11,9 +11,9 @@ describe('按频率生成当日任务', () => {
     expect(more.some((t) => t.id === 'toilet-break')).toBe(true)
     expect(more.some((t) => t.id === 'pack-bag')).toBe(true)
   })
-  it('周六没有作业和口语课，也不用整理书包', () => {
+  it('周六没有作业，外教课每天都有，也不用整理书包', () => {
     const { required, more } = tasksForDay(tasks, '2026-10-17')
-    expect(required.map((t) => t.id)).toEqual(['start-on-time', 'english-reading', 'drink-water'])
+    expect(required.map((t) => t.id)).toEqual(['start-on-time', 'english-speaking', 'english-reading', 'drink-water'])
     expect(more.some((t) => t.id === 'toilet-break')).toBe(false)
     expect(more.some((t) => t.id === 'pack-bag')).toBe(false)
   })

@@ -24,7 +24,7 @@ export function describeUnlock(rule: UnlockRule): string {
       return `摆放 ${rule.count} 件装饰`
     case 'taskCount':
       if (rule.taskIds?.includes('english-reading')) return `阅读累计 ${rule.count} 次`
-      if (rule.taskIds?.includes('english-speaking')) return `英语口语课累计 ${rule.count} 节`
+      if (rule.taskIds?.includes('english-speaking')) return `外教课累计 ${rule.count} 节`
       if (rule.taskIds?.includes('drink-water')) return `喝水累计 ${rule.count} 天`
       return `完成任务 ${rule.count} 次`
   }

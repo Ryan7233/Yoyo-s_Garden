@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useStore, act } from '../../app/store'
 import { livePlan } from '../../engine/plans'
-import { dayProgress, latestRecordByTask } from '../../engine/rewards'
+import { cardRecords, dayProgress } from '../../engine/rewards'
 import { earnedOn } from '../../engine/ledger'
 import { childReportTask } from '../../db/actions'
 import { EXERCISE_TASK_ID, RAISE_HAND_TASK_ID, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../../data/tasks'
@@ -29,7 +29,7 @@ export function TodayTasks() {
   // 今天始终按当前配置
   const planOf = livePlan(tasks)
   const { required, more } = planOf(today)
-  const latest = latestRecordByTask(records, today)
+  const latest = cardRecords(records, tasks, today)
   const progress = dayProgress(planOf, records, today)
   const earned = earnedOn(ledger, today)
   const scheduledEx = exercisesForDay(exercises, today)
@@ -156,6 +156,7 @@ function TaskCard({ task, record, sport, spelling, onReport }: {
   if (task.id === EXERCISE_TASK_ID) return <SportCard task={task} sport={sport} onOpen={onReport} />
   if (task.id === RAISE_HAND_TASK_ID) return <RaiseCard task={task} onOpen={onReport} />
   const status = record?.status === 'revoked' ? undefined : record?.status
+  const weekly = task.schedule.kind === 'weekly'
   return (
     <div className={`task-card ${status ?? 'todo'}`}>
       <span className="task-icon" aria-hidden>{task.icon}</span>
@@ -163,7 +164,8 @@ function TaskCard({ task, record, sport, spelling, onReport }: {
         <div className="task-name">{task.name}</div>
         <div className="task-meta">
           <Reward coins={task.coins} drops={task.drops} size="s" />
-          {status && <span className={`badge ${status}`}>{STATUS_TEXT[status]}</span>}
+          {status && <span className={`badge ${status}`}>{weekly && status === 'done' ? '✓ 这周完成了' : STATUS_TEXT[status]}</span>}
+          {weekly && !status && <span className="hint">这周哪天做都行</span>}
         </div>
         {spelling && !status && <div className="spell-count">{spelling.count}</div>}
         {status === 'rejected' && record?.note && <div className="task-note">💬 {record.note}</div>}

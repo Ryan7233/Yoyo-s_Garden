@@ -7,7 +7,7 @@ test('建园前的日子显示无数据', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-10-17T18:00:00+08:00'))
   await onboard(page)
 
-  // 完成一项自报任务：周六安排了 14 项（不含运动，含周末小听写），完成率应是 1/14 ≈ 7%
+  // 完成一项自报任务：周六安排了 16 项（不含运动和每周一次的伊顿作业，含周末小听写、外教课、棒球），完成率应是 1/16 ≈ 6%
   await page.getByRole('button', { name: /任务/ }).click()
   await page.getByRole('button', { name: /更多任务/ }).click()
   await page.locator('.task-card', { hasText: '自己洗澡刷牙' }).getByRole('button', { name: '我完成了' }).click()
@@ -23,7 +23,7 @@ test('建园前的日子显示无数据', async ({ page }) => {
   await page.getByRole('button', { name: '家长模式' }).click()
   await pin(page)
   await page.getByRole('button', { name: /统计/ }).click()
-  await expect(page.locator('.stat-tile', { hasText: '任务完成率' })).toContainText('7%')
+  await expect(page.locator('.stat-tile', { hasText: '任务完成率' })).toContainText('6%')
   await expect(page.locator('.heat-cell.no-data')).toHaveCount(6)
   await page.locator('.heat-cell.no-data').first().click()
   await expect(page.locator('.heat-foot')).toContainText('无数据')

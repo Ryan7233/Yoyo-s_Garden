@@ -13,6 +13,15 @@ export const EXERCISE_TASK_ID = 'sport'
 export const SPELLING_TASK_ID = 'spelling'
 export const SPELLING_QUIZ_TASK_ID = 'spelling-quiz'
 export const SPELLING_TASK_IDS = [SPELLING_TASK_ID, SPELLING_QUIZ_TASK_ID]
+/** 美森英语外教课：原来叫“英语口语课”（周一到周五），版本 7 起改名、改成每天 */
+export const ENGLISH_CLASS_TASK_ID = 'english-speaking'
+export const ENGLISH_CLASS_NAME = '美森英语外教课'
+export const ENGLISH_CLASS_HINT = '每天 25 分钟，按时上线、完整上完'
+export const ENGLISH_CLASS_V6 = { name: '英语口语课', hint: '按时上线、完整上完' }
+
+/** 版本 7 加的：周末棒球、周一伊顿英语课、伊顿课后作业（这周哪天做都行） */
+export const WEEK7_TASK_IDS = ['baseball', 'eton-class', 'eton-homework']
+
 /** 向日葵举手：上课举手就记一次，结果不影响奖励（见 engine/courage.ts） */
 export const RAISE_HAND_TASK_ID = 'raise-hand'
 
@@ -25,7 +34,7 @@ type Seed = Omit<TaskDef, 'childId' | 'order' | 'enabled'>
 const SEEDS: Seed[] = [
   { id: 'start-on-time', name: '说开始就开始', icon: '⏰', category: 'habit', confirmMode: 'parent', schedule: DAILY, coins: 5, drops: 1, required: true, hint: '到学习时间不讨价还价，几分钟内坐下开始' },
   { id: 'homework', name: '学校作业', icon: '📝', category: 'study', confirmMode: 'parent', schedule: SCHOOL_DAYS, coins: 5, drops: 1, required: true, hint: '放学后独立完成，不用催' },
-  { id: 'english-speaking', name: '英语口语课', icon: '🗣️', category: 'study', confirmMode: 'parent', schedule: SCHOOL_DAYS, coins: 5, drops: 1, required: true, hint: '按时上线、完整上完' },
+  { id: ENGLISH_CLASS_TASK_ID, name: ENGLISH_CLASS_NAME, icon: '🗣️', category: 'study', confirmMode: 'parent', schedule: DAILY, coins: 5, drops: 1, required: true, hint: ENGLISH_CLASS_HINT },
   { id: 'english-reading', name: '英语阅读', icon: '📖', category: 'study', confirmMode: 'parent', schedule: DAILY, coins: 5, drops: 1, required: true, hint: '牛津树读 1 本，新书或复习都算' },
   { id: 'drink-water', name: '喝完一瓶水', icon: '💧', category: 'health', confirmMode: 'parent', schedule: DAILY, coins: 3, drops: 3, required: true, hint: '放学看水杯，一瓶喝完' },
   { id: EXERCISE_TASK_ID, name: '运动打卡', icon: '🏃', category: 'sport', confirmMode: 'value', schedule: DAILY, coins: 0, drops: 0, required: false, hint: '做了几项记几项' },
@@ -43,12 +52,19 @@ const SEEDS: Seed[] = [
   { id: 'wash-up', name: '自己洗澡刷牙', icon: '🪥', category: 'habit', confirmMode: 'self', schedule: DAILY, coins: 2, drops: 1, required: false, hint: '不用大人催' },
   { id: SPELLING_TASK_ID, name: '拼 3 个词', icon: '✍️', category: 'study', confirmMode: 'parent', schedule: SCHOOL_DAYS, coins: 3, drops: 1, required: false, hint: SPELLING_HINT },
   { id: SPELLING_QUIZ_TASK_ID, name: '周末小听写', icon: '📝', category: 'study', confirmMode: 'parent', schedule: { kind: 'weekdays', days: [6] }, coins: 5, drops: 1, required: false, hint: '本周学过的词听写一遍，错的放进下周' },
+  { id: 'baseball', name: '飞雪棒球训练', icon: '⚾', category: 'sport', confirmMode: 'parent', schedule: { kind: 'weekdays', days: [6, 0] }, coins: 5, drops: 2, required: false, hint: '飞雪棒球俱乐部，周六周日各一次，认真练完' },
+  { id: 'eton-class', name: '伊顿英语课', icon: '🏫', category: 'study', confirmMode: 'parent', schedule: { kind: 'weekdays', days: [1] }, coins: 5, drops: 1, required: false, hint: '每周一，按时上课、完整上完' },
+  { id: 'eton-homework', name: '伊顿英语作业', icon: '📒', category: 'study', confirmMode: 'parent', schedule: { kind: 'weekly' }, coins: 5, drops: 1, required: false, hint: '伊顿课的课后作业，这周哪天做完都行' },
   { id: RAISE_HAND_TASK_ID, name: '我今天举手了', icon: '🙋', category: 'habit', confirmMode: 'self', schedule: SCHOOL_DAYS, coins: 0, drops: 0, required: false, hint: '上课举手就记一次，答对、答错、没叫到都一样棒' },
 ]
 
 /** 新版本加的任务：老档案升级时补上（不影响过去的日子） */
 export function spellingTasks(childId: string, fromOrder: number): TaskDef[] {
   return SEEDS.filter((t) => SPELLING_TASK_IDS.includes(t.id)).map((t, i) => ({ ...t, childId, order: fromOrder + i, enabled: true }))
+}
+
+export function week7Tasks(childId: string, fromOrder: number): TaskDef[] {
+  return SEEDS.filter((t) => WEEK7_TASK_IDS.includes(t.id)).map((t, i) => ({ ...t, childId, order: fromOrder + i, enabled: true }))
 }
 
 export function raiseHandTask(childId: string, order: number): TaskDef {

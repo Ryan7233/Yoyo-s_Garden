@@ -26,16 +26,16 @@ beforeEach(async () => {
 
 describe('改任务不改变过去', () => {
   it('第二天把别的任务改成必做，前一天的全勤和奖励保持', async () => {
-    for (const t of ['start-on-time', 'english-reading', 'drink-water']) await parentMarkDone(childId, t, DAY, SAT)
-    expect(await balance()).toEqual({ coin: 18, drop: 10 })
+    for (const t of ['start-on-time', 'english-speaking', 'english-reading', 'drink-water']) await parentMarkDone(childId, t, DAY, SAT)
+    expect(await balance()).toEqual({ coin: 23, drop: 11 })
     expect((await progressStats(childId)).allDoneDays).toBe(1)
 
     await updateTask('math', { required: true }, SUN)
     await addTask(childId, { name: '跳绳', icon: '🪢', category: 'sport', confirmMode: 'parent', schedule: { kind: 'daily' }, coins: 2, drops: 1, required: true }, SUN)
     await reconcileFrom(childId, DAY, SUN)
-    expect(await balance()).toEqual({ coin: 18, drop: 10 })
+    expect(await balance()).toEqual({ coin: 23, drop: 11 })
     expect((await progressStats(childId)).allDoneDays).toBe(1)
-    expect(await db.dayPlans.get([childId, DAY])).toMatchObject({ required: ['start-on-time', 'english-reading', 'drink-water'] })
+    expect(await db.dayPlans.get([childId, DAY])).toMatchObject({ required: ['start-on-time', 'english-speaking', 'english-reading', 'drink-water'] })
   })
 
   it('今天的配置不冻结，改了当天就生效', async () => {
@@ -67,7 +67,7 @@ describe('数据库升级', () => {
     useDatabase(next)
     await next.open()
     const snaps = (await next.snapshots.toArray()).sort((a, b) => a.schemaVersion - b.schemaVersion)
-    expect(snaps.map((s) => s.schemaVersion)).toEqual([1, 2, 5])
+    expect(snaps.map((s) => s.schemaVersion)).toEqual([1, 2, 5, 6])
     expect(JSON.parse(snaps[0].data).ledger).toHaveLength(1)
     expect(await next.ledger.get('l1')).toMatchObject({ amount: 7 })
     expect(await next.dayPlans.count()).toBeGreaterThanOrEqual(3)

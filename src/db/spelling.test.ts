@@ -7,7 +7,7 @@ import { addSpellWords, correctSpellResult, gradeSpellQuiz, inksOf, markSpellKno
 import { updateTask } from './actions'
 import { exportBackup, parseBackup } from './backup'
 import { balanceOf } from '../engine/ledger'
-import { defaultTasks, RAISE_HAND_TASK_ID, SPELLING_HINT, SPELLING_HINT_V3, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID, SPELLING_TASK_IDS } from '../data/tasks'
+import { defaultTasks, RAISE_HAND_TASK_ID, WEEK7_TASK_IDS, SPELLING_HINT, SPELLING_HINT_V3, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID, SPELLING_TASK_IDS } from '../data/tasks'
 import { addDays, toTaskDay } from '../engine/taskDay'
 
 const MON = new Date(2026, 9, 19, 18, 0)
@@ -199,7 +199,7 @@ describe('数据库升级到版本 3', () => {
       dayPlans: '[childId+date], childId',
     })
     const createdAt = new Date(Date.now() - 5 * 86400_000)
-    const oldTasks = defaultTasks('c').filter((t) => !SPELLING_TASK_IDS.includes(t.id) && t.id !== RAISE_HAND_TASK_ID)
+    const oldTasks = defaultTasks('c').filter((t) => !SPELLING_TASK_IDS.includes(t.id) && t.id !== RAISE_HAND_TASK_ID && !WEEK7_TASK_IDS.includes(t.id))
     await v2.table('children').add({ id: 'c', name: '小花', gardenName: '园', houseColor: '#fff', theme: 'mint', mascotName: '苞', createdAt: createdAt.toISOString() })
     await v2.table('tasks').bulkAdd(oldTasks)
     v2.close()
@@ -208,15 +208,18 @@ describe('数据库升级到版本 3', () => {
     useDatabase(next)
     await next.open()
     const tasks = await next.tasks.where('childId').equals('c').sortBy('order')
-    expect(tasks.slice(-3).map((t) => [t.id, t.order, t.required])).toEqual([
+    expect(tasks.slice(-6).map((t) => [t.id, t.order, t.required])).toEqual([
       [SPELLING_TASK_ID, oldTasks.length, false],
       [SPELLING_QUIZ_TASK_ID, oldTasks.length + 1, false],
       [RAISE_HAND_TASK_ID, oldTasks.length + 2, false],
+      ['baseball', oldTasks.length + 3, false],
+      ['eton-class', oldTasks.length + 4, false],
+      ['eton-homework', oldTasks.length + 5, false],
     ])
     const plans = await next.dayPlans.where('childId').equals('c').toArray()
     expect(plans.length).toBeGreaterThanOrEqual(4)
-    expect(plans.every((p) => !p.more.some((id) => SPELLING_TASK_IDS.includes(id) || id === RAISE_HAND_TASK_ID))).toBe(true)
+    expect(plans.every((p) => !p.more.some((id) => SPELLING_TASK_IDS.includes(id) || id === RAISE_HAND_TASK_ID || WEEK7_TASK_IDS.includes(id)))).toBe(true)
     expect(plans.some((p) => p.date === addDays(toTaskDay(new Date()), -1))).toBe(true)
-    expect((await next.snapshots.toArray()).map((s) => s.schemaVersion).sort()).toEqual([2, 5])
+    expect((await next.snapshots.toArray()).map((s) => s.schemaVersion).sort()).toEqual([2, 5, 6])
   })
 })

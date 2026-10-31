@@ -16,19 +16,19 @@ const entry = (e: Partial<LedgerEntry>): LedgerEntry => ({ id: `e${n++}`, childI
 describe('全勤', () => {
   const sat = '2026-10-17' // 周六必做：说开始就开始、英语阅读、喝水
   it('必做全部完成才算全勤', () => {
-    const rs = [rec('start-on-time', sat), rec('english-reading', sat)]
-    expect(dayProgress(tasks, rs, sat)).toEqual({ requiredDone: 2, requiredTotal: 3, allDone: false })
+    const rs = [rec('start-on-time', sat), rec('english-speaking', sat), rec('english-reading', sat)]
+    expect(dayProgress(tasks, rs, sat)).toEqual({ requiredDone: 3, requiredTotal: 4, allDone: false })
     rs.push(rec('drink-water', sat))
     expect(dayProgress(tasks, rs, sat).allDone).toBe(true)
   })
   it('待确认不算完成；撤销后以最新记录为准', () => {
-    const rs = [rec('start-on-time', sat), rec('english-reading', sat), rec('drink-water', sat, 'pending')]
+    const rs = [rec('start-on-time', sat), rec('english-speaking', sat), rec('english-reading', sat), rec('drink-water', sat, 'pending')]
     expect(dayProgress(tasks, rs, sat).allDone).toBe(false)
-    const rs2 = [rec('start-on-time', sat), rec('english-reading', sat), rec('drink-water', sat), rec('drink-water', sat, 'revoked')]
+    const rs2 = [rec('start-on-time', sat), rec('english-speaking', sat), rec('english-reading', sat), rec('drink-water', sat), rec('drink-water', sat, 'revoked')]
     expect(dayProgress(tasks, rs2, sat).allDone).toBe(false)
   })
   it('非必做任务不影响全勤', () => {
-    const rs = [rec('start-on-time', sat), rec('english-reading', sat), rec('drink-water', sat)]
+    const rs = [rec('start-on-time', sat), rec('english-speaking', sat), rec('english-reading', sat), rec('drink-water', sat)]
     expect(dayProgress(tasks, rs, sat).allDone).toBe(true)
   })
 })

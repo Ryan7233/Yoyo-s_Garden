@@ -24,6 +24,12 @@ export function weekdayOf(day: string): number {
   return parseTaskDay(day).getDay()
 }
 
+/** 这一周的周一（一周从周一算到周日） */
+export function weekStart(day: string): string {
+  const wd = weekdayOf(day)
+  return addDays(day, wd === 0 ? -6 : 1 - wd)
+}
+
 /** a - b 相差的天数 */
 export function diffDays(a: string, b: string): number {
   return Math.round((parseTaskDay(a).getTime() - parseTaskDay(b).getTime()) / 86_400_000)
