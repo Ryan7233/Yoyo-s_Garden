@@ -1,6 +1,6 @@
 /**
  * 伊顿英语课的课后内容：孩子看的单词卡和课本要点（家长的台词不放进来）。
- * 按日期放，任务牌上显示最近一天（不晚于今天）的那一课。
+ * 按日期放，只在那一天显示（周二的课周三就不显示了）。
  */
 export interface WordCard {
   kind: 'word'
@@ -89,7 +89,7 @@ export const ETON_LESSONS: EtonLesson[] = [
   },
 ]
 
-/** 不晚于今天的最近一课；还没有课时返回 undefined */
+/** 今天的课；今天没有课时返回 undefined（任务牌上就不显示“看今天的课”） */
 export function lessonFor(today: string): EtonLesson | undefined {
-  return ETON_LESSONS.filter((l) => l.date <= today).sort((a, b) => (a.date < b.date ? 1 : -1))[0]
+  return ETON_LESSONS.find((l) => l.date === today)
 }
