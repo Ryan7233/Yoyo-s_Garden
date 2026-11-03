@@ -59,14 +59,14 @@ export function cueTick() {
   beep(740, 120)
 }
 
-/** 读英文单词（默写的纸笔备用模式用） */
-export function speakEnglish(text: string) {
+/** 读英文（默写的纸笔备用模式、伊顿英语课）；填空的下划线不读出来 */
+export function speakEnglish(text: string, lang = 'en-GB') {
   try {
     const synth = window.speechSynthesis
     if (!synth) return
     synth.cancel()
-    const u = new SpeechSynthesisUtterance(text)
-    u.lang = 'en-GB'
+    const u = new SpeechSynthesisUtterance(text.replace(/_+/g, ' '))
+    u.lang = lang
     u.rate = 0.85
     // iPad 上 cancel() 后立刻 speak() 可能没声音，稍等一下
     setTimeout(() => synth.speak(u), 60)

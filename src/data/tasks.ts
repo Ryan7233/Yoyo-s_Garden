@@ -21,6 +21,8 @@ export const ENGLISH_CLASS_V6 = { name: '英语口语课', hint: '按时上线�
 
 /** 版本 7 加的：周末棒球、周一伊顿英语课、伊顿课后作业（这周哪天做都行） */
 export const WEEK7_TASK_IDS = ['baseball', 'eton-class', 'eton-homework']
+/** 伊顿英语作业：任务牌上可以打开当天的课（见 data/etonLessons.ts） */
+export const ETON_HOMEWORK_TASK_ID = 'eton-homework'
 
 /** 向日葵举手：上课举手就记一次，结果不影响奖励（见 engine/courage.ts） */
 export const RAISE_HAND_TASK_ID = 'raise-hand'

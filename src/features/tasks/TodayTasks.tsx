@@ -4,12 +4,14 @@ import { livePlan } from '../../engine/plans'
 import { cardRecords, dayProgress } from '../../engine/rewards'
 import { earnedOn } from '../../engine/ledger'
 import { childReportTask } from '../../db/actions'
-import { EXERCISE_TASK_ID, RAISE_HAND_TASK_ID, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../../data/tasks'
+import { ETON_HOMEWORK_TASK_ID, EXERCISE_TASK_ID, RAISE_HAND_TASK_ID, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../../data/tasks'
+import { lessonFor } from '../../data/etonLessons'
 import type { TaskDef, TaskRecord } from '../../data/types'
 import { spellQueue, weekQuizWords } from '../../engine/spelling'
 import { submitSpellSession, type SubmittedResult } from '../../db/spelling'
 import { SpellingSheet, type DictationItem } from '../spelling/SpellingSheet'
 import { RaiseHandSheet } from '../courage/RaiseHandSheet'
+import { EtonLessonSheet } from '../eton/EtonLessonSheet'
 import { Celebrate } from '../../ui/Celebrate'
 import { ExerciseSheet } from './Exercise'
 import { bestTodayByExercise, exercisesForDay } from '../../engine/exercise'
@@ -24,7 +26,10 @@ export function TodayTasks() {
   const [sportOpen, setSportOpen] = useState(false)
   const [dictation, setDictation] = useState<{ taskId: string; items: DictationItem[] } | null>(null)
   const [raising, setRaising] = useState(false)
+  const [lessonOpen, setLessonOpen] = useState(false)
   if (!child) return null
+  const lesson = lessonFor(today)
+  const lessonOf = (task: TaskDef) => (task.id === ETON_HOMEWORK_TASK_ID && lesson ? () => setLessonOpen(true) : undefined)
 
   // 今天始终按当前配置
   const planOf = livePlan(tasks)
@@ -113,7 +118,7 @@ export function TodayTasks() {
 
       <h3 className="section-title">⭐ 今日必做</h3>
       <div className="task-grid">
-        {required.map((t) => <TaskCard key={t.id} task={t} record={latest.get(t.id)} sport={sport} spelling={spellingOf(t)} onReport={() => report(t)} />)}
+        {required.map((t) => <TaskCard key={t.id} task={t} record={latest.get(t.id)} sport={sport} spelling={spellingOf(t)} onLesson={lessonOf(t)} onReport={() => report(t)} />)}
       </div>
 
       <button className="more-toggle btn btn-ghost" aria-expanded={showMore} onClick={() => setShowMore(!showMore)}>
@@ -121,13 +126,14 @@ export function TodayTasks() {
       </button>
       {showMore && (
         <div className="task-grid">
-          {more.map((t) => <TaskCard key={t.id} task={t} record={latest.get(t.id)} sport={sport} spelling={spellingOf(t)} onReport={() => report(t)} />)}
+          {more.map((t) => <TaskCard key={t.id} task={t} record={latest.get(t.id)} sport={sport} spelling={spellingOf(t)} onLesson={lessonOf(t)} onReport={() => report(t)} />)}
         </div>
       )}
 
       {celebrate > 0 && <Celebrate key={celebrate} />}
       {sportOpen && <ExerciseSheet onClose={() => setSportOpen(false)} />}
       {raising && <RaiseHandSheet onClose={() => setRaising(false)} />}
+      {lessonOpen && lesson && <EtonLessonSheet lesson={lesson} onClose={() => setLessonOpen(false)} />}
       {dictation && (
         <SpellingSheet
           items={dictation.items}
@@ -146,11 +152,13 @@ interface SportProgress { done: number; total: number }
 const STATUS_TEXT = { done: '✓ 已完成', pending: '⏳ 等爸爸妈妈确认', rejected: '↺ 可以再试一次' } as const
 
 /** 任务牌：图标、名字、奖励、状态、按钮。状态都有图标和文字，不只靠颜色 */
-function TaskCard({ task, record, sport, spelling, onReport }: {
+function TaskCard({ task, record, sport, spelling, onLesson, onReport }: {
   task: TaskDef
   record?: TaskRecord
   sport: SportProgress
   spelling?: { count: string; items: DictationItem[] }
+  /** 伊顿英语作业：打开当天的课 */
+  onLesson?: () => void
   onReport: () => void
 }) {
   if (task.id === EXERCISE_TASK_ID) return <SportCard task={task} sport={sport} onOpen={onReport} />
@@ -169,6 +177,7 @@ function TaskCard({ task, record, sport, spelling, onReport }: {
         </div>
         {spelling && !status && <div className="spell-count">{spelling.count}</div>}
         {status === 'rejected' && record?.note && <div className="task-note">💬 {record.note}</div>}
+        {onLesson && <button className="btn btn-soft eton-open" onClick={onLesson}>📖 看今天的课</button>}
       </div>
       {(!status || status === 'rejected') && (
         <button className="btn btn-primary btn-big task-btn" disabled={spelling && !spelling.items.length} onClick={onReport}>
