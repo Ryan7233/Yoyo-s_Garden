@@ -44,9 +44,6 @@
 .eton-hint { margin: 0; text-align: center; }
 .eton-say:focus-visible, .eton-chip:focus-visible, .eton-word:focus-visible, .eton-weather:focus-visible, .eton-season:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 2px; }
 
-/* 任务牌上的“看今天的课” */
-.task-card .eton-open { align-self: flex-start; }
-
 @media (max-width: 640px) {
   .eton-word { font-size: 88px; }
   .eton-grid.three, .eton-grid.four, .eton-seasons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
