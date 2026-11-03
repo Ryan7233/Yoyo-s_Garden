@@ -7,8 +7,11 @@ import { speakEnglish } from '../../ui/voice'
 const speakEn = (text: string) => speakEnglish(text, 'en-US')
 import './eton.css'
 
-/** 伊顿英语课：一张一张翻看当天的单词卡和课本要点，点单词或句子能听发音 */
-export function EtonLessonSheet({ lesson, onClose }: { lesson: EtonLesson; onClose: () => void }) {
+/**
+ * 伊顿英语课：一张一张翻看当天的单词卡和课本要点，点单词或句子能听发音。
+ * onFinish：这周作业还没打卡时，看完最后一张点“学完了”就交作业（等家长确认）
+ */
+export function EtonLessonSheet({ lesson, onFinish, onClose }: { lesson: EtonLesson; onFinish?: () => Promise<unknown>; onClose: () => void }) {
   const [at, setAt] = useState(0)
   const top = useRef<HTMLDivElement>(null)
   // 翻到下一张时回到最上面
@@ -32,7 +35,7 @@ export function EtonLessonSheet({ lesson, onClose }: { lesson: EtonLesson; onClo
         <div className="modal-actions">
           <button className="btn btn-ghost btn-big" disabled={at === 0} onClick={() => setAt(at - 1)}>← 上一张</button>
           {last
-            ? <button className="btn btn-primary btn-big" onClick={onClose}>看完啦</button>
+            ? <button className="btn btn-primary btn-big" onClick={async () => { await onFinish?.(); onClose() }}>{onFinish ? '学完了，交作业 ✓' : '看完啦'}</button>
             : <button className="btn btn-primary btn-big" onClick={() => setAt(at + 1)}>下一张 →</button>}
         </div>
       </div>

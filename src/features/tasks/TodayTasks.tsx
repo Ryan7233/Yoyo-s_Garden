@@ -133,7 +133,14 @@ export function TodayTasks() {
       {celebrate > 0 && <Celebrate key={celebrate} />}
       {sportOpen && <ExerciseSheet onClose={() => setSportOpen(false)} />}
       {raising && <RaiseHandSheet onClose={() => setRaising(false)} />}
-      {lessonOpen && lesson && <EtonLessonSheet lesson={lesson} onClose={() => setLessonOpen(false)} />}
+      {lessonOpen && lesson && (
+        <EtonLessonSheet
+          lesson={lesson}
+          // 这周的作业还没打卡时，看完最后一张就算交作业（等家长确认）
+          onFinish={['done', 'pending'].includes(latest.get(ETON_HOMEWORK_TASK_ID)?.status ?? '') ? undefined : () => act(() => childReportTask(child.id, ETON_HOMEWORK_TASK_ID, today))}
+          onClose={() => setLessonOpen(false)}
+        />
+      )}
       {dictation && (
         <SpellingSheet
           items={dictation.items}
@@ -177,11 +184,12 @@ function TaskCard({ task, record, sport, spelling, onLesson, onReport }: {
         </div>
         {spelling && !status && <div className="spell-count">{spelling.count}</div>}
         {status === 'rejected' && record?.note && <div className="task-note">💬 {record.note}</div>}
-        {onLesson && <button className="btn btn-soft eton-open" onClick={onLesson}>📖 看今天的课</button>}
+        {/* 有当天的课：主按钮就是去学；已经打过卡的，留一个“再看一遍” */}
+        {onLesson && status && status !== 'rejected' && <button className="btn btn-soft eton-open" onClick={onLesson}>📖 再看一遍今天的课</button>}
       </div>
       {(!status || status === 'rejected') && (
-        <button className="btn btn-primary btn-big task-btn" disabled={spelling && !spelling.items.length} onClick={onReport}>
-          {spelling ? (status === 'rejected' ? '再写一次' : '去默写 ✍️') : status === 'rejected' ? '再试一次' : '我完成了'}
+        <button className="btn btn-primary btn-big task-btn" disabled={spelling && !spelling.items.length} onClick={onLesson ?? onReport}>
+          {onLesson ? '去学今天的课 📖' : spelling ? (status === 'rejected' ? '再写一次' : '去默写 ✍️') : status === 'rejected' ? '再试一次' : '我完成了'}
         </button>
       )}
     </div>
