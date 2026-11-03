@@ -206,6 +206,10 @@ function TaskCard({ task, record, sport, spelling, onLesson, onReport }: {
           {spelling ? (status === 'rejected' ? '再写一次' : '去默写 ✍️') : status === 'rejected' ? '再试一次' : '我完成了'}
         </button>
       )}
+      {/* 伊顿作业交过以后，同一个位置换成“再看一遍”：还能点开当天的课，不会再交一次 */}
+      {task.id === ETON_HOMEWORK_TASK_ID && onLesson && (status === 'done' || status === 'pending') && (
+        <button className="btn btn-ghost btn-big task-btn" onClick={onLesson}>📖 再看一遍</button>
+      )}
     </div>
   )
 }
