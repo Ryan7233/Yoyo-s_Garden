@@ -66,6 +66,9 @@ export interface TaskRecord {
   note?: string
   createdAt: string
   confirmedAt?: string
+  /** 每日拼读：读了几遍、最快一遍用了几秒 */
+  readTimes?: number
+  readBestSec?: number
 }
 export interface ExerciseRecord {
   id: string

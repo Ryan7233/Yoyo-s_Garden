@@ -7,6 +7,7 @@ import { formatValue } from '../tasks/Exercise'
 import { formatDay, isEditable } from '../../engine/taskDay'
 import type { TaskRecord } from '../../data/types'
 import { Modal } from '../../ui/Modal'
+import { formatReadTime } from '../../data/pinyinCards'
 import { SpellReview, needsGrading, sessionOfRecord } from '../spelling/SpellReview'
 
 export function PendingPanel() {
@@ -70,6 +71,7 @@ export function PendingPanel() {
                   <div className="row-main">
                     <div className="row-title">{t?.name ?? r.taskId}</div>
                     {t?.hint && <div className="row-sub">达标：{t.hint}</div>}
+                    {r.readTimes && <div className="row-sub">🔤 读了 {r.readTimes} 遍，最快 {formatReadTime(r.readBestSec ?? 0)}</div>}
                   </div>
                   {editable && (
                     <>

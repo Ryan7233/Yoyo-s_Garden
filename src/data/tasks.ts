@@ -24,6 +24,9 @@ export const WEEK7_TASK_IDS = ['baseball', 'eton-class', 'eton-homework']
 /** 伊顿英语作业：任务牌上可以打开当天的课（见 data/etonLessons.ts） */
 export const ETON_HOMEWORK_TASK_ID = 'eton-homework'
 
+/** 每日拼读：老师发的拼读小卡片，读几遍、计时（版本 8 加的，见 data/pinyinCards.ts） */
+export const PINYIN_TASK_ID = 'pinyin-reading'
+
 /** 向日葵举手：上课举手就记一次，结果不影响奖励（见 engine/courage.ts） */
 export const RAISE_HAND_TASK_ID = 'raise-hand'
 
@@ -58,6 +61,7 @@ const SEEDS: Seed[] = [
   { id: 'eton-class', name: '伊顿英语课', icon: '🏫', category: 'study', confirmMode: 'parent', schedule: { kind: 'weekdays', days: [1] }, coins: 5, drops: 1, required: false, hint: '每周一，按时上课、完整上完' },
   { id: 'eton-homework', name: '伊顿英语作业', icon: '📒', category: 'study', confirmMode: 'parent', schedule: { kind: 'weekly' }, coins: 5, drops: 1, required: false, hint: '伊顿课的课后作业，这周哪天做完都行' },
   { id: RAISE_HAND_TASK_ID, name: '我今天举手了', icon: '🙋', category: 'habit', confirmMode: 'self', schedule: SCHOOL_DAYS, coins: 0, drops: 0, required: false, hint: '上课举手就记一次，答对、答错、没叫到都一样棒' },
+  { id: PINYIN_TASK_ID, name: '每日拼读', icon: '🔤', category: 'study', confirmMode: 'parent', schedule: SCHOOL_DAYS, coins: 3, drops: 1, required: false, hint: '老师的拼读小卡片，读熟，记下读了几遍、最快用时' },
 ]
 
 /** 新版本加的任务：老档案升级时补上（不影响过去的日子） */
@@ -71,6 +75,11 @@ export function week7Tasks(childId: string, fromOrder: number): TaskDef[] {
 
 export function raiseHandTask(childId: string, order: number): TaskDef {
   const t = SEEDS.find((s) => s.id === RAISE_HAND_TASK_ID)!
+  return { ...t, childId, order, enabled: true }
+}
+
+export function pinyinTask(childId: string, order: number): TaskDef {
+  const t = SEEDS.find((s) => s.id === PINYIN_TASK_ID)!
   return { ...t, childId, order, enabled: true }
 }
 

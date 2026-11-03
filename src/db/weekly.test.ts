@@ -108,3 +108,15 @@ describe('数据库升级到版本 7', () => {
     expect(weekend.more).not.toContain('baseball')
   })
 })
+
+describe('每日拼读', () => {
+  it('上学日出现、不必做；交作业带上读了几遍和最快用时，等家长确认，确认后发奖励', async () => {
+    const tasks = await db.tasks.toArray()
+    expect(tasksForDay(tasks, day(20)).more.map((t) => t.id)).toContain('pinyin-reading')
+    expect(tasksForDay(tasks, day(24)).more.map((t) => t.id)).not.toContain('pinyin-reading')
+    const r = await childReportTask(childId, 'pinyin-reading', day(20), at(20), { readTimes: 3, readBestSec: 65 })
+    expect(r).toMatchObject({ status: 'pending', readTimes: 3, readBestSec: 65 })
+    await confirmRecord(r.id, at(20))
+    expect(balanceOf(await db.ledger.toArray()).coin).toBeGreaterThanOrEqual(3)
+  })
+})

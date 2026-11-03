@@ -68,7 +68,7 @@ const TABLE_SPECS: Record<BackupTable, TableSpec> = {
   taskRecords: {
     key: ['id'],
     fields: { id: 's', childId: 's', taskId: 's', date: 's', status: STATUS, source: ['child', 'parent'], createdAt: 's' },
-    optional: { note: 's', confirmedAt: 's' },
+    optional: { note: 's', confirmedAt: 's', readTimes: 'n', readBestSec: 'n' },
   },
   exerciseRecords: {
     key: ['id'],

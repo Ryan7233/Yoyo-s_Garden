@@ -1,0 +1,17 @@
+/* 每日拼读：图片在上，计时条贴在弹窗底部，读的时候不用往下翻就能点停。孩子会点的地方都不小于 64px */
+.pinyin { display: flex; flex-direction: column; gap: var(--sp-3); }
+.pinyin .modal-title { margin: 0; }
+.pinyin-img { display: block; padding: 0; border: 2px solid var(--cream-edge); border-radius: var(--r-l); background: #fff; overflow: auto; cursor: zoom-in; max-height: 70vh; }
+.pinyin-img img { display: block; width: 100%; height: auto; }
+.pinyin-img.zoom { cursor: zoom-out; }
+.pinyin-img.zoom img { width: 180%; max-width: none; }
+.pinyin-hint { margin: 0; }
+.pinyin-bar { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); padding: var(--sp-3) var(--sp-4); background: var(--mint-light); border-radius: var(--r-l); z-index: 1; }
+.pinyin-clock { display: flex; align-items: baseline; gap: var(--sp-3); }
+.pinyin-round { font-size: var(--fs-m); color: var(--text-soft); }
+.pinyin-time { font-size: var(--fs-2xl); font-weight: 800; min-width: 5em; text-align: left; }
+.pinyin-go { min-height: var(--touch); min-width: 200px; }
+.pinyin-go.stop { background: var(--coin-light); }
+.pinyin-laps { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; justify-content: center; }
+.pinyin-laps li { padding: 8px 16px; border-radius: var(--r-pill); background: var(--cream); font-size: var(--fs-m); }
+.pinyin-laps li.best { background: var(--coin-light); }

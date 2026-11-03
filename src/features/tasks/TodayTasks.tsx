@@ -4,14 +4,16 @@ import { livePlan } from '../../engine/plans'
 import { cardRecords, dayProgress } from '../../engine/rewards'
 import { earnedOn } from '../../engine/ledger'
 import { childReportTask } from '../../db/actions'
-import { ETON_HOMEWORK_TASK_ID, EXERCISE_TASK_ID, RAISE_HAND_TASK_ID, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../../data/tasks'
+import { ETON_HOMEWORK_TASK_ID, EXERCISE_TASK_ID, PINYIN_TASK_ID, RAISE_HAND_TASK_ID, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../../data/tasks'
 import { lessonFor } from '../../data/etonLessons'
+import { pinyinCardFor } from '../../data/pinyinCards'
 import type { TaskDef, TaskRecord } from '../../data/types'
 import { spellQueue, weekQuizWords } from '../../engine/spelling'
 import { submitSpellSession, type SubmittedResult } from '../../db/spelling'
 import { SpellingSheet, type DictationItem } from '../spelling/SpellingSheet'
 import { RaiseHandSheet } from '../courage/RaiseHandSheet'
 import { EtonLessonSheet } from '../eton/EtonLessonSheet'
+import { PinyinCardSheet } from '../pinyin/PinyinCardSheet'
 import { Celebrate } from '../../ui/Celebrate'
 import { ExerciseSheet } from './Exercise'
 import { bestTodayByExercise, exercisesForDay } from '../../engine/exercise'
@@ -27,9 +29,16 @@ export function TodayTasks() {
   const [dictation, setDictation] = useState<{ taskId: string; items: DictationItem[] } | null>(null)
   const [raising, setRaising] = useState(false)
   const [lessonOpen, setLessonOpen] = useState(false)
+  const [pinyinOpen, setPinyinOpen] = useState(false)
   if (!child) return null
   const lesson = lessonFor(today)
-  const lessonOf = (task: TaskDef) => (task.id === ETON_HOMEWORK_TASK_ID && lesson ? () => setLessonOpen(true) : undefined)
+  const pinyin = pinyinCardFor(today)
+  // 当天有伊顿课 / 拼读卡时，点“我完成了”先弹出来，学完再交
+  const lessonOf = (task: TaskDef) => {
+    if (task.id === ETON_HOMEWORK_TASK_ID && lesson) return () => setLessonOpen(true)
+    if (task.id === PINYIN_TASK_ID && pinyin) return () => setPinyinOpen(true)
+    return undefined
+  }
 
   // 今天始终按当前配置
   const planOf = livePlan(tasks)
@@ -141,6 +150,13 @@ export function TodayTasks() {
           onClose={() => setLessonOpen(false)}
         />
       )}
+      {pinyinOpen && pinyin && (
+        <PinyinCardSheet
+          card={pinyin}
+          onFinish={(r) => act(() => childReportTask(child.id, PINYIN_TASK_ID, today, new Date(), r))}
+          onClose={() => setPinyinOpen(false)}
+        />
+      )}
       {dictation && (
         <SpellingSheet
           items={dictation.items}
@@ -164,7 +180,7 @@ function TaskCard({ task, record, sport, spelling, onLesson, onReport }: {
   record?: TaskRecord
   sport: SportProgress
   spelling?: { count: string; items: DictationItem[] }
-  /** 伊顿英语作业：当天有课时，点“我完成了”先弹出课，学完再交 */
+  /** 伊顿英语作业、每日拼读：当天有课 / 有卡片时，点“我完成了”先弹出来，学完再交 */
   onLesson?: () => void
   onReport: () => void
 }) {

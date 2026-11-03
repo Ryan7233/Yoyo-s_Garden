@@ -118,8 +118,10 @@ async function existingRecord(childId: string, task: TaskDef, day: string): Prom
   return latestRecordByTask(records, day).get(task.id)
 }
 
-/** 孩子点“我完成了” */
-export function childReportTask(childId: string, taskId: string, day: string, now = new Date()): Promise<TaskRecord> {
+/** 孩子点“我完成了”；extra：每日拼读带上读了几遍、最快用时 */
+export function childReportTask(
+  childId: string, taskId: string, day: string, now = new Date(), extra?: Pick<TaskRecord, 'readTimes' | 'readBestSec'>,
+): Promise<TaskRecord> {
   return taskTx(async () => {
     const task = await db.tasks.get(taskId)
     if (!task) throw new Error('任务不存在')
@@ -133,6 +135,7 @@ export function childReportTask(childId: string, taskId: string, day: string, no
       status: task.confirmMode === 'parent' ? 'pending' : 'done',
       source: 'child',
       createdAt: now.toISOString(),
+      ...extra,
     }
     if (record.status === 'done') record.confirmedAt = record.createdAt
     await db.taskRecords.add(record)

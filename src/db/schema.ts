@@ -4,13 +4,13 @@ import type {
   PlantInstance, Plot, Settings, SpellInk, SpellSession, SpellWord, TaskDef, TaskRecord, Unlock, Wish,
 } from '../data/types'
 import {
-  ENGLISH_CLASS_HINT, ENGLISH_CLASS_NAME, ENGLISH_CLASS_TASK_ID, ENGLISH_CLASS_V6, RAISE_HAND_TASK_ID, SPELLING_HINT, SPELLING_HINT_V3,
-  SPELLING_TASK_ID, raiseHandTask, spellingTasks, week7Tasks,
+  ENGLISH_CLASS_HINT, ENGLISH_CLASS_NAME, ENGLISH_CLASS_TASK_ID, ENGLISH_CLASS_V6, PINYIN_TASK_ID, RAISE_HAND_TASK_ID, SPELLING_HINT, SPELLING_HINT_V3,
+  SPELLING_TASK_ID, pinyinTask, raiseHandTask, spellingTasks, week7Tasks,
 } from '../data/tasks'
 import { daysToFreeze, freezePlan } from '../engine/plans'
 import { toTaskDay } from '../engine/taskDay'
 
-export const SCHEMA_VERSION = 7
+export const SCHEMA_VERSION = 8
 
 export interface VideoBlob { id: string; blob: Blob; createdAt: string }
 export interface Snapshot { id: string; schemaVersion: number; at: string; data: string }
@@ -126,6 +126,18 @@ export class GardenDB extends Dexie {
         }
         const missing = week7Tasks(child.id, tasks.length).filter((t) => !tasks.some((x) => x.id === t.id))
         await tx.table<TaskDef>('tasks').bulkAdd(missing)
+      }
+    })
+    // 版本 8：加“每日拼读”
+    this.version(8).stores({}).upgrade(async (tx) => {
+      await snapshotBeforeMigration(tx, 7, [...V1_TABLES, 'dayPlans', 'spellWords', 'spellSessions', 'handRaises'])
+      const today = toTaskDay(new Date())
+      for (const child of await tx.table<Child>('children').toArray()) {
+        const tasks = await tx.table<TaskDef>('tasks').where('childId').equals(child.id).toArray()
+        const frozen = await tx.table<DayPlan>('dayPlans').where('childId').equals(child.id).toArray()
+        const days = daysToFreeze(toTaskDay(new Date(child.createdAt)), today, new Set(frozen.map((p) => p.date)))
+        await tx.table<DayPlan>('dayPlans').bulkPut(days.map((d) => freezePlan(tasks, child.id, d)))
+        if (!tasks.some((t) => t.id === PINYIN_TASK_ID)) await tx.table<TaskDef>('tasks').add(pinyinTask(child.id, tasks.length))
       }
     })
   }
