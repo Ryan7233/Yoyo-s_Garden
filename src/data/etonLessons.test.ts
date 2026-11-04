@@ -5,6 +5,12 @@ describe('伊顿英语课', () => {
   it('只在课程那一天显示，前一天和第二天都没有', () => {
     expect(lessonFor('2026-11-03')?.title).toContain('11 月 3 日')
     expect(lessonFor('2026-11-02')).toBeUndefined()
-    expect(lessonFor('2026-11-04')).toBeUndefined()
+    expect(lessonFor('2026-11-04')?.title).toContain('11 月 4 日')
+  })
+
+  it('周三是 me、Power Verbs 和小书，不再是周二的 look / at / 季节', () => {
+    const kinds = lessonFor('2026-11-04')?.cards.map((c) => c.kind === 'word' ? c.word : c.kind)
+    expect(kinds).toEqual(['me', 'verbs', 'book'])
+    expect(lessonFor('2026-11-05')).toBeUndefined()
   })
 })

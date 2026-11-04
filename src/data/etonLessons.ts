@@ -24,7 +24,26 @@ export interface TopicCard {
   talk: { q: string; a: string }[]
 }
 
-export type LessonCard = WordCard | TopicCard
+/** 课本里的动作词：边做动作边说整句，再和四季连起来 */
+export interface VerbsCard {
+  kind: 'verbs'
+  title: string
+  tag: string
+  verbs: { word: string; icon: string; meaning: string; sentence: string }[]
+  talk: { q: string; a: string }[]
+  remember?: { say: string; not: string }
+}
+
+/** 小书跟读：每两页一问一答 */
+export interface BookCard {
+  kind: 'book'
+  title: string
+  tag: string
+  pages: { pages: string; icon: string; lead: string; q: string; a: string }[]
+  words: string[]
+}
+
+export type LessonCard = WordCard | TopicCard | VerbsCard | BookCard
 
 export interface EtonLesson {
   date: string
@@ -84,6 +103,51 @@ export const ETON_LESSONS: EtonLesson[] = [
           { q: 'What kind of weather do you like?', a: 'I like sunny weather.' },
           { q: 'What is your favorite season?', a: 'My favorite season is ______.' },
         ],
+      },
+    ],
+  },
+  {
+    date: '2026-11-04',
+    title: '11 月 4 日 · 周三',
+    cards: [
+      {
+        kind: 'word',
+        word: 'me',
+        tag: 'Sight Words 11',
+        meaning: '我',
+        spell: ['M', 'E'],
+        tip: 'Only two letters! M-E is me. M-Y is my.',
+        sentences: ['Look at me.', "It's me!", 'Can you see me?'],
+        remember: { say: "It's me.", not: 'It me.' },
+      },
+      {
+        kind: 'verbs',
+        title: 'Power Verbs',
+        tag: 'Reading Key K1 · Unit 1',
+        verbs: [
+          { word: 'rain', icon: '🌧️', meaning: '下雨', sentence: 'It is raining.' },
+          { word: 'snow', icon: '❄️', meaning: '下雪', sentence: 'It is snowing.' },
+          { word: 'bloom', icon: '🌸', meaning: '开花', sentence: 'Flowers bloom.' },
+          { word: 'change', icon: '🍂', meaning: '改变', sentence: 'Leaves change colors.' },
+        ],
+        talk: [
+          { q: 'When do flowers bloom?', a: 'Flowers bloom in spring.' },
+          { q: 'When do leaves change colors?', a: 'Leaves change colors in fall.' },
+          { q: 'When is it snowing?', a: 'It is snowing in winter.' },
+        ],
+        remember: { say: 'It is raining.', not: 'It raining.' },
+      },
+      {
+        kind: 'book',
+        title: 'What Season Is It?',
+        tag: 'Little book · Level C',
+        pages: [
+          { pages: '3–4', icon: '🍂', lead: 'The leaves change color.', q: 'When do leaves change color?', a: 'Leaves change color in fall.' },
+          { pages: '5–6', icon: '❄️', lead: 'The snow falls.', q: 'When does snow fall?', a: 'Snow falls in winter.' },
+          { pages: '7–8', icon: '🌷', lead: 'The flowers grow.', q: 'When do flowers grow?', a: 'Flowers grow in spring.' },
+          { pages: '9–10', icon: '☀️', lead: 'The days become hot.', q: 'When do days become hot?', a: 'Days become hot in summer.' },
+        ],
+        words: ['change', 'fall', 'grow', 'spring', 'summer', 'winter'],
       },
     ],
   },

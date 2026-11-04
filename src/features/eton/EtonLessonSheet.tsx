@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { EtonLesson, TopicCard, WordCard } from '../../data/etonLessons'
+import type { BookCard, EtonLesson, LessonCard, TopicCard, VerbsCard, WordCard } from '../../data/etonLessons'
 import { Modal } from '../../ui/Modal'
 import { speakEnglish } from '../../ui/voice'
 
@@ -29,7 +29,7 @@ export function EtonLessonSheet({ lesson, onFinish, onClose }: { lesson: EtonLes
           <span className="eton-page num" aria-live="polite">{at + 1} / {lesson.cards.length}</span>
         </div>
 
-        {card.kind === 'word' ? <WordView card={card} /> : <TopicView card={card} />}
+        <CardView card={card} />
 
         <p className="eton-hint hint">点一下单词或句子，可以听发音 🔊</p>
         <div className="modal-actions">
@@ -40,6 +40,24 @@ export function EtonLessonSheet({ lesson, onFinish, onClose }: { lesson: EtonLes
         </div>
       </div>
     </Modal>
+  )
+}
+
+function CardView({ card }: { card: LessonCard }) {
+  switch (card.kind) {
+    case 'word': return <WordView card={card} />
+    case 'topic': return <TopicView card={card} />
+    case 'verbs': return <VerbsView card={card} />
+    case 'book': return <BookView card={card} />
+  }
+}
+
+function Remember({ say, not }: { say: string; not: string }) {
+  return (
+    <div className="eton-remember">
+      <span>✓ <b>{say}</b></span>
+      <span className="eton-not">✗ <s>{not}</s></span>
+    </div>
   )
 }
 
@@ -98,12 +116,7 @@ function WordView({ card }: { card: WordCard }) {
         </div>
       </section>
 
-      {card.remember && (
-        <div className="eton-remember">
-          <span>✓ <b>{card.remember.say}</b></span>
-          <span className="eton-not">✗ <s>{card.remember.not}</s></span>
-        </div>
-      )}
+      {card.remember && <Remember {...card.remember} />}
     </div>
   )
 }
@@ -148,6 +161,76 @@ function TopicView({ card }: { card: TopicCard }) {
               <Say text={t.a} className="a" />
             </div>
           ))}
+        </div>
+      </section>
+    </div>
+  )
+}
+
+/** 动作词：点一下听词和整句，再问“在哪个季节” */
+function VerbsView({ card }: { card: VerbsCard }) {
+  return (
+    <div className="eton-card">
+      <span className="eton-tag">{card.tag}</span>
+      <h3 className="eton-topic">{card.title}</h3>
+
+      <section className="eton-block">
+        <h3 className="eton-sub">Act it out!</h3>
+        <div className="eton-grid two">
+          {card.verbs.map((v) => (
+            <button key={v.word} className="eton-weather" onClick={() => speakEn(`${v.word}. ${v.sentence}`)}>
+              <span className="eton-wicon" aria-hidden>{v.icon}</span>
+              <span className="eton-wtext"><b>{v.word} <small className="eton-zh">{v.meaning}</small></b><span>{v.sentence}</span></span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="eton-block">
+        <h3 className="eton-sub">Which season?</h3>
+        <div className="eton-lines">
+          {card.talk.map((t) => (
+            <div key={t.q} className="eton-qa">
+              <Say text={t.q} className="q" />
+              <Say text={t.a} className="a" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {card.remember && <Remember {...card.remember} />}
+    </div>
+  )
+}
+
+/** 小书跟读：每两页一句、一问一答 */
+function BookView({ card }: { card: BookCard }) {
+  return (
+    <div className="eton-card">
+      <span className="eton-tag">{card.tag}</span>
+      <h3 className="eton-topic">📗 {card.title}</h3>
+
+      <section className="eton-block">
+        <h3 className="eton-sub">Read along</h3>
+        <div className="eton-lines">
+          {card.pages.map((p) => (
+            <div key={p.pages} className="eton-page-pair">
+              {/* 图标不放进朗读的句子里，免得把表情也念出来 */}
+              <span className="eton-pages hint">p. {p.pages} <span aria-hidden>{p.icon}</span></span>
+              <Say text={p.lead} />
+              <div className="eton-qa">
+                <Say text={p.q} className="q" />
+                <Say text={p.a} className="a" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="eton-block">
+        <h3 className="eton-sub">Words to know</h3>
+        <div className="eton-grid three">
+          {card.words.map((w) => <button key={w} className="eton-chip" onClick={() => speakEn(w)}>{w}</button>)}
         </div>
       </section>
     </div>

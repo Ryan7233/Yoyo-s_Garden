@@ -41,6 +41,10 @@
 .eton-season.s1 { background: var(--coin-light); }
 .eton-season.s2 { background: var(--cream-2); }
 .eton-season.s3 { background: var(--sky-light); }
+.eton-zh { font-family: system-ui, sans-serif; font-size: var(--fs-m); font-weight: 400; color: var(--text-soft); }
+.eton-page-pair { display: flex; flex-direction: column; gap: var(--sp-2); padding-bottom: var(--sp-3); border-bottom: 2px dashed var(--cream-edge); }
+.eton-page-pair:last-child { border-bottom: 0; padding-bottom: 0; }
+.eton-pages { font-size: var(--fs-s); }
 .eton-hint { margin: 0; text-align: center; }
 .eton-say:focus-visible, .eton-chip:focus-visible, .eton-word:focus-visible, .eton-weather:focus-visible, .eton-season:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 2px; }
 
