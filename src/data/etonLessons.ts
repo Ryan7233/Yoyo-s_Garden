@@ -43,13 +43,58 @@ export interface BookCard {
   words: string[]
 }
 
-export type LessonCard = WordCard | TopicCard | VerbsCard | BookCard
+/** 比较级：比两个用 -er + than，三个以上里“最……”用 the + -est */
+export interface CompareCard {
+  kind: 'compare'
+  title: string
+  tag: string
+  rows: { icon: string; forms: [string, string, string]; two: string; most: string }[]
+  talk?: { q: string; a: string }[]
+  remember?: { say: string; not: string }
+}
+
+/** 问答练习：this / that 游戏、口头彩排 */
+export interface TalkCard {
+  kind: 'talk'
+  title: string
+  tag: string
+  tip?: string
+  talk: { q: string; a: string }[]
+}
+
+/** 复习这周的词：点词听发音，每个词一句 */
+export interface ReviewCard {
+  kind: 'review'
+  title: string
+  tag: string
+  words: { word: string; sentence: string }[]
+}
+
+export type LessonCard = WordCard | TopicCard | VerbsCard | BookCard | CompareCard | TalkCard | ReviewCard
 
 export interface EtonLesson {
   date: string
   title: string
   cards: LessonCard[]
 }
+
+/** 小书 What Season Is It?（Level C）：周三跟读，周五自己读，周日读给家人听 */
+const SEASON_BOOK: Omit<BookCard, 'tag'> = {
+  kind: 'book',
+  title: 'What Season Is It?',
+  pages: [
+    { pages: '3–4', icon: '🍂', lead: 'The leaves change color.', q: 'When do leaves change color?', a: 'Leaves change color in fall.' },
+    { pages: '5–6', icon: '❄️', lead: 'The snow falls.', q: 'When does snow fall?', a: 'Snow falls in winter.' },
+    { pages: '7–8', icon: '🌷', lead: 'The flowers grow.', q: 'When do flowers grow?', a: 'Flowers grow in spring.' },
+    { pages: '9–10', icon: '☀️', lead: 'The days become hot.', q: 'When do days become hot?', a: 'Days become hot in summer.' },
+  ],
+  words: ['change', 'fall', 'grow', 'spring', 'summer', 'winter'],
+}
+
+/** 比较级三组（教案“比较级造句”），周四、周五、周六用 */
+const HOT = { icon: '☀️', forms: ['hot', 'hotter', 'the hottest'], two: 'Summer is hotter than spring.', most: 'Summer is the hottest season.' } as CompareCard['rows'][number]
+const COLD = { icon: '❄️', forms: ['cold', 'colder', 'the coldest'], two: 'Winter is colder than fall.', most: 'Winter is the coldest season.' } as CompareCard['rows'][number]
+const SMALL = { icon: '🥤', forms: ['small', 'smaller', 'the smallest'], two: 'My brother is smaller than me.', most: 'The blue cup is the smallest.' } as CompareCard['rows'][number]
 
 export const ETON_LESSONS: EtonLesson[] = [
   {
@@ -137,17 +182,149 @@ export const ETON_LESSONS: EtonLesson[] = [
         ],
         remember: { say: 'It is raining.', not: 'It raining.' },
       },
+      { ...SEASON_BOOK, tag: 'Little book · Read along' },
+    ],
+  },
+  {
+    date: '2026-11-05',
+    title: '11 月 5 日 · 周四',
+    cards: [
       {
-        kind: 'book',
-        title: 'What Season Is It?',
-        tag: 'Little book · Level C',
-        pages: [
-          { pages: '3–4', icon: '🍂', lead: 'The leaves change color.', q: 'When do leaves change color?', a: 'Leaves change color in fall.' },
-          { pages: '5–6', icon: '❄️', lead: 'The snow falls.', q: 'When does snow fall?', a: 'Snow falls in winter.' },
-          { pages: '7–8', icon: '🌷', lead: 'The flowers grow.', q: 'When do flowers grow?', a: 'Flowers grow in spring.' },
-          { pages: '9–10', icon: '☀️', lead: 'The days become hot.', q: 'When do days become hot?', a: 'Days become hot in summer.' },
+        kind: 'word',
+        word: 'who',
+        tag: 'Sight Words 12',
+        meaning: '谁',
+        spell: ['W', 'H', 'O'],
+        tip: 'W-H-O. It sounds like "hoo".',
+        sentences: ['Who is it?', 'Who are you?', 'Who is that?'],
+        remember: { say: 'Who is it?', not: 'Who it is?' },
+      },
+      {
+        kind: 'compare',
+        title: 'Hot and Cold',
+        tag: 'Reading Key K1 · Compare',
+        rows: [HOT, COLD],
+        talk: [
+          { q: 'Is summer hotter than spring?', a: 'Yes! Summer is hotter than spring.' },
+          { q: 'Which season is the hottest?', a: 'Summer is the hottest season.' },
+          { q: 'Is fall colder than winter?', a: 'No! Winter is colder than fall.' },
+          { q: 'Which season is the coldest?', a: 'Winter is the coldest season.' },
         ],
-        words: ['change', 'fall', 'grow', 'spring', 'summer', 'winter'],
+        remember: { say: 'hotter', not: 'hoter' },
+      },
+    ],
+  },
+  {
+    date: '2026-11-06',
+    title: '11 月 6 日 · 周五',
+    cards: [
+      {
+        kind: 'word',
+        word: 'this',
+        tag: 'Sight Words 13',
+        meaning: '这个',
+        spell: ['T', 'H', 'I', 'S'],
+        tip: 'this = near me 👇',
+        sentences: ['This is my cup.', 'This is a book.', 'Look at this!'],
+        remember: { say: 'This is my cup.', not: 'This my cup.' },
+      },
+      {
+        kind: 'compare',
+        title: 'Small, Smaller, the Smallest',
+        tag: 'Reading Key K1 · Compare',
+        rows: [SMALL],
+        talk: [
+          { q: 'Which cup is the smallest?', a: 'The blue cup is the smallest.' },
+          { q: 'Are you smaller than Dad?', a: 'Yes! I am smaller than Dad.' },
+          { q: 'Is a cat smaller than a dog?', a: 'Yes! A cat is smaller than a dog.' },
+        ],
+        remember: { say: 'smaller than', not: 'smaller then' },
+      },
+      { ...SEASON_BOOK, tag: 'Little book · Read it yourself' },
+    ],
+  },
+  {
+    date: '2026-11-07',
+    title: '11 月 7 日 · 周六',
+    cards: [
+      {
+        kind: 'word',
+        word: 'that',
+        tag: 'Sight Words 14',
+        meaning: '那个',
+        spell: ['T', 'H', 'A', 'T'],
+        tip: 'that = over there 👉',
+        sentences: ['That is a bird.', 'Look at that!', 'What is that?'],
+        remember: { say: 'What is that?', not: 'What that?' },
+      },
+      {
+        kind: 'talk',
+        title: 'This or That?',
+        tag: 'Sight Words · Game',
+        tip: 'Near me: this 👇 Over there: that 👉',
+        talk: [
+          { q: 'What is this?', a: 'This is my pencil.' },
+          { q: 'What is that?', a: 'That is the door.' },
+          { q: 'Is this your cup?', a: 'Yes, this is my cup.' },
+          { q: 'Is that a bird?', a: 'Yes, that is a bird.' },
+        ],
+      },
+      {
+        kind: 'compare',
+        title: 'Write 6 Sentences',
+        tag: 'Reading Key K1 · Notebook',
+        rows: [HOT, COLD, SMALL],
+        remember: { say: 'than', not: 'then' },
+      },
+    ],
+  },
+  {
+    date: '2026-11-08',
+    title: '11 月 8 日 · 周日',
+    cards: [
+      {
+        kind: 'review',
+        title: "This Week's Words",
+        tag: 'Sight Words · Spelling test',
+        words: [
+          { word: 'look', sentence: 'Look at me.' },
+          { word: 'at', sentence: 'I am at home.' },
+          { word: 'me', sentence: "It's me!" },
+          { word: 'who', sentence: 'Who is it?' },
+          { word: 'this', sentence: 'This is my cup.' },
+          { word: 'that', sentence: 'What is that?' },
+        ],
+      },
+      {
+        kind: 'talk',
+        title: 'Seasons and Compare',
+        tag: 'Reading Key K1 · Rehearsal',
+        talk: [
+          { q: 'How many seasons are there?', a: 'There are four seasons.' },
+          { q: 'When do flowers bloom?', a: 'Flowers bloom in spring.' },
+          { q: 'Which season is the hottest?', a: 'Summer is the hottest season.' },
+          { q: 'When do leaves change colors?', a: 'Leaves change colors in fall.' },
+          { q: 'Is winter colder than fall?', a: 'Yes! Winter is colder than fall.' },
+          { q: 'Which cup is the smallest?', a: 'The blue cup is the smallest.' },
+        ],
+      },
+      { ...SEASON_BOOK, tag: 'Little book · Read to your family' },
+    ],
+  },
+  {
+    date: '2026-11-09',
+    title: '11 月 9 日 · 周一',
+    cards: [
+      {
+        kind: 'talk',
+        title: 'Before Class',
+        tag: 'Reading Key K1 · 3 minutes',
+        tip: 'Say one sentence for each!',
+        talk: [
+          { q: 'hot', a: 'Summer is hotter than spring.' },
+          { q: 'cold', a: 'Winter is the coldest season.' },
+          { q: 'small', a: 'My brother is smaller than me.' },
+        ],
       },
     ],
   },

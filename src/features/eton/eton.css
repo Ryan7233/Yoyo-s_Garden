@@ -45,11 +45,18 @@
 .eton-page-pair { display: flex; flex-direction: column; gap: var(--sp-2); padding-bottom: var(--sp-3); border-bottom: 2px dashed var(--cream-edge); }
 .eton-page-pair:last-child { border-bottom: 0; padding-bottom: 0; }
 .eton-pages { font-size: var(--fs-s); }
+.eton-rule { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); font-family: var(--font-en); font-size: var(--fs-l); }
+.eton-rule span { padding: var(--sp-3) var(--sp-4); border-radius: var(--r-m); background: var(--coin-light); }
+.eton-forms { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.eton-form { display: flex; align-items: center; gap: var(--sp-2); }
+.eton-form .eton-chip { padding: 0 var(--sp-4); }
+.eton-arrow { font-size: var(--fs-l); color: var(--text-soft); }
+.eton-big { font-size: var(--fs-2xl); font-weight: 800; }
 .eton-hint { margin: 0; text-align: center; }
 .eton-say:focus-visible, .eton-chip:focus-visible, .eton-word:focus-visible, .eton-weather:focus-visible, .eton-season:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 2px; }
 
 @media (max-width: 640px) {
   .eton-word { font-size: 88px; }
   .eton-grid.three, .eton-grid.four, .eton-seasons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .eton-qa, .eton-grid.two { grid-template-columns: minmax(0, 1fr); }
+  .eton-qa, .eton-grid.two, .eton-rule { grid-template-columns: minmax(0, 1fr); }
 }

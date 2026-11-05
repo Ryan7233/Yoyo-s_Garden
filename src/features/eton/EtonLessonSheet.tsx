@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { BookCard, EtonLesson, LessonCard, TopicCard, VerbsCard, WordCard } from '../../data/etonLessons'
+import type { BookCard, CompareCard, EtonLesson, LessonCard, ReviewCard, TalkCard, TopicCard, VerbsCard, WordCard } from '../../data/etonLessons'
 import { Modal } from '../../ui/Modal'
 import { speakEnglish } from '../../ui/voice'
 
@@ -49,6 +49,9 @@ function CardView({ card }: { card: LessonCard }) {
     case 'topic': return <TopicView card={card} />
     case 'verbs': return <VerbsView card={card} />
     case 'book': return <BookView card={card} />
+    case 'compare': return <CompareView card={card} />
+    case 'talk': return <TalkView card={card} />
+    case 'review': return <ReviewView card={card} />
   }
 }
 
@@ -57,6 +60,19 @@ function Remember({ say, not }: { say: string; not: string }) {
     <div className="eton-remember">
       <span>✓ <b>{say}</b></span>
       <span className="eton-not">✗ <s>{not}</s></span>
+    </div>
+  )
+}
+
+function Talk({ talk }: { talk: { q: string; a: string }[] }) {
+  return (
+    <div className="eton-lines">
+      {talk.map((t) => (
+        <div key={t.q} className="eton-qa">
+          <Say text={t.q} className="q" />
+          <Say text={t.a} className="a" />
+        </div>
+      ))}
     </div>
   )
 }
@@ -188,14 +204,7 @@ function VerbsView({ card }: { card: VerbsCard }) {
 
       <section className="eton-block">
         <h3 className="eton-sub">Which season?</h3>
-        <div className="eton-lines">
-          {card.talk.map((t) => (
-            <div key={t.q} className="eton-qa">
-              <Say text={t.q} className="q" />
-              <Say text={t.a} className="a" />
-            </div>
-          ))}
-        </div>
+        <Talk talk={card.talk} />
       </section>
 
       {card.remember && <Remember {...card.remember} />}
@@ -231,6 +240,79 @@ function BookView({ card }: { card: BookCard }) {
         <h3 className="eton-sub">Words to know</h3>
         <div className="eton-grid three">
           {card.words.map((w) => <button key={w} className="eton-chip" onClick={() => speakEn(w)}>{w}</button>)}
+        </div>
+      </section>
+    </div>
+  )
+}
+
+/** 比较级：hot → hotter → the hottest，下面两句：比两个、三个以上里最…… */
+function CompareView({ card }: { card: CompareCard }) {
+  return (
+    <div className="eton-card">
+      <span className="eton-tag">{card.tag}</span>
+      <h3 className="eton-topic">{card.title}</h3>
+
+      <div className="eton-rule">
+        <span><b>2</b> things: <b>-er</b> + than</span>
+        <span><b>3+</b> things: <b>the -est</b></span>
+      </div>
+
+      {card.rows.map((r) => (
+        <section key={r.forms[0]} className="eton-block">
+          <div className="eton-forms">
+            <span className="eton-wicon" aria-hidden>{r.icon}</span>
+            {r.forms.map((f, i) => (
+              <span key={f} className="eton-form">
+                {i > 0 && <span className="eton-arrow" aria-hidden>→</span>}
+                <button className="eton-chip" onClick={() => speakEn(f)}>{f}</button>
+              </span>
+            ))}
+          </div>
+          <div className="eton-lines">
+            <Say text={r.two} />
+            <Say text={r.most} />
+          </div>
+        </section>
+      ))}
+
+      {card.talk && (
+        <section className="eton-block">
+          <h3 className="eton-sub">Talk time</h3>
+          <Talk talk={card.talk} />
+        </section>
+      )}
+
+      {card.remember && <Remember {...card.remember} />}
+    </div>
+  )
+}
+
+/** 问答：左边问，右边答 */
+function TalkView({ card }: { card: TalkCard }) {
+  return (
+    <div className="eton-card">
+      <span className="eton-tag">{card.tag}</span>
+      <h3 className="eton-topic">{card.title}</h3>
+      {card.tip && <p className="eton-tip">{card.tip}</p>}
+      <Talk talk={card.talk} />
+    </div>
+  )
+}
+
+/** 这周的词：大字词块，点了听；下面每个词一句 */
+function ReviewView({ card }: { card: ReviewCard }) {
+  return (
+    <div className="eton-card">
+      <span className="eton-tag">{card.tag}</span>
+      <h3 className="eton-topic">{card.title}</h3>
+      <div className="eton-grid three">
+        {card.words.map((w) => <button key={w.word} className="eton-chip eton-big" onClick={() => speakEn(w.word)}>{w.word}</button>)}
+      </div>
+      <section className="eton-block">
+        <h3 className="eton-sub">Say it</h3>
+        <div className="eton-lines">
+          {card.words.map((w) => <Say key={w.word} text={w.sentence} />)}
         </div>
       </section>
     </div>

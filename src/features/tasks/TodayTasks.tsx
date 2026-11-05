@@ -144,6 +144,7 @@ export function TodayTasks() {
       {raising && <RaiseHandSheet onClose={() => setRaising(false)} />}
       {lessonOpen && lesson && (
         <EtonLessonSheet
+          key={lesson.date}
           lesson={lesson}
           // 这周的作业还没打卡时，看完最后一张就算交作业（等家长确认）
           onFinish={['done', 'pending'].includes(latest.get(ETON_HOMEWORK_TASK_ID)?.status ?? '') ? undefined : () => act(() => childReportTask(child.id, ETON_HOMEWORK_TASK_ID, today))}
