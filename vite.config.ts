@@ -17,7 +17,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      // 新版本只在家长模式里提示更新，不自动刷新
+      // 新版本在刚打开 / 切回前台时自动换上（见 app/pwa.ts），家长模式里也能手动更新
       registerType: 'prompt',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
