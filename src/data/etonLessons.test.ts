@@ -18,7 +18,7 @@ describe('伊顿英语课', () => {
     expect(firstWord('2026-11-05')).toBe('who')
     expect(firstWord('2026-11-06')).toBe('this')
     expect(firstWord('2026-11-07')).toBe('that')
-    expect(lessonFor('2026-11-08')?.cards[0].kind).toBe('review')
+    expect(lessonFor('2026-11-08')?.cards.map((c) => c.kind)).toEqual(['compare', 'talk', 'book', 'word', 'talk', 'review'])
     expect(lessonFor('2026-11-09')?.cards[0].kind).toBe('talk')
     expect(lessonFor('2026-11-10')).toBeUndefined()
   })

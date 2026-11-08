@@ -96,6 +96,39 @@ const HOT = { icon: '☀️', forms: ['hot', 'hotter', 'the hottest'], two: 'Sum
 const COLD = { icon: '❄️', forms: ['cold', 'colder', 'the coldest'], two: 'Winter is colder than fall.', most: 'Winter is the coldest season.' } as CompareCard['rows'][number]
 const SMALL = { icon: '🥤', forms: ['small', 'smaller', 'the smallest'], two: 'My brother is smaller than me.', most: 'The blue cup is the smallest.' } as CompareCard['rows'][number]
 
+/** 周六的三张卡：周日补作业时也放进周日的课里 */
+const THAT_CARD: WordCard = {
+  kind: 'word',
+  word: 'that',
+  tag: 'Sight Words 14',
+  meaning: '那个',
+  spell: ['T', 'H', 'A', 'T'],
+  tip: 'that = over there 👉',
+  sentences: ['That is a bird.', 'Look at that!', 'What is that?'],
+  remember: { say: 'What is that?', not: 'What that?' },
+}
+
+const THIS_THAT_GAME: TalkCard = {
+  kind: 'talk',
+  title: 'This or That?',
+  tag: 'Sight Words · Game',
+  tip: 'Near me: this 👇 Over there: that 👉',
+  talk: [
+    { q: 'What is this?', a: 'This is my pencil.' },
+    { q: 'What is that?', a: 'That is the door.' },
+    { q: 'Is this your cup?', a: 'Yes, this is my cup.' },
+    { q: 'Is that a bird?', a: 'Yes, that is a bird.' },
+  ],
+}
+
+const SIX_SENTENCES: CompareCard = {
+  kind: 'compare',
+  title: 'Write 6 Sentences',
+  tag: 'Reading Key K1 · Notebook',
+  rows: [HOT, COLD, SMALL],
+  remember: { say: 'than', not: 'then' },
+}
+
 export const ETON_LESSONS: EtonLesson[] = [
   {
     date: '2026-11-03',
@@ -246,55 +279,14 @@ export const ETON_LESSONS: EtonLesson[] = [
   {
     date: '2026-11-07',
     title: '11 月 7 日 · 周六',
-    cards: [
-      {
-        kind: 'word',
-        word: 'that',
-        tag: 'Sight Words 14',
-        meaning: '那个',
-        spell: ['T', 'H', 'A', 'T'],
-        tip: 'that = over there 👉',
-        sentences: ['That is a bird.', 'Look at that!', 'What is that?'],
-        remember: { say: 'What is that?', not: 'What that?' },
-      },
-      {
-        kind: 'talk',
-        title: 'This or That?',
-        tag: 'Sight Words · Game',
-        tip: 'Near me: this 👇 Over there: that 👉',
-        talk: [
-          { q: 'What is this?', a: 'This is my pencil.' },
-          { q: 'What is that?', a: 'That is the door.' },
-          { q: 'Is this your cup?', a: 'Yes, this is my cup.' },
-          { q: 'Is that a bird?', a: 'Yes, that is a bird.' },
-        ],
-      },
-      {
-        kind: 'compare',
-        title: 'Write 6 Sentences',
-        tag: 'Reading Key K1 · Notebook',
-        rows: [HOT, COLD, SMALL],
-        remember: { say: 'than', not: 'then' },
-      },
-    ],
+    cards: [THAT_CARD, THIS_THAT_GAME, SIX_SENTENCES],
   },
   {
     date: '2026-11-08',
-    title: '11 月 8 日 · 周日',
+    title: '11 月 8 日 · 周日（补周六）',
+    // 周六没做：先补明天课上要查的 6 个比较句，再做周日的；that 和听写下周也来得及
     cards: [
-      {
-        kind: 'review',
-        title: "This Week's Words",
-        tag: 'Sight Words · Spelling test',
-        words: [
-          { word: 'look', sentence: 'Look at me.' },
-          { word: 'at', sentence: 'I am at home.' },
-          { word: 'me', sentence: "It's me!" },
-          { word: 'who', sentence: 'Who is it?' },
-          { word: 'this', sentence: 'This is my cup.' },
-          { word: 'that', sentence: 'What is that?' },
-        ],
-      },
+      SIX_SENTENCES,
       {
         kind: 'talk',
         title: 'Seasons and Compare',
@@ -309,6 +301,21 @@ export const ETON_LESSONS: EtonLesson[] = [
         ],
       },
       { ...SEASON_BOOK, tag: 'Little book · Read to your family' },
+      THAT_CARD,
+      THIS_THAT_GAME,
+      {
+        kind: 'review',
+        title: "This Week's Words",
+        tag: 'Sight Words · Spelling test',
+        words: [
+          { word: 'look', sentence: 'Look at me.' },
+          { word: 'at', sentence: 'I am at home.' },
+          { word: 'me', sentence: "It's me!" },
+          { word: 'who', sentence: 'Who is it?' },
+          { word: 'this', sentence: 'This is my cup.' },
+          { word: 'that', sentence: 'What is that?' },
+        ],
+      },
     ],
   },
   {
