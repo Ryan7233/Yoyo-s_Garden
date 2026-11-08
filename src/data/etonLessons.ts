@@ -303,6 +303,38 @@ export const ETON_LESSONS: EtonLesson[] = [
       { ...SEASON_BOOK, tag: 'Little book · Read to your family' },
       THAT_CARD,
       THIS_THAT_GAME,
+      // 加练：Sight Words 第 2 单元最后两个词，先学 This is a cat.，再反过来说 This is not a cat.
+      {
+        kind: 'word',
+        word: 'is',
+        tag: 'Sight Words 15',
+        meaning: '是',
+        spell: ['I', 'S'],
+        tip: 'Only two letters! I comes first: I-S.',
+        sentences: ['This is a book.', 'The sky is blue.', 'This is my cat.'],
+        remember: { say: 'This is my cat.', not: 'This my cat.' },
+      },
+      {
+        kind: 'word',
+        word: 'not',
+        tag: 'Sight Words 16',
+        meaning: '不是',
+        spell: ['N', 'O', 'T'],
+        tip: 'N-O-T is not. N-O is no.',
+        sentences: ['This is not a ball.', 'The sky is not green.', 'She is not happy.'],
+        remember: { say: 'This is not a ball.', not: 'This not a ball.' },
+      },
+      {
+        kind: 'talk',
+        title: 'Yes or No?',
+        tag: 'Sight Words · Game',
+        tip: 'Mom or Dad says it wrong. You fix it with not!',
+        talk: [
+          { q: 'This is a ball!', a: 'No! This is not a ball. This is an apple.' },
+          { q: 'It is red!', a: 'No! It is not red. It is blue.' },
+          { q: 'Is it summer now?', a: 'No. It is not summer. It is fall.' },
+        ],
+      },
       {
         kind: 'review',
         title: "This Week's Words",
