@@ -13,6 +13,7 @@ export const PINYIN_CARDS: PinyinCard[] = [
   { date: '2026-11-03', title: '第 11–12 天 · ao ou iu', image: 'pinyin/2026-11-03.jpg' },
   { date: '2026-11-04', title: '第 14–15 天 · ie üe er', image: 'pinyin/2026-11-04.jpg' },
   { date: '2026-11-05', title: '第 16 天 · an en in un ün', image: 'pinyin/2026-11-05.jpg' },
+  { date: '2026-11-09', title: '第 17–18 天 · ang eng ing ong', image: 'pinyin/2026-11-09.jpg' },
 ]
 
 export function pinyinCardFor(today: string): PinyinCard | undefined {
