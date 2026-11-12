@@ -6,7 +6,7 @@ import { DEFAULT_EXERCISES } from '../data/exercises'
 import { BALANCE } from '../data/balance'
 import { balanceOf } from '../engine/ledger'
 import { dayProgress, latestRecordByTask, latestThisWeek, reconcileDayAwards, revokeEntries, taskRewardEntries, type NewEntry } from '../engine/rewards'
-import { isWeekly } from '../engine/schedule'
+import { countsByWeek } from '../engine/schedule'
 import { addDays, diffDays, toTaskDay } from '../engine/taskDay'
 import { hashPin, newSalt } from '../engine/pin'
 import { ensureDayPlans, loadPlanOf } from './plans'
@@ -108,9 +108,9 @@ async function finishRecord(childId: string, record: TaskRecord, now: Date) {
   await reconcileFrom(childId, record.date, now)
 }
 
-/** 这个任务已有的记录：普通任务看当天，每周一次的任务看这一周（做过就不能再领一次） */
+/** 这个任务已有的记录：普通任务看当天，每周一次的任务看这一周（做过就不能再领一次）；伊顿作业有课的日子看当天 */
 async function existingRecord(childId: string, task: TaskDef, day: string): Promise<TaskRecord | undefined> {
-  if (isWeekly(task)) {
+  if (countsByWeek(task, day)) {
     const records = await db.taskRecords.where('childId').equals(childId).toArray()
     return latestThisWeek(records, task.id, day)
   }

@@ -1,5 +1,7 @@
 import type { TaskDef } from '../data/types'
 import { weekdayOf } from './taskDay'
+import { ETON_HOMEWORK_TASK_ID } from '../data/tasks'
+import { lessonFor } from '../data/etonLessons'
 
 export function isScheduledOn(task: TaskDef, day: string): boolean {
   if (!task.enabled) return false
@@ -16,6 +18,15 @@ export interface DayTasks {
 /** 每周一次的任务不属于某一天，不能算当天必做 */
 export function isWeekly(task: Pick<TaskDef, 'schedule'>): boolean {
   return task.schedule.kind === 'weekly'
+}
+
+/**
+ * 记录按周算还是按天算：每周一次的任务这一周做一次就算；
+ * 伊顿英语作业在有课的日子按天算——每天的课各交一次（周四做了，周五的课还能交）
+ */
+export function countsByWeek(task: Pick<TaskDef, 'id' | 'schedule'>, day: string): boolean {
+  if (!isWeekly(task)) return false
+  return !(task.id === ETON_HOMEWORK_TASK_ID && lessonFor(day))
 }
 
 /** 按频率生成当日任务，分“必做”和“更多任务” */

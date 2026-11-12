@@ -55,8 +55,63 @@
 .eton-hint { margin: 0; text-align: center; }
 .eton-say:focus-visible, .eton-chip:focus-visible, .eton-word:focus-visible, .eton-weather:focus-visible, .eton-season:focus-visible { outline: 3px solid var(--primary-dark); outline-offset: 2px; }
 
+/* 带图的新词卡 */
+.eton-picture { font-family: var(--font-en); display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px; min-height: var(--touch); color: var(--text); border: 0; border-radius: var(--r-m); cursor: pointer; text-align: center; font-size: var(--fs-s); line-height: 1.3; }
+.eton-picture b { font-size: var(--fs-xl); font-weight: 800; }
+.eton-picture.land { background: var(--cream-2); }
+.eton-picture.water { background: var(--sky-light); }
+.eton-picture-icon { font-size: 48px; line-height: 1.1; }
+
+/* 课文跟读：Words to Know */
+.eton-know { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-3); border-radius: var(--r-m); background: var(--lavender-light); }
+.eton-know-word { text-align: left; padding: 8px 16px; font-size: var(--fs-m); font-weight: 400; }
+.eton-know-word b { font-size: var(--fs-l); font-weight: 800; color: var(--primary-dark); margin-right: 8px; }
+
+/* 纸面作业提示 */
+.eton-bank { display: flex; flex-wrap: wrap; gap: var(--sp-2); padding: var(--sp-3); border-radius: var(--r-m); background: var(--mint-light); }
+.eton-bank .eton-chip { padding: 0 var(--sp-4); }
+.eton-paper-q { display: flex; flex-direction: column; gap: var(--sp-2); padding-bottom: var(--sp-3); border-bottom: 2px dashed var(--cream-edge); }
+.eton-paper-q:last-child { border-bottom: 0; padding-bottom: 0; }
+.eton-paper-head { display: flex; align-items: center; gap: var(--sp-2); }
+.eton-paper-head .eton-say { flex: 1; min-width: 0; }
+.eton-paper-n { flex: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--sky-light); color: var(--sky-dark); font-weight: 800; font-size: var(--fs-l); }
+.eton-paper-options { display: flex; flex-wrap: wrap; gap: var(--sp-2); padding-left: 48px; }
+.eton-paper-options .eton-chip { padding: 0 var(--sp-4); }
+
+/* 勾选题 */
+.eton-picks { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--sp-2); }
+.eton-pick { font-family: var(--font-en); position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 6px; min-height: 120px; justify-content: center; font-size: var(--fs-l); color: var(--text); background: var(--cream); border: 3px solid var(--cream-edge); border-radius: var(--r-m); cursor: pointer; }
+.eton-pick-icon { font-size: 52px; line-height: 1; }
+.eton-pick-mark { position: absolute; top: 6px; right: 10px; font-size: var(--fs-l); font-weight: 800; }
+.eton-pick.on { border-color: var(--primary-dark); background: var(--sky-light); }
+.eton-pick.right { border-color: var(--mint-dark, #3a9a6a); background: var(--mint-light); }
+.eton-pick.wrong { border-color: #d9534f; background: #fde4e4; }
+.eton-pick.missed { border-style: dashed; border-color: var(--coin-dark); background: var(--coin-light); }
+.eton-result { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; padding: var(--sp-3) var(--sp-4); border-radius: var(--r-m); font-size: var(--fs-l); font-weight: 700; }
+.eton-result.ok { background: var(--mint-light); }
+.eton-result.retry { background: var(--coin-light); }
+
+/* 拖拽分类 */
+.eton-sort-left { display: flex; flex-wrap: wrap; gap: var(--sp-2); min-height: 80px; padding: var(--sp-3); border-radius: var(--r-m); background: var(--cream); }
+.eton-sort-card { font-family: var(--font-en); display: flex; align-items: center; gap: 8px; min-height: var(--touch); padding: 8px 16px; font-size: var(--fs-l); color: var(--text); background: var(--paper); border: 3px solid var(--cream-edge); border-radius: var(--r-m); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; transition: transform 0.25s ease; }
+.eton-sort-card span { font-size: 32px; }
+.eton-sort-card.picked { border-color: var(--primary-dark); background: var(--sky-light); }
+.eton-sort-card.dragging { transition: none; position: relative; z-index: 5; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18); cursor: grabbing; }
+.eton-sort-card.wrong { animation: eton-shake 0.45s; border-color: #d9534f; }
+@keyframes eton-shake { 0%, 100% { translate: 0; } 20%, 60% { translate: -8px; } 40%, 80% { translate: 8px; } }
+.eton-sort-boxes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); }
+.eton-sort-box { min-height: 200px; display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-3); border-radius: var(--r-l); border: 3px dashed var(--cream-edge); cursor: pointer; }
+.eton-sort-box h4 { margin: 0; font-family: var(--font-en); font-size: var(--fs-xl); font-weight: 800; }
+.eton-sort-box.land { background: var(--cream-2); }
+.eton-sort-box.water { background: var(--sky-light); }
+.eton-sort-box.ready { border-color: var(--primary-dark); }
+.eton-sort-in { display: flex; flex-wrap: wrap; gap: 6px; }
+.eton-sort-done { font-family: var(--font-en); padding: 4px 12px; border-radius: var(--r-pill); background: var(--paper); font-size: var(--fs-m); font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .eton-sort-card.wrong { animation: none; } .eton-sort-card { transition: none; } }
+
 @media (max-width: 640px) {
   .eton-word { font-size: 88px; }
   .eton-grid.three, .eton-grid.four, .eton-seasons { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .eton-qa, .eton-grid.two, .eton-rule { grid-template-columns: minmax(0, 1fr); }
+  .eton-picks { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }

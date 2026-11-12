@@ -24,3 +24,35 @@ describe('伊顿英语课', () => {
     expect(lessonFor('2026-11-10')).toBeUndefined()
   })
 })
+
+describe('Unit 2 Our Land and Water（11/12–11/15）', () => {
+  const kinds = (d: string) => lessonFor(d)?.cards.map((c) => c.kind)
+
+  it('四天各有自己的课，11/11 和 11/16 没有', () => {
+    expect(lessonFor('2026-11-11')).toBeUndefined()
+    expect(kinds('2026-11-12')).toEqual(['vocab', 'talk', 'read', 'read', 'talk'])
+    expect(kinds('2026-11-13')).toEqual(['pick', 'vocab', 'sort', 'paper'])
+    expect(kinds('2026-11-14')).toEqual(['paper', 'paper', 'paper', 'read', 'review'])
+    expect(kinds('2026-11-15')).toEqual(['talk', 'read', 'read'])
+    expect(lessonFor('2026-11-16')).toBeUndefined()
+  })
+
+  it('周五自己做：勾选题答案是 cat dog bird frog；分类 6 个陆地、3 个水', () => {
+    const cards = lessonFor('2026-11-13')!.cards
+    const pick = cards.find((c) => c.kind === 'pick')
+    const sort = cards.find((c) => c.kind === 'sort')
+    expect(pick?.kind === 'pick' && pick.answers).toEqual(['cat', 'dog', 'bird', 'frog'])
+    expect(sort?.kind === 'sort' && sort.words.filter((w) => w.group === 'water').map((w) => w.word)).toEqual(['ocean', 'lake', 'river'])
+  })
+
+  it('简化版故事：周六读第 1–2 段，周日读第 3–5 段，每段 6 句、3 个 Words to Know', () => {
+    const story = (d: string) => lessonFor(d)!.cards.find((c) => c.kind === 'read' && c.title === 'Room on the Broom')
+    const sat = story('2026-11-14'), sun = story('2026-11-15')
+    expect(sat?.kind === 'read' && sat.sections.map((s) => s.label)).toEqual(['01 Meet the travellers', '02 Lost and found'])
+    expect(sun?.kind === 'read' && sun.sections.map((s) => s.label?.slice(0, 2))).toEqual(['03', '04', '05'])
+    for (const s of sun?.kind === 'read' ? sun.sections : []) {
+      expect(s.lines).toHaveLength(6)
+      expect(s.words).toHaveLength(3)
+    }
+  })
+})

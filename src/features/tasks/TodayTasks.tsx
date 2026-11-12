@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useStore, act } from '../../app/store'
 import { livePlan } from '../../engine/plans'
+import { countsByWeek } from '../../engine/schedule'
 import { cardRecords, dayProgress } from '../../engine/rewards'
 import { earnedOn } from '../../engine/ledger'
 import { childReportTask } from '../../db/actions'
@@ -187,8 +188,10 @@ function TaskCard({ task, record, sport, spelling, onLesson, onReport }: {
 }) {
   if (task.id === EXERCISE_TASK_ID) return <SportCard task={task} sport={sport} onOpen={onReport} />
   if (task.id === RAISE_HAND_TASK_ID) return <RaiseCard task={task} onOpen={onReport} />
+  const { today } = useStore()
   const status = record?.status === 'revoked' ? undefined : record?.status
-  const weekly = task.schedule.kind === 'weekly'
+  // 伊顿作业有课的日子按天算，显示“今天”
+  const weekly = countsByWeek(task, today)
   return (
     <div className={`task-card ${status ?? 'todo'}`}>
       <span className="task-icon" aria-hidden>{task.icon}</span>
@@ -207,9 +210,9 @@ function TaskCard({ task, record, sport, spelling, onLesson, onReport }: {
           {spelling ? (status === 'rejected' ? '再写一次' : '去默写 ✍️') : status === 'rejected' ? '再试一次' : '我完成了'}
         </button>
       )}
-      {/* 伊顿作业交过以后，同一个位置换成“再看一遍”：还能点开当天的课，不会再交一次 */}
-      {task.id === ETON_HOMEWORK_TASK_ID && onLesson && (status === 'done' || status === 'pending') && (
-        <button className="btn btn-ghost btn-big task-btn" onClick={onLesson}>📖 再看一遍</button>
+      {/* 当天的课 / 拼读卡交过以后，同一个位置换成“再做一遍”：小游戏重新开始，不会再交一次、不会重复发奖励 */}
+      {onLesson && (status === 'done' || status === 'pending') && (
+        <button className="btn btn-ghost btn-big task-btn" onClick={onLesson}>{task.id === PINYIN_TASK_ID ? '↺ 再读一遍' : '↺ 再做一遍'}</button>
       )}
     </div>
   )

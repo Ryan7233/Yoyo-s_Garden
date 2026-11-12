@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import type { BookCard, CompareCard, EtonLesson, LessonCard, ReviewCard, TalkCard, TopicCard, VerbsCard, WordCard } from '../../data/etonLessons'
+import type { BookCard, CompareCard, EtonLesson, LessonCard, PaperCard, ReadCard, ReviewCard, TalkCard, TopicCard, VerbsCard, VocabCard, WordCard } from '../../data/etonLessons'
 import { Modal } from '../../ui/Modal'
-import { speakEnglish } from '../../ui/voice'
-
-/** 伊顿课本是美式英语（fall、color），用美式发音 */
-const speakEn = (text: string) => speakEnglish(text, 'en-US')
+import { Say, speakEn } from './Say'
+import { PickView, SortView } from './EtonPractice'
 import './eton.css'
 
 /**
@@ -52,6 +50,11 @@ function CardView({ card }: { card: LessonCard }) {
     case 'compare': return <CompareView card={card} />
     case 'talk': return <TalkView card={card} />
     case 'review': return <ReviewView card={card} />
+    case 'vocab': return <VocabView card={card} />
+    case 'sort': return <SortView card={card} />
+    case 'pick': return <PickView card={card} />
+    case 'read': return <ReadView card={card} />
+    case 'paper': return <PaperView card={card} />
   }
 }
 
@@ -74,15 +77,6 @@ function Talk({ talk }: { talk: { q: string; a: string }[] }) {
         </div>
       ))}
     </div>
-  )
-}
-
-function Say({ text, className = '' }: { text: string; className?: string }) {
-  return (
-    <button className={`eton-say ${className}`} onClick={() => speakEn(text)} aria-label={`听：${text}`}>
-      <span>{text}</span>
-      <span className="eton-speaker" aria-hidden>🔊</span>
-    </button>
   )
 }
 
@@ -296,6 +290,97 @@ function TalkView({ card }: { card: TalkCard }) {
       <h3 className="eton-topic">{card.title}</h3>
       {card.tip && <p className="eton-tip">{card.tip}</p>}
       <Talk talk={card.talk} />
+    </div>
+  )
+}
+
+/** 带图的新词：分 Land / Water 两组，点一下听“词 + 句子” */
+function VocabView({ card }: { card: VocabCard }) {
+  return (
+    <div className="eton-card">
+      <span className="eton-tag">{card.tag}</span>
+      <h3 className="eton-topic">{card.title}</h3>
+      {card.tip && <p className="eton-tip">{card.tip}</p>}
+      {(['land', 'water'] as const).map((g) => (
+        <section key={g} className="eton-block">
+          <h3 className="eton-sub">{g === 'land' ? '⛰️ Land' : '💧 Water'}</h3>
+          <div className="eton-grid three">
+            {card.words.filter((w) => w.group === g).map((w) => (
+              <button key={w.word} className={`eton-picture ${g}`} onClick={() => speakEn(`${w.word}. ${w.sentence}`)}>
+                <span className="eton-picture-icon" aria-hidden>{w.icon}</span>
+                <b>{w.word}</b>
+                <span>{w.sentence}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  )
+}
+
+/** 课文跟读：每段一个小标题，一句一行；段后是 Words to Know */
+function ReadView({ card }: { card: ReadCard }) {
+  return (
+    <div className="eton-card">
+      <span className="eton-tag">{card.tag}</span>
+      <h3 className="eton-topic">{card.title}</h3>
+      {card.tip && <p className="eton-tip">{card.tip}</p>}
+      {card.sections.map((s, i) => (
+        <section key={s.label ?? i} className="eton-block eton-page-pair">
+          {s.label && <h3 className="eton-sub">{s.label}</h3>}
+          <div className="eton-lines">
+            {s.lines.map((l) => <Say key={l} text={l} />)}
+          </div>
+          {s.words && (
+            <div className="eton-know">
+              <span className="eton-pages hint">Words to Know</span>
+              {s.words.map((w) => (
+                <button key={w.word} className="eton-chip eton-know-word" onClick={() => speakEn(`${w.word}. ${w.note}`)}>
+                  <b>{w.word}</b> <span>{w.note}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+      ))}
+    </div>
+  )
+}
+
+/** 纸面作业：在课本上做，这里只有题目、图、可点读的选项和词库，不给答案 */
+function PaperView({ card }: { card: PaperCard }) {
+  return (
+    <div className="eton-card">
+      <span className="eton-tag">{card.tag}</span>
+      <h3 className="eton-topic">📘 {card.title}</h3>
+      {card.tip && <p className="eton-tip">{card.tip}</p>}
+      {card.bank && (
+        <div className="eton-bank">
+          {card.bank.map((w) => <button key={w} className="eton-chip" onClick={() => speakEn(w)}>{w}</button>)}
+        </div>
+      )}
+      <div className="eton-lines">
+        {card.items.map((q) => (
+          <div key={q.n} className="eton-paper-q">
+            <div className="eton-paper-head">
+              <span className="eton-paper-n num">{q.n}</span>
+              {q.icon && <span className="eton-wicon" aria-hidden>{q.icon}</span>}
+              <Say text={q.text} />
+            </div>
+            {q.options && (
+              <div className="eton-paper-options">
+                {q.options.map((o, i) => (
+                  <button key={o} className="eton-chip" onClick={() => speakEn(o)}>
+                    {q.abc && <span className="eton-zh">{'abc'[i]}. </span>}{o}
+                  </button>
+                ))}
+              </div>
+            )}
+            {q.tip && <p className="eton-tip">{q.tip}</p>}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

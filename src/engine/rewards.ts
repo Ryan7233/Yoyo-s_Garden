@@ -2,7 +2,7 @@ import type { ExerciseDef, LedgerEntry, TaskDef, TaskRecord } from '../data/type
 import type { PlanOf } from './plans'
 import { BALANCE } from '../data/balance'
 import { addDays, weekStart } from './taskDay'
-import { isWeekly } from './schedule'
+import { countsByWeek } from './schedule'
 import { clampedDeduction, isAwardActive } from './ledger'
 
 /** 当天有效记录：每个任务取最新一条 */
@@ -28,11 +28,11 @@ export function latestThisWeek(records: TaskRecord[], taskId: string, day: strin
   return out
 }
 
-/** 任务牌和家长记录上显示的记录：普通任务看当天，每周一次的任务看整周 */
+/** 任务牌和家长记录上显示的记录：普通任务看当天，每周一次的任务看整周（伊顿作业有课的日子看当天） */
 export function cardRecords(records: TaskRecord[], tasks: Pick<TaskDef, 'id' | 'schedule'>[], day: string): Map<string, TaskRecord> {
   const map = latestRecordByTask(records, day)
   for (const t of tasks) {
-    if (!isWeekly(t)) continue
+    if (!countsByWeek(t, day)) continue
     const r = latestThisWeek(records, t.id, day)
     if (r) map.set(t.id, r)
     else map.delete(t.id)

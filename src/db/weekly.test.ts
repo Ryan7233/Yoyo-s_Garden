@@ -120,3 +120,30 @@ describe('每日拼读', () => {
     expect(balanceOf(await db.ledger.toArray()).coin).toBeGreaterThanOrEqual(3)
   })
 })
+
+describe('伊顿作业：有课的日子按天交', () => {
+  // 2026-11-12 周四、11-13 周五都有课；11-10 周二没有课
+  const nov = (d: number) => `2026-11-${d}`
+  const atNov = (d: number) => new Date(2026, 10, d, 18, 0)
+
+  it('周四交了，周五的课还能再交一次，各发一次奖励；同一天再点还是那一条', async () => {
+    const coins = () => db.ledger.toArray().then((l) => balanceOf(l).coin)
+    const before = await coins()
+    const thu = await childReportTask(childId, 'eton-homework', nov(12), atNov(12))
+    expect((await childReportTask(childId, 'eton-homework', nov(12), atNov(12))).id).toBe(thu.id)
+    const fri = await childReportTask(childId, 'eton-homework', nov(13), atNov(13))
+    expect(fri.id).not.toBe(thu.id)
+    expect(fri.status).toBe('pending')
+    await confirmRecord(thu.id, atNov(13))
+    await confirmRecord(fri.id, atNov(14))
+    expect(await coins()).toBe(before + 10)
+
+    const records = await db.taskRecords.toArray()
+    const tasks = await db.tasks.toArray()
+    // 有课的日子：任务牌看当天；周六的课还没交
+    expect(cardRecords(records, tasks, nov(13)).get('eton-homework')?.id).toBe(fri.id)
+    expect(cardRecords(records, tasks, nov(14)).get('eton-homework')).toBeUndefined()
+    // 没课的日子还是按周看
+    expect(cardRecords(records, tasks, nov(10)).get('eton-homework')?.id).toBe(fri.id)
+  })
+})
