@@ -2,6 +2,7 @@ import { useStore, act } from './store'
 import { getCatalogItem } from '../data/catalog'
 import { VISITORS } from '../data/visitors'
 import { BADGES } from '../data/badges'
+import { COMBOS } from '../data/combos'
 import { BALANCE } from '../data/balance'
 import { describeUnlock } from '../data/unlocks'
 import { markUnlocksSeen } from '../db/progress'
@@ -52,6 +53,11 @@ function Notice({ u }: { u: Unlock }) {
     if (!v) return null
     icon = v.icon
     text = `${v.name}第一次来做客：“${v.line}” 送你 ${BALANCE.visitorFirstCoins} 金币`
+  } else if (u.kind === 'combo') {
+    const c = COMBOS.find((x) => x.id === u.refId)
+    if (!c) return null
+    icon = c.icon
+    text = `发现新组合「${c.name}」：${c.a.label}挨着${c.b.label}。${c.line} 送你 ${BALANCE.comboFirstCoins} 金币`
   } else if (u.kind === 'badge') {
     const b = BADGES.find((x) => x.id === u.refId)
     if (!b) return null

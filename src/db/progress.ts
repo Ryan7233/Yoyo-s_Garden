@@ -6,6 +6,7 @@ import type { Unlock } from '../data/types'
 import { CATALOG, getCatalogItem } from '../data/catalog'
 import { VISITORS } from '../data/visitors'
 import { BADGES } from '../data/badges'
+import { COMBOS } from '../data/combos'
 import { BALANCE } from '../data/balance'
 import { computeGrants, type Grants } from '../engine/progress'
 import { snapshotOf } from '../engine/visitors'
@@ -36,6 +37,8 @@ export async function syncProgress(childId: string, now = new Date()): Promise<G
       },
       snapshot: snapshotOf(plants, placed, ledger),
       plants,
+      placed,
+      combos: COMBOS,
       unlocks,
     })
 
@@ -52,6 +55,10 @@ export async function syncProgress(childId: string, now = new Date()): Promise<G
     for (const refId of grants.visitors) {
       rows.push({ id: uid(), childId, kind: 'visitor', refId, at })
       await db.ledger.add({ id: uid(), childId, at, date, currency: 'coin', amount: BALANCE.visitorFirstCoins, reason: 'visitor', refId })
+    }
+    for (const refId of grants.combos) {
+      rows.push({ id: uid(), childId, kind: 'combo', refId, at })
+      await db.ledger.add({ id: uid(), childId, at, date, currency: 'coin', amount: BALANCE.comboFirstCoins, reason: 'combo', refId })
     }
     for (const refId of grants.badges) rows.push({ id: uid(), childId, kind: 'badge', refId, at })
     if (rows.length) await db.unlocks.bulkAdd(rows)

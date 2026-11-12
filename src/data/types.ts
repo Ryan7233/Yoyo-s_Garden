@@ -90,7 +90,7 @@ export interface ExerciseRecord {
 export type Currency = 'coin' | 'drop'
 export type LedgerReason =
   | 'task' | 'exercise' | 'bonus' | 'allDone' | 'streak' | 'personalBest'
-  | 'harvest' | 'visitor' | 'purchase' | 'sell' | 'water' | 'expand' | 'revoke' | 'gift'
+  | 'harvest' | 'visitor' | 'purchase' | 'sell' | 'water' | 'expand' | 'revoke' | 'gift' | 'combo'
 export interface LedgerEntry {
   id: string
   childId: string
@@ -167,7 +167,7 @@ export interface Plot { childId: string; x: number; y: number; kind: 'soil' | 'p
 export interface Unlock {
   id: string
   childId: string
-  kind: 'item' | 'visitor' | 'badge' | 'codex'
+  kind: 'item' | 'visitor' | 'badge' | 'codex' | 'combo'
   refId: string
   at: string
   /** 孩子看过这条解锁提示的时间 */

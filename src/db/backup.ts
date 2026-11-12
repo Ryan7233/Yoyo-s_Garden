@@ -39,7 +39,7 @@ type TableSpec = { key: readonly string[]; fields: Record<string, FieldType>; op
 const STATUS = ['pending', 'done', 'rejected', 'revoked'] as const
 const REASONS = [
   'task', 'exercise', 'bonus', 'allDone', 'streak', 'personalBest',
-  'harvest', 'visitor', 'purchase', 'sell', 'water', 'expand', 'revoke', 'gift',
+  'harvest', 'visitor', 'purchase', 'sell', 'water', 'expand', 'revoke', 'gift', 'combo',
 ] as const
 
 /** 每张表必须有的字段和类型（见 data/types.ts） */
@@ -98,7 +98,7 @@ const TABLE_SPECS: Record<BackupTable, TableSpec> = {
   plots: { key: ['childId', 'x', 'y'], fields: { childId: 's', x: 'n', y: 'n', kind: ['soil', 'pond'] } },
   unlocks: {
     key: ['id'],
-    fields: { id: 's', childId: 's', kind: ['item', 'visitor', 'badge', 'codex'], refId: 's', at: 's' },
+    fields: { id: 's', childId: 's', kind: ['item', 'visitor', 'badge', 'codex', 'combo'], refId: 's', at: 's' },
     optional: { seenAt: 's' },
   },
   wishes: { key: ['childId'], fields: { childId: 's', catalogId: 's', setAt: 's' } },

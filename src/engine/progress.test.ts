@@ -52,7 +52,7 @@ describe('解锁、访客、徽章发放', () => {
   }
 
   it('什么都没做时什么都不发', () => {
-    expect(computeGrants(base)).toEqual({ items: [], visitors: [], codex: [], badges: [] })
+    expect(computeGrants(base)).toEqual({ items: [], visitors: [], codex: [], badges: [], combos: [] })
   })
 
   it('累计全勤 7 天解锁彩虹花，并得到“第一颗星”徽章', () => {
@@ -77,7 +77,7 @@ describe('解锁、访客、徽章发放', () => {
     expect(g.badges).toEqual(['first-visitor'])
     expect(g.codex).toEqual(['seed-carrot'])
     expect(computeGrants({ ...base, snapshot, plants, unlocks: [unlock('visitor', 'rabbit'), unlock('badge', 'first-visitor'), unlock('codex', 'seed-carrot')] }))
-      .toEqual({ items: [], visitors: [], codex: [], badges: [] })
+      .toEqual({ items: [], visitors: [], codex: [], badges: [], combos: [] })
   })
 
   it('成熟就点亮图鉴（观赏树、室内盆栽也能点亮），没成熟不算', () => {

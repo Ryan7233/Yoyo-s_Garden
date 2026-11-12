@@ -20,7 +20,7 @@ const pct = (r: number | null) => (r === null ? '—' : `${Math.round(r * 100)}%
 
 const REASON_LABEL: Partial<Record<LedgerReason, string>> = {
   task: '任务', exercise: '运动', personalBest: '运动纪录', bonus: '加分', allDone: '全勤', streak: '连续全勤',
-  harvest: '收获', sell: '卖果实', visitor: '访客', purchase: '购买', expand: '扩建地块', revoke: '撤销扣回', gift: '礼物',
+  harvest: '收获', sell: '卖果实', visitor: '访客', purchase: '购买', expand: '扩建地块', revoke: '撤销扣回', gift: '礼物', combo: '组合',
 }
 
 export function StatsPanel() {

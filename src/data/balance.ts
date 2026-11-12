@@ -46,6 +46,8 @@ export const BALANCE = {
 
   /** 首次访客奖励 */
   visitorFirstCoins: 5,
+  /** 第一次发现相邻组合 */
+  comboFirstCoins: 3,
 
   /** 家长模式 */
   pinMaxTries: 5,

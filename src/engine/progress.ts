@@ -1,5 +1,7 @@
 // 解锁、访客首次来访、成就徽章、图鉴点亮：比较“现在满足的”和“已经记录的”，算出这次要新发的（5.6、5.7）
-import type { CatalogItem, PlantInstance, Unlock } from '../data/types'
+import type { CatalogItem, PlacedItem, PlantInstance, Unlock } from '../data/types'
+import type { ComboDef } from '../data/combos'
+import { activeCombos, thingsOf } from './combos'
 import type { VisitorDef } from '../data/visitors'
 import type { BadgeDef, BadgeRule } from '../data/badges'
 import { isUnlocked, type ProgressStats } from './unlocks'
@@ -31,6 +33,9 @@ export interface GrantInput {
   stats: Omit<BadgeStats, 'codexPlants' | 'visitorsMet'>
   snapshot: GardenSnapshot
   plants: PlantInstance[]
+  /** 摆放的装饰和组合表；不给就不算组合 */
+  placed?: PlacedItem[]
+  combos?: ComboDef[]
   unlocks: Unlock[]
 }
 
@@ -43,6 +48,8 @@ export interface Grants {
   codex: string[]
   /** 新获得的徽章 id */
   badges: string[]
+  /** 第一次发现的相邻组合 id */
+  combos: string[]
 }
 
 function idsOf(unlocks: Unlock[], kind: Unlock['kind']): Set<string> {
@@ -55,6 +62,7 @@ export function computeGrants(i: GrantInput): Grants {
   const hadVisitors = idsOf(i.unlocks, 'visitor')
   const hadCodex = idsOf(i.unlocks, 'codex')
   const hadBadges = idsOf(i.unlocks, 'badge')
+  const hadCombos = idsOf(i.unlocks, 'combo')
 
   const items = i.catalog.filter((c) => c.unlock && !hadItems.has(c.id) && isUnlocked(c.unlock, i.stats)).map((c) => c.id)
   const visitors = presentVisitors(i.visitors, i.snapshot).map((v) => v.id).filter((id) => !hadVisitors.has(id))
@@ -67,7 +75,10 @@ export function computeGrants(i: GrantInput): Grants {
     visitorsMet: hadVisitors.size + visitors.length,
   }
   const badges = i.badges.filter((b) => !hadBadges.has(b.id) && hasBadge(b, full)).map((b) => b.id)
-  return { items, visitors, codex, badges }
+  const combos = i.combos
+    ? activeCombos(thingsOf(i.plants, i.placed ?? []), i.combos).map((a) => a.combo.id).filter((id) => !hadCombos.has(id))
+    : []
+  return { items, visitors, codex, badges, combos }
 }
 
 /** 物品是否已解锁：曾经解锁过（有记录）或现在满足条件 */

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../../app/store'
 import { SEEDS, SPECIAL_SEEDS } from '../../data/plants'
 import { VISITORS } from '../../data/visitors'
+import { COMBOS } from '../../data/combos'
 import { BADGES } from '../../data/badges'
 import { Icon } from '../../ui/Icon'
 import { allDoneDays, monthGrid, shiftMonth } from '../../engine/stats'
@@ -10,15 +11,16 @@ import { formatDay, toTaskDay } from '../../engine/taskDay'
 import '../shop/shop.css'
 import './codex.css'
 
-type Tab = 'plants' | 'visitors' | 'badges' | 'calendar'
+type Tab = 'plants' | 'visitors' | 'combos' | 'badges' | 'calendar'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'plants', label: '🌷 植物' },
   { id: 'visitors', label: '🐾 访客' },
+  { id: 'combos', label: '✨ 组合' },
   { id: 'badges', label: '🏅 徽章' },
   { id: 'calendar', label: '⭐ 全勤日历' },
 ]
 
-/** 图鉴三页（植物、访客、徽章）和全勤日历 */
+/** 图鉴四页（植物、访客、组合、徽章）和全勤日历 */
 export function Codex() {
   const [tab, setTab] = useState<Tab>('plants')
   return (
@@ -31,6 +33,7 @@ export function Codex() {
       </nav>
       {tab === 'plants' && <PlantsPage />}
       {tab === 'visitors' && <VisitorsPage />}
+      {tab === 'combos' && <CombosPage />}
       {tab === 'badges' && <BadgesPage />}
       {tab === 'calendar' && <CalendarPage />}
     </div>
@@ -48,7 +51,7 @@ function Count({ label, n, total }: { label: string; n: number; total: number })
   )
 }
 
-function useSeen(kind: 'codex' | 'visitor' | 'badge') {
+function useSeen(kind: 'codex' | 'visitor' | 'badge' | 'combo') {
   const unlocks = useStore((s) => s.unlocks)
   return new Map(unlocks.filter((u) => u.kind === kind).map((u) => [u.refId, u.at]))
 }
@@ -88,6 +91,30 @@ function VisitorsPage() {
               <span className="codex-pic emoji-pic">{v.icon}</span>
               <span className="title">{at ? v.name : '？？？'}</span>
               <span className="codex-sub">{at ? `第一次来：${formatDay(toTaskDay(new Date(at)), today)}` : `怎样才会来：${v.hint}`}</span>
+            </div>
+          )
+        })}
+      </div>
+    </>
+  )
+}
+
+/** 相邻组合：两样东西挨着放就能发现；没发现的也写明怎么摆 */
+function CombosPage() {
+  const seen = useSeen('combo')
+  const today = useStore((s) => s.today)
+  return (
+    <>
+      <Count label="发现的组合" n={COMBOS.filter((c) => seen.has(c.id)).length} total={COMBOS.length} />
+      <div className="codex-grid wide">
+        {COMBOS.map((c) => {
+          const at = seen.get(c.id)
+          return (
+            <div key={c.id} className={`codex-card${at ? ' got' : ' unknown'}`}>
+              <span className="codex-pic emoji-pic">{c.icon}</span>
+              <span className="title">{at ? c.name : '？？？'}</span>
+              <span className="codex-sub">{`${c.a.label} 挨着 ${c.b.label}`}</span>
+              <span className="codex-sub">{at ? `第一次发现：${formatDay(toTaskDay(new Date(at)), today)}` : '两样挨着放，就能发现'}</span>
             </div>
           )
         })}

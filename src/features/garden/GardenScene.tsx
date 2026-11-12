@@ -16,7 +16,8 @@ import { getCatalogItem } from '../../data/catalog'
 import { expandPlot } from '../../db/garden'
 import { PlacedView, placedProps } from '../decorate/PlacedView'
 import { PlacementLayer } from '../decorate/PlacementLayer'
-import { Visitors } from './Visitors'
+import { AnchoredVisitors, Visitors } from './Visitors'
+import { ComboSparkles, GoalHint } from './GardenGoals'
 import { WishBar } from './WishBar'
 import { Horizon, GroundDecor } from './Scenery'
 import { CourageSunflower } from '../courage/CourageSunflower'
@@ -113,6 +114,9 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
                 </div>
               ))}
 
+              <ComboSparkles />
+              <AnchoredVisitors />
+
               {decorating && <PlacementLayer scene="outdoor" layer="ground" cols={BALANCE.gridWidth} rows={BALANCE.gridHeight} />}
 
               {candidates.map((c) => (
@@ -130,6 +134,7 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
       {!decorating && (
         <div className="scene-overlay top">
           {!expanding && <WishBar />}
+          {!expanding && <GoalHint />}
           <span className="spacer" />
           {expanding ? (
             <>

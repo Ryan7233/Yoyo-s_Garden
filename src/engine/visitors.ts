@@ -1,6 +1,7 @@
 import type { VisitorCondition, VisitorDef } from '../data/visitors'
 import type { LedgerEntry, PlacedItem, PlantInstance } from '../data/types'
 import { FLOWER_IDS, FRUIT_TREE_IDS, SPECIAL_SEEDS, VEGGIE_IDS } from '../data/plants'
+import type { Thing } from './combos'
 
 export interface GardenSnapshot {
   /** 已摆放的物品 catalogId（室内外） */
@@ -31,6 +32,15 @@ export function meets(c: VisitorCondition, g: GardenSnapshot): boolean {
     case 'any':
       return c.conditions.some((x) => meets(x, g))
   }
+}
+
+/** 访客落脚的东西：蜂箱摆哪儿蜜蜂就在哪儿飞；没有可落的就用固定位置 */
+export function visitorAnchor(v: VisitorDef, things: Thing[]): Thing | undefined {
+  for (const n of v.near ?? []) {
+    const t = things.find((x) => n.ids.includes(x.catalogId) && (!n.mature || x.mature))
+    if (t) return t
+  }
+  return undefined
 }
 
 /** 条件满足时出现，不满足时离开 */
