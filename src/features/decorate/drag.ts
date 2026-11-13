@@ -13,12 +13,14 @@ export function startPress(
   onDrop: (cell: Cell, h: Holding) => void,
   onTap: () => void,
 ) {
+  const pointerId = e.pointerId
   const sx = e.clientX
   const sy = e.clientY
   let dragging = false
   const st = useDecorate.getState()
 
   const move = (ev: PointerEvent) => {
+    if (ev.pointerId !== pointerId) return
     if (!dragging && Math.hypot(ev.clientX - sx, ev.clientY - sy) > DRAG_THRESHOLD) {
       dragging = true
       st.hold(holding)
@@ -30,9 +32,8 @@ export function startPress(
     }
   }
   const up = (ev: PointerEvent) => {
-    window.removeEventListener('pointermove', move)
-    window.removeEventListener('pointerup', up)
-    window.removeEventListener('pointercancel', up)
+    if (ev.pointerId !== pointerId) return
+    cleanup()
     if (!dragging) {
       onTap()
       return
@@ -44,7 +45,17 @@ export function startPress(
     if (cell) onDrop(cell, holding)
     else s.hold(null)
   }
+  const cancel = (ev: PointerEvent) => {
+    if (ev.pointerId !== pointerId) return
+    cleanup()
+    if (dragging) useDecorate.getState().reset()
+  }
+  const cleanup = () => {
+    window.removeEventListener('pointermove', move)
+    window.removeEventListener('pointerup', up)
+    window.removeEventListener('pointercancel', cancel)
+  }
   window.addEventListener('pointermove', move, { passive: false })
   window.addEventListener('pointerup', up)
-  window.addEventListener('pointercancel', up)
+  window.addEventListener('pointercancel', cancel)
 }

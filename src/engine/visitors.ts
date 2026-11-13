@@ -51,6 +51,12 @@ export function presentVisitors(visitors: VisitorDef[], g: GardenSnapshot): Visi
 const FLOWERS = new Set([...FLOWER_IDS, ...SPECIAL_SEEDS.filter((s) => s.id !== 'seed-star-tree').map((s) => s.id)])
 const PRODUCE = new Set([...VEGGIE_IDS, ...FRUIT_TREE_IDS])
 
+/** 蜜蜂飞到最近的盛开花朵。跨格的蜂箱或莲池按中心计距。 */
+export function closestFlower(hive: Thing, things: Thing[]): Thing | undefined {
+  const distance = (t: Thing) => Math.hypot(t.x + t.w / 2 - hive.x - hive.w / 2, t.y + t.h / 2 - hive.y - hive.h / 2)
+  return things.filter(t => t.mature && FLOWERS.has(t.catalogId)).sort((a, b) => distance(a) - distance(b))[0]
+}
+
 /** 累计收获蔬果次数（瓢虫） */
 export function veggieHarvestCount(entries: LedgerEntry[]): number {
   return entries.filter((e) => e.reason === 'harvest' && PRODUCE.has(e.refId ?? '')).length

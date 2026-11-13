@@ -1,9 +1,9 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { useStore } from '../../app/store'
 import { VISITORS, type VisitorDef } from '../../data/visitors'
-import { presentVisitors, snapshotOf, visitorAnchor } from '../../engine/visitors'
+import { closestFlower, presentVisitors, snapshotOf, visitorAnchor } from '../../engine/visitors'
 import { thingsOf } from '../../engine/combos'
-import { cell } from './GardenScene'
+import { centerOf, gardenCell } from './projection'
 import './visitors.css'
 import { play } from '../../ui/sfx'
 
@@ -36,7 +36,11 @@ function useHere(scene: 'outdoor' | 'indoor') {
   const things = scene === 'outdoor' ? thingsOf(plants, placed) : []
   return presentVisitors(VISITORS, snapshotOf(plants, placed, ledger))
     .filter((v) => v.scene === scene)
-    .map((v) => ({ v, anchor: visitorAnchor(v, things) }))
+    .map(v => {
+      const anchor = visitorAnchor(v, things)
+      const flower = v.id === 'bee' && anchor?.catalogId === 'out-beehive' ? closestFlower(anchor, things) : undefined
+      return { v, anchor, flower }
+    })
 }
 
 /** 条件满足时出现的小动物：从边上蹦进来，点一下会跳一下并说一句话。这里只放没有落脚点的 */
@@ -63,11 +67,21 @@ export function AnchoredVisitors() {
   if (decorating) return null
   return (
     <>
-      {here.map(({ v, anchor }, i) => (
-        <div key={v.id} className="visitor-spot" style={cell(anchor!.x, anchor!.y, anchor!.w, anchor!.h)}>
-          <Visitor v={v} fly={SPOTS[v.id]?.fly} style={{ left: '78%', top: '8%' }} delay={i * 0.25} talking={talking === v.id} onTap={() => setTalking(v.id)} />
-        </div>
-      ))}
+      {here.map(({ v, anchor, flower }, i) => {
+        if (!anchor) return null
+        const from = centerOf(anchor)
+        const to = flower && centerOf(flower)
+        const flight = to && {
+          '--flight-x': `calc(var(--half-w) * ${to.u - from.u})`,
+          '--flight-y': `calc(var(--half-h) * ${to.v - from.v})`,
+        }
+        return (
+          <div key={v.id} className={`visitor-spot${flight ? ' nectar-flight' : ''}`}
+            style={{ ...gardenCell(anchor.x, anchor.y, anchor.w, anchor.h), ...flight }}>
+            <Visitor v={v} fly={SPOTS[v.id]?.fly} style={{ left: '60%', top: 'calc(30% - var(--obj) * .8)' }} delay={i * 0.25} talking={talking === v.id} onTap={() => setTalking(v.id)} />
+          </div>
+        )
+      })}
     </>
   )
 }

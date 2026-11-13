@@ -52,9 +52,11 @@ test('iPad mini 竖屏的花园：能往右滑时提示，滑到最右换成往�
   await expect(page.locator('.scroll-hint.left')).toBeVisible()
 })
 
-test('iPad Pro 横屏的花园只多出几像素，不显示提示', async ({ page }) => {
+test('iPad Pro 横屏花园保留完整触控尺寸，提示与可见范围一致', async ({ page }) => {
   await onboard(page)
   await expect(page.locator('.garden-name')).toBeVisible()
-  await expectHintsMatch(page)
-  await expect(page.locator('.scroll-hint')).toHaveCount(0)
+  const can = await expectHintsMatch(page)
+  expect(can.right).toBe(false)
+  const tile = await page.getByRole('button', { name: '地块', exact: true }).first().boundingBox()
+  expect(tile!.height).toBeGreaterThanOrEqual(64)
 })

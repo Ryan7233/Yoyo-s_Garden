@@ -160,7 +160,7 @@
 .moving { opacity: 0.35; }
 
 /* 装扮时天空收窄，给格子多留位置 */
-.scene-wrap.decorating .garden { --sky-min: 28px; --front: 8px; }
+
 .scene-wrap.decorating .room { --wall-min: 120px; }
 
 /* 窄屏：其他步骤只显示序号，当前步骤完整显示 */

@@ -72,3 +72,14 @@
 @media (prefers-reduced-motion: reduce) {
   .combo-spark span { animation: none; opacity: 1; }
 }
+
+/* Move the hit target with the bee so a tap always reaches the animal on screen. */
+@media (prefers-reduced-motion: no-preference) {
+  .nectar-flight { animation: nectar-trip 7s ease-in-out infinite; }
+  .nectar-flight:has(.visitor-say) { animation-play-state: paused; }
+}
+@keyframes nectar-trip {
+  0%, 12%, 100% { transform: translate(0, 0); }
+  29%, 76% { transform: translate(calc(var(--flight-x) * .5), calc(var(--flight-y) * .5 - 18px)); }
+  48%, 58% { transform: translate(var(--flight-x), var(--flight-y)); }
+}

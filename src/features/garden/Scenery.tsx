@@ -1,3 +1,6 @@
+import { BALANCE } from '../../data/balance'
+import { project } from './projection'
+
 // 花园布景：远景山丘和树丛、草地上的小花石子、门前小路、前景草丛。纯装饰，不接收点击。
 const INK = '#5B4366'
 
@@ -25,46 +28,49 @@ export function Horizon({ night }: { night?: boolean }) {
   )
 }
 
-// 草地小花和石子：用场景比例摆放，避开中间的地块
-const FLOWERS: [number, number][] = [
-  [4, 70], [9, 88], [27, 92], [31, 30], [44, 22], [52, 90], [61, 12], [70, 84], [79, 30], [86, 60], [93, 18], [96, 86], [38, 66], [64, 50],
-]
-const PEBBLES: [number, number, number][] = [
-  [6, 54, 1], [24, 80, 0.8], [47, 8, 0.9], [58, 76, 1.1], [74, 16, 0.8], [90, 44, 1], [83, 92, 0.9],
-]
-const TUFTS: [number, number][] = [
-  [2, 40], [15, 94], [34, 12], [50, 58], [66, 30], [76, 68], [88, 8], [98, 52], [20, 62],
-]
-
-export function GroundDecor() {
+/** 地面插画与可点击格共享投影。SVG 单位分别对应半格宽和半格高。 */
+export function Meadow() {
+  const { gridWidth: cols, gridHeight: rows } = BALANCE
+  const span = cols + rows
+  const top = `${rows},0 ${span},${cols} ${cols},${span} 0,${rows}`
   return (
-    <div className="ground-decor" aria-hidden>
-      {FLOWERS.map(([x, y], i) => (
-        <svg key={`f${i}`} className="decor flower" style={{ left: `${x}%`, top: `${y}%` }} viewBox="0 0 20 20">
-          {[0, 72, 144, 216, 288].map((a) => (
-            <ellipse key={a} cx={10} cy={5.5} rx={3.2} ry={4.2} fill="#FFFFFF" stroke="#E6D9E8" strokeWidth={0.8} transform={`rotate(${a} 10 10)`} />
-          ))}
-          <circle cx={10} cy={10} r={2.6} fill={i % 3 === 0 ? '#FF9EC0' : '#FFD66B'} />
-        </svg>
-      ))}
-      {PEBBLES.map(([x, y, s], i) => (
-        <svg key={`p${i}`} className="decor pebble" style={{ left: `${x}%`, top: `${y}%`, width: 22 * s, height: 14 * s }} viewBox="0 0 22 14">
-          <ellipse cx={11} cy={8} rx={10} ry={5.5} fill="#C8BBA9" />
-          <ellipse cx={10} cy={6.5} rx={9} ry={5} fill="#E9E1D6" />
-          <ellipse cx={7} cy={5} rx={3} ry={1.5} fill="#FFF" opacity={0.7} />
-        </svg>
-      ))}
-      {TUFTS.map(([x, y], i) => (
-        <svg key={`t${i}`} className="decor tuft" style={{ left: `${x}%`, top: `${y}%` }} viewBox="0 0 30 18">
-          <path d="M3 18 Q6 6 10 2 Q10 10 13 18 Q15 4 19 0 Q19 10 21 18 Q24 8 28 6 Q26 12 27 18 Z" fill="#7FC66A" />
-          <path d="M10 4 Q9 10 11 16" stroke="#C9EC9F" strokeWidth={1.4} fill="none" strokeLinecap="round" />
-        </svg>
-      ))}
-      {/* 门前的踏脚石，从小屋台阶走向菜地 */}
-      {[[1.45, 3.15], [1.95, 3.55], [2.55, 3.85]].map(([cx, cy], i) => (
-        <span key={`s${i}`} className="stepping-stone" style={{ left: `calc(var(--pad) + ${cx} * var(--cw))`, top: `calc(var(--pad) + ${cy} * var(--ch))` }} />
-      ))}
-      <div className="ground-front" />
-    </div>
+    <svg className="meadow" viewBox={`0 0 ${span} ${span}`} preserveAspectRatio="none" aria-hidden>
+      <defs>
+        <linearGradient id="turf" x2=".6" y2="1">
+          <stop stopColor="#dfefae" /><stop offset=".48" stopColor="#b8df91" /><stop offset="1" stopColor="#99ce84" />
+        </linearGradient>
+        <g id="grass-blades" fill="none" stroke="#75ac68" strokeWidth=".034" strokeLinecap="round">
+          <path d="M-.09 0l-.06-.10M0 .02l.02-.15M.07 0l.08-.07" />
+        </g>
+        <g id="field-daisy">
+          <path d="M0 0q.04-.11 .01-.19" fill="none" stroke="#629957" strokeWidth=".034" />
+          <path d="M0-.07q-.11-.12-.13-.05t.13.05" fill="#7dac61" />
+          <g fill="#fff8d7">
+            <ellipse cy="-.22" rx=".044" ry=".09" />
+            <ellipse cy="-.22" rx=".09" ry=".044" />
+          </g>
+          <circle cy="-.22" r=".035" fill="#ebb75d" />
+        </g>
+      </defs>
+      <path d={`M0 ${rows}L${cols} ${span}L${span} ${cols}v.36L${cols} ${span + .36}L0 ${rows + .36}Z`} fill="#ab9068" />
+      <path d={`M0 ${rows}L${cols} ${span}L${span} ${cols}v.18L${cols} ${span + .18}L0 ${rows + .18}Z`} fill="#82a76b" />
+      <polygon points={top} fill="url(#turf)" stroke="#81b273" strokeWidth=".045" strokeLinejoin="round" />
+      {Array.from({ length: cols * rows }, (_, i) => {
+        const x = i % cols
+        const y = Math.floor(i / cols)
+        const { u, v } = project(x, y)
+        return (
+          <g key={i} transform={`translate(${u} ${v})`}>
+            <path d="M0 0l1 1-1 1-1-1z" fill={(x + y) % 2 ? '#ffffff' : '#63955d'} fillOpacity=".065" />
+            {i % 4 === 0 && <use href="#grass-blades" x="-.34" y="1.10" />}
+            {i % 9 === 2 && <use href="#field-daisy" x=".36" y=".96" />}
+          </g>
+        )
+      })}
+      {[0, 1, 2, 3].map(i => {
+        const { u, v } = project(1.8 + i * .42, 3 + i * .26)
+        return <ellipse key={i} cx={u} cy={v} rx=".22" ry=".12" fill="#e6dfbd" stroke="#afa985" strokeWidth=".035" />
+      })}
+    </svg>
   )
 }

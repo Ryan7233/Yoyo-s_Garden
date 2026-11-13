@@ -4,7 +4,7 @@ import { COMBOS } from '../../data/combos'
 import { snapshotOf } from '../../engine/visitors'
 import { activeCombos, thingsOf } from '../../engine/combos'
 import { nextGoal } from '../../engine/goals'
-import { cell } from './GardenScene'
+import { gardenCell } from './projection'
 
 const seenOf = (unlocks: { kind: string; refId: string }[], kind: string) => new Set(unlocks.filter((u) => u.kind === kind).map((u) => u.refId))
 
@@ -38,7 +38,7 @@ export function ComboSparkles() {
   return (
     <>
       {things.filter((t) => lit.has(t.id)).map((t, i) => (
-        <div key={t.id} className="combo-spark" style={cell(t.x, t.y, t.w, t.h)} aria-hidden>
+        <div key={t.id} className="combo-spark" style={gardenCell(t.x, t.y, t.w, t.h)} aria-hidden>
           <span style={{ animationDelay: `${(i % 4) * 0.4}s` }}>✨</span>
         </div>
       ))}

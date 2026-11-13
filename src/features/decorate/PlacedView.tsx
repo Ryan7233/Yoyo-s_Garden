@@ -7,6 +7,7 @@ import { Icon } from '../../ui/Icon'
 import { startPress } from './drag'
 import { dropAt } from './actions'
 import { useDecorate } from './useDecorate'
+import { gardenCell } from '../garden/projection'
 import './scene-objects.css'
 
 function cellStyle(x: number, y: number, w = 1, h = 1) {
@@ -19,7 +20,7 @@ function cellStyle(x: number, y: number, w = 1, h = 1) {
  * 装扮模式下：拖动就是移动，点一下弹出菜单；平时：可选 onTap（比如点花瓶插花）。
  */
 export function PlacedView({
-  id, catalogId, x, y, flipped, onTap, children, className = 'placed', wall,
+  id, catalogId, x, y, flipped, onTap, children, className = 'placed', wall, outdoor,
 }: {
   id: string
   catalogId: string
@@ -31,6 +32,7 @@ export function PlacedView({
   className?: string
   /** 墙面挂件：没有地面阴影 */
   wall?: boolean
+  outdoor?: boolean
 }) {
   const decorating = useStore((s) => s.decorating)
   const { holding, menuId } = useDecorate()
@@ -42,10 +44,16 @@ export function PlacedView({
   const moving = holding?.kind === 'move' && holding.id === id
   const interactive = decorating ? !holding : !!onTap
 
+  const style = {
+    ...(outdoor ? gardenCell(x, y, w, h) : cellStyle(x, y, w, h)),
+    '--span-e': Math.min(w, h) + (Math.max(w, h) - Math.min(w, h)) * 0.45,
+    '--row': y,
+  } satisfies CSSProperties & Record<`--${string}`, number>
+
   return (
     <div
       className={`${className}${tile ? ' tile' : ''}${interactive ? ' tappable' : ''}${menuId === id ? ' selected' : ''}${moving ? ' moving' : ''}`}
-      style={{ ...cellStyle(x, y, w, h), '--span-e': Math.min(w, h) + (Math.max(w, h) - Math.min(w, h)) * 0.45, '--row': y } as CSSProperties}
+      style={style}
       onPointerDown={
         decorating && !holding
           ? (e) => startPress(e, { kind: 'move', id, catalogId }, dropAt, () => useDecorate.getState().openMenu(id))
@@ -53,6 +61,8 @@ export function PlacedView({
       }
       onClick={!decorating && onTap ? onTap : undefined}
       data-item={catalogId}
+      data-x={x}
+      data-y={y}
       aria-label={interactive ? item.name : undefined}
       role={interactive ? 'button' : undefined}
     >

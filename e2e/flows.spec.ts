@@ -63,22 +63,21 @@ test('收获、插花、运动计时、拖拽摆放与刷新后恢复', async ({
 
   // 拖拽：把长椅从工具盒拖到 (8, 1)
   const from = await page.locator('.tray-item', { hasText: '长椅' }).boundingBox()
-  // 格子只在拿着东西时出现，所以按网格位置算出 (8, 1) 的中心
-  const grid = (await page.locator('.ground').boundingBox())!
-  const tx = grid.x + (8.5 / 12) * grid.width
-  const ty = grid.y + (1.5 / 8) * grid.height
   await page.mouse.move(from!.x + from!.width / 2, from!.y + from!.height / 2)
   await page.mouse.down()
-  await page.mouse.move(tx, ty, { steps: 12 })
+  await page.mouse.move(from!.x + from!.width / 2, from!.y - 16, { steps: 5 })
+  const target = page.locator('.place-cell[data-x="8"][data-y="1"]')
+  const box = (await target.boundingBox())!
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 12 })
   await expect(page.locator('.place-preview.good')).toBeVisible()
   await page.mouse.up()
-  await expect(page.locator('[data-item="out-bench"]')).toHaveCSS('grid-column-start', '9')
+  await expect(page.locator('[data-item="out-bench"]')).toHaveAttribute('data-x', '8')
   await page.getByRole('button', { name: '完成装扮' }).click()
 
   // 刷新后恢复
   await page.reload()
-  await expect(page.locator('[data-item="out-bench"]')).toHaveCSS('grid-column-start', '9')
-  await expect(page.locator('[data-item="out-bench"]')).toHaveCSS('grid-row-start', '2')
+  await expect(page.locator('[data-item="out-bench"]')).toHaveAttribute('data-x', '8')
+  await expect(page.locator('[data-item="out-bench"]')).toHaveAttribute('data-y', '1')
   await page.getByRole('button', { name: '进入小屋' }).click()
   await expect(page.locator('[data-item="in-vase"] .vase-flower')).toBeVisible()
 })

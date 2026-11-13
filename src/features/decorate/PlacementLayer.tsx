@@ -3,6 +3,7 @@ import { getCatalogItem } from '../../data/catalog'
 import { buildSceneState, canPlace, footprintOf, slotFor, type Layer, type Scene } from '../../engine/placement'
 import { Icon } from '../../ui/Icon'
 import { useDecorate } from './useDecorate'
+import { gardenCell } from '../garden/projection'
 import { dropAt } from './actions'
 
 function cellStyle(x: number, y: number, w = 1, h = 1) {
@@ -14,6 +15,7 @@ function cellStyle(x: number, y: number, w = 1, h = 1) {
  * 手里有东西时显示占格预览（绿色能放，红色不能放）。
  */
 export function PlacementLayer({ scene, layer, cols, rows }: { scene: Scene; layer: Layer; cols: number; rows: number }) {
+  const position = scene === 'outdoor' ? gardenCell : cellStyle
   const { plots, placed, plants } = useStore()
   const { holding, hover, dragging } = useDecorate()
 
@@ -36,7 +38,7 @@ export function PlacementLayer({ scene, layer, cols, rows }: { scene: Scene; lay
             <button
               key={i}
               className={`place-cell${ok(x, y) ? ' can' : ''}`}
-              style={cellStyle(x, y)}
+              style={position(x, y)}
               data-cell="1"
               data-scene={scene}
               data-layer={layer}
@@ -51,7 +53,7 @@ export function PlacementLayer({ scene, layer, cols, rows }: { scene: Scene; lay
       {preview && item && (
         <div
           className={`place-preview ${ok(preview.x, preview.y) ? 'good' : 'bad'}`}
-          style={cellStyle(preview.x, preview.y, Math.min(item.size[0], cols - preview.x), Math.min(item.size[1], rows - preview.y))}
+          style={position(preview.x, preview.y, Math.min(item.size[0], cols - preview.x), Math.min(item.size[1], rows - preview.y))}
         >
           <Icon icon={item.icon} size={44} />
         </div>
