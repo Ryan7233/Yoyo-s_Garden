@@ -83,3 +83,10 @@
   29%, 76% { transform: translate(calc(var(--flight-x) * .5), calc(var(--flight-y) * .5 - 18px)); }
   48%, 58% { transform: translate(var(--flight-x), var(--flight-y)); }
 }
+
+/* 落脚点旁的飞舞保持在自己的按钮里，尤其是同一片花田里的鸟和蝴蝶。 */
+.visitor-spot .visitor-move.fly { animation-name: perch-flutter; }
+@keyframes perch-flutter {
+  0%, 100% { transform: translate(-3px, 1px) rotate(-6deg); }
+  50% { transform: translate(4px, -5px) rotate(6deg); }
+}

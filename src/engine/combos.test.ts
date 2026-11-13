@@ -5,7 +5,7 @@ import { COMBOS } from '../data/combos'
 import { activeCombos, thingsOf } from './combos'
 import { nextGoal } from './goals'
 import { computeGrants } from './progress'
-import { snapshotOf, visitorAnchor } from './visitors'
+import { snapshotOf, visitorAnchors } from './visitors'
 
 const plant = (catalogId: string, x: number, y: number, stage: 0 | 1 | 2 | 3 = 3, waterCount = 0): PlantInstance => ({
   id: `${catalogId}@${x},${y}`, childId: 'c', scene: 'outdoor', x, y, catalogId, plantedAt: '', waterCount, stage,
@@ -44,13 +44,13 @@ describe('访客落脚点', () => {
   it('蜜蜂落在蜂箱旁边，没有蜂箱时落在开花的花旁边', () => {
     const bee = VISITORS.find((v) => v.id === 'bee')!
     const things = thingsOf([plant('seed-daisy', 1, 1)], [item('out-beehive', 8, 5)])
-    expect(visitorAnchor(bee, things)?.catalogId).toBe('out-beehive')
-    expect(visitorAnchor(bee, thingsOf([plant('seed-daisy', 1, 1)], []))?.catalogId).toBe('seed-daisy')
+    expect(visitorAnchors(bee, things)[0]?.catalogId).toBe('out-beehive')
+    expect(visitorAnchors(bee, thingsOf([plant('seed-daisy', 1, 1)], []))[0]?.catalogId).toBe('seed-daisy')
   })
 
   it('刺猬没有落脚点，用固定位置', () => {
     const hedgehog = VISITORS.find((v) => v.id === 'hedgehog')!
-    expect(visitorAnchor(hedgehog, thingsOf([], [item('out-rock', 1, 1)]))).toBeUndefined()
+    expect(visitorAnchors(hedgehog, thingsOf([], [item('out-rock', 1, 1)]))).toEqual([])
   })
 })
 

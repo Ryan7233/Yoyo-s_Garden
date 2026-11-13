@@ -1,9 +1,10 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { useStore } from '../../app/store'
 import { VISITORS, type VisitorDef } from '../../data/visitors'
-import { closestFlower, presentVisitors, snapshotOf, visitorAnchor } from '../../engine/visitors'
+import { closestFlower, presentVisitors, snapshotOf, visitorAnchors } from '../../engine/visitors'
 import { thingsOf } from '../../engine/combos'
 import { centerOf, gardenCell } from './projection'
+import { visitorPerches } from './visitorLayout'
 import './visitors.css'
 import { play } from '../../ui/sfx'
 
@@ -34,12 +35,14 @@ function useTalking() {
 function useHere(scene: 'outdoor' | 'indoor') {
   const { plants, placed, ledger } = useStore()
   const things = scene === 'outdoor' ? thingsOf(plants, placed) : []
+  const pickPerch = visitorPerches()
   return presentVisitors(VISITORS, snapshotOf(plants, placed, ledger))
     .filter((v) => v.scene === scene)
     .map(v => {
-      const anchor = visitorAnchor(v, things)
+      const perch = pickPerch(visitorAnchors(v, things))
+      const anchor = perch?.anchor
       const flower = v.id === 'bee' && anchor?.catalogId === 'out-beehive' ? closestFlower(anchor, things) : undefined
-      return { v, anchor, flower }
+      return { v, anchor, offset: perch?.offset ?? 0, flower }
     })
 }
 
@@ -67,7 +70,7 @@ export function AnchoredVisitors() {
   if (decorating) return null
   return (
     <>
-      {here.map(({ v, anchor, flower }, i) => {
+      {here.map(({ v, anchor, flower, offset }, i) => {
         if (!anchor) return null
         const from = centerOf(anchor)
         const to = flower && centerOf(flower)
@@ -78,7 +81,7 @@ export function AnchoredVisitors() {
         return (
           <div key={v.id} className={`visitor-spot${flight ? ' nectar-flight' : ''}`}
             style={{ ...gardenCell(anchor.x, anchor.y, anchor.w, anchor.h), ...flight }}>
-            <Visitor v={v} fly={SPOTS[v.id]?.fly} style={{ left: '60%', top: 'calc(30% - var(--obj) * .8)' }} delay={i * 0.25} talking={talking === v.id} onTap={() => setTalking(v.id)} />
+            <Visitor v={v} fly={SPOTS[v.id]?.fly} style={{ left: `calc(50% + var(--half-w) * ${offset})`, top: 'calc(50% - var(--half-h) * .4 - var(--obj) * .8)' }} delay={i * 0.25} talking={talking === v.id} onTap={() => setTalking(v.id)} />
           </div>
         )
       })}

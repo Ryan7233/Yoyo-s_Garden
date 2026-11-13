@@ -35,12 +35,12 @@ export function meets(c: VisitorCondition, g: GardenSnapshot): boolean {
 }
 
 /** 访客落脚的东西：蜂箱摆哪儿蜜蜂就在哪儿飞；没有可落的就用固定位置 */
-export function visitorAnchor(v: VisitorDef, things: Thing[]): Thing | undefined {
+export function visitorAnchors(v: VisitorDef, things: Thing[]): Thing[] {
   for (const n of v.near ?? []) {
-    const t = things.find((x) => n.ids.includes(x.catalogId) && (!n.mature || x.mature))
-    if (t) return t
+    const matches = things.filter((x) => n.ids.includes(x.catalogId) && (!n.mature || x.mature))
+    if (matches.length) return matches
   }
-  return undefined
+  return []
 }
 
 /** 条件满足时出现，不满足时离开 */
