@@ -1,3 +1,4 @@
+import { woodDemo } from './app/woodPreview'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import '@fontsource/zcool-kuaile/400.css'
@@ -11,8 +12,15 @@ initPwa()
 installAudioUnlock()
 installKeyboardInset()
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+async function start() {
+  if (woodDemo) {
+    const { prepareWoodDemo } = await import('./features/garden/woodland/demo')
+    await prepareWoodDemo()
+  }
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  )
+}
+void start()

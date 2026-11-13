@@ -33,9 +33,13 @@ export const useDecorate = create<DecorateState>((set) => ({
   reset: () => set({ holding: null, hover: null, dragging: false, menuId: null }),
 }))
 
+export const canvasCells = new WeakMap<Element, (x: number, y: number) => Cell | null>()
+
 /** 找到手指下面的格子（格子按钮带 data-cell 属性） */
 export function cellAt(clientX: number, clientY: number): Cell | null {
   for (const el of document.elementsFromPoint(clientX, clientY)) {
+    const resolve = canvasCells.get(el)
+    if (resolve) return resolve(clientX, clientY)
     const d = (el as HTMLElement).dataset
     if (d?.cell) {
       return { scene: d.scene as Scene, layer: d.layer as Layer, x: Number(d.x), y: Number(d.y) }

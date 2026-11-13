@@ -1,0 +1,73 @@
+.woodland {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 40% 36%, #f6f0d9 0%, #e7e6c8 55%, #c8d4b0 100%);
+}
+.woodland canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+.wood-tools,
+.wood-entry {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  z-index: 5;
+}
+.wood-tools {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #ae946a;
+  border-radius: 22px;
+  background: #fff7e7ee;
+  box-shadow: 0 2px 7px #65462925;
+}
+.wood-tools button,
+.wood-entry {
+  font: inherit;
+  color: #674c39;
+  background: #fff4dd;
+  border: 1px solid #dbc7a7;
+  border-radius: 18px;
+  min-height: 40px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+.wood-tools button:active,
+.wood-tools button[aria-pressed='true'] {
+  background: #eed9b7;
+}
+.wood-error {
+  position: absolute;
+  inset: 30% 10% auto;
+  text-align: center;
+}
+
+.layout:has(.woodland) {
+  background: #faf2e1;
+}
+.layout:has(.woodland) .nav-btn {
+  background: linear-gradient(180deg, #fff4dd, #f0dabb);
+  border-color: #d6b691;
+  box-shadow:
+    inset 0 1px #fff9ea,
+    0 3px #c49e77;
+  color: #624a37;
+}
+.layout:has(.woodland) .goal-hint,
+.layout:has(.woodland) .scene-overlay .btn {
+  background: #fff5e1f5;
+  color: #65503a;
+  border-color: #d4b68e;
+}
+.layout:has(.woodland) .goal-hint {
+  min-height: 40px;
+  font-size: 16px;
+  padding: 5px 12px;
+  max-width: 325px;
+}

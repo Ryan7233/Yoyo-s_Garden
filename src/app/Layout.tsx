@@ -1,3 +1,4 @@
+import { woodDemo } from './woodPreview'
 import { useState, type CSSProperties } from 'react'
 import { useStore, act, type Page } from './store'
 import { BalanceBar } from '../ui/BalanceBar'
@@ -35,7 +36,7 @@ export function Layout() {
   return (
     <div className="layout">
       {!isStandalone() && (
-        <div className="standalone-tip">请从主屏幕上的“小花园”图标打开，这样每次用的都是同一份花园记录</div>
+        <div className="standalone-tip">{woodDemo ? '这里是独立试玩花园，可以放心种花、收获和摆放。' : '请从主屏幕上的“小花园”图标打开，这样每次用的都是同一份花园记录'}</div>
       )}
       <header className="topbar">
         <div className="topbar-left">

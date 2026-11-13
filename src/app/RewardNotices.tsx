@@ -1,3 +1,4 @@
+import { gardenLocalKey } from './woodPreview'
 import { useEffect, useMemo, useState } from 'react'
 import { useStore } from './store'
 import { Modal } from '../ui/Modal'
@@ -7,7 +8,7 @@ import { Reward } from '../ui/Reward'
 import { UnlockNotices } from './UnlockNotices'
 import type { LedgerEntry } from '../data/types'
 
-const SEEN_KEY = 'little-garden:seen-ledger-at'
+const SEEN_KEY = gardenLocalKey('seen-ledger-at')
 
 function readSeen(): string | null {
   try {

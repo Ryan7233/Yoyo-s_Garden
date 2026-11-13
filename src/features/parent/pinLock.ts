@@ -1,7 +1,8 @@
+import { gardenLocalKey } from '../../app/woodPreview'
 import type { PinLock } from '../../engine/pin'
 
 // 输错锁定状态存在本机，家长模式和当场见证共用
-const LOCK_KEY = 'little-garden:pin-lock'
+const LOCK_KEY = gardenLocalKey('pin-lock')
 
 export function readLock(): PinLock {
   try {

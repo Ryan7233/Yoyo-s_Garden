@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react'
+import { lazy, Suspense, useState, type CSSProperties } from 'react'
 import { useStore, act } from '../../app/store'
 import { BALANCE } from '../../data/balance'
 import { POND_ID } from '../../data/plants'
@@ -24,6 +24,10 @@ import { gardenCell } from './projection'
 import { CourageSunflower } from '../courage/CourageSunflower'
 import './garden.css'
 
+const Woodland = lazy(() => import('./woodland/Woodland'))
+const preview = new URLSearchParams(location.search)
+let woodView = preview.get('view') === '3d' || preview.has('wood-demo')
+
 type Fx = { id: string; kind: 'water' | 'grow' }
 
 /**
@@ -38,6 +42,8 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
   const [expanding, setExpanding] = useState(false)
   const [expandAt, setExpandAt] = useState<{ x: number; y: number } | null>(null)
   const [fx, setFx] = useState<Fx | null>(null)
+  const [wood, setWood] = useState(woodView)
+  const switchView = (next: boolean) => { woodView = next; setWood(next) }
   if (!child) return null
 
   const phase = skyPhase(new Date().getHours())
@@ -76,6 +82,7 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
 
   return (
     <>
+      {wood ? <Suspense fallback={<p role="status">正在打开木作花园…</p>}><Woodland onHouse={onEnterHouse} onPlot={tapPlot} onPond={tapPond} candidates={candidates} onExpand={setExpandAt} onExit={()=>switchView(false)} /></Suspense> : <>
       <ScrollHints />
       <div className="scene-scroll">
         <div className={`garden phase-${phase}`} style={gridStyle}>
@@ -131,6 +138,8 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
         </div>
       </div>
 
+      {!decorating && <button className="btn wood-entry" onClick={()=>switchView(true)}>木作 3D</button>}
+      </>}
       {/* 浮在天空上的工具：不随场景滑动，也不盖住地块 */}
       {!decorating && (
         <div className="scene-overlay top">

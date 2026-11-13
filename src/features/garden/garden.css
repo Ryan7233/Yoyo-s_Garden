@@ -380,3 +380,5 @@
 .wish-bar.ready .wish-fill { background: linear-gradient(180deg, #ffe9a6, var(--coin)); }
 .wish-text { font-size: var(--fs-xs); color: var(--text-soft); }
 .wish-text .num { font-size: 16px; }
+
+.wood-entry { position:absolute; bottom:10px; right:12px; z-index:5; }

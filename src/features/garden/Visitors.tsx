@@ -32,7 +32,7 @@ function useTalking() {
 }
 
 /** 现在在场的访客，分成落在花园某样东西旁边的（anchor）和用固定位置的 */
-function useHere(scene: 'outdoor' | 'indoor') {
+export function useHere(scene: 'outdoor' | 'indoor') {
   const { plants, placed, ledger } = useStore()
   const things = scene === 'outdoor' ? thingsOf(plants, placed) : []
   const pickPerch = visitorPerches()
