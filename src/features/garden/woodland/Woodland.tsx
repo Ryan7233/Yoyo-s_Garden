@@ -36,7 +36,7 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
     [courage, setCourage] = useState(false)
   const { child, plots, plants, placed, decorating, settings, today } = useStore()
   const { holding, hover } = useDecorate()
-  const visitors = useHere('outdoor')
+  const visitors = useHere('outdoor', 'wood')
   const level = sunflowerLevel(settings?.courageWeeks?.length ?? 0)
   const actions = new Map<string, () => void>()
   const toys: Toy[] = []
@@ -262,7 +262,7 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
         <div className="wood-error">
           <p>设备暂时无法显示立体花园</p>
           <button className="btn" onClick={onExit}>
-            打开经典花园
+            打开平面 2D
           </button>
         </div>
       ) : (
@@ -279,7 +279,7 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
           >
             {near ? '⤢ 看全园' : '⊕ 看近些'}
           </button>
-          <button onClick={onExit}>经典视角</button>
+          <button onClick={onExit}>平面 2D</button>
         </div>
       )}
       {courage && <CourageSheet onClose={() => setCourage(false)} />}

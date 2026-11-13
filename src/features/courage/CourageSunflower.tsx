@@ -6,7 +6,7 @@ import {
 } from '../../engine/courage'
 import { HOUSE_RECT } from '../../engine/plots'
 import { Modal } from '../../ui/Modal'
-import { gardenCell } from '../garden/projection'
+import { gridCell } from '../garden/grid'
 import { SunflowerArt } from './SunflowerArt'
 import './courage.css'
 
@@ -18,7 +18,7 @@ export function CourageSunflower() {
   if (!level) return null
   return (
     <>
-      <div className="courage-spot" style={gardenCell(HOUSE_RECT.x, HOUSE_RECT.y, HOUSE_RECT.w, HOUSE_RECT.h)}>
+      <div className="courage-spot" style={gridCell(HOUSE_RECT.x, HOUSE_RECT.y, HOUSE_RECT.w, HOUSE_RECT.h)}>
         <button className={`courage-flower lv${level}`} onClick={() => setOpen(true)} aria-label="勇气向日葵">
           <SunflowerArt level={level} />
         </button>

@@ -3,7 +3,7 @@ import { useStore } from '../../app/store'
 import { VISITORS, type VisitorDef } from '../../data/visitors'
 import { closestFlower, presentVisitors, snapshotOf, visitorAnchors } from '../../engine/visitors'
 import { thingsOf } from '../../engine/combos'
-import { centerOf, gardenCell } from './projection'
+import { gridCell } from './grid'
 import { visitorPerches } from './visitorLayout'
 import './visitors.css'
 import { play } from '../../ui/sfx'
@@ -32,10 +32,10 @@ function useTalking() {
 }
 
 /** 现在在场的访客，分成落在花园某样东西旁边的（anchor）和用固定位置的 */
-export function useHere(scene: 'outdoor' | 'indoor') {
+export function useHere(scene: 'outdoor' | 'indoor', view: 'flat' | 'wood' = 'flat') {
   const { plants, placed, ledger } = useStore()
   const things = scene === 'outdoor' ? thingsOf(plants, placed) : []
-  const pickPerch = visitorPerches()
+  const pickPerch = visitorPerches(view)
   return presentVisitors(VISITORS, snapshotOf(plants, placed, ledger))
     .filter((v) => v.scene === scene)
     .map(v => {
@@ -72,16 +72,14 @@ export function AnchoredVisitors() {
     <>
       {here.map(({ v, anchor, flower, offset }, i) => {
         if (!anchor) return null
-        const from = centerOf(anchor)
-        const to = flower && centerOf(flower)
-        const flight = to && {
-          '--flight-x': `calc(var(--half-w) * ${to.u - from.u})`,
-          '--flight-y': `calc(var(--half-h) * ${to.v - from.v})`,
+        const flight = flower && {
+          '--flight-x': `calc(var(--cw) * ${flower.x + flower.w / 2 - anchor.x - anchor.w / 2})`,
+          '--flight-y': `calc(var(--ch) * ${flower.y + flower.h / 2 - anchor.y - anchor.h / 2})`,
         }
         return (
           <div key={v.id} className={`visitor-spot${flight ? ' nectar-flight' : ''}`}
-            style={{ ...gardenCell(anchor.x, anchor.y, anchor.w, anchor.h), ...flight }}>
-            <Visitor v={v} fly={SPOTS[v.id]?.fly} style={{ left: `calc(50% + var(--half-w) * ${offset})`, top: 'calc(50% - var(--half-h) * .4 - var(--obj) * .8)' }} delay={i * 0.25} talking={talking === v.id} onTap={() => setTalking(v.id)} />
+            style={{ ...gridCell(anchor.x, anchor.y, anchor.w, anchor.h), ...flight }}>
+            <Visitor v={v} fly={SPOTS[v.id]?.fly} style={{ left: `calc(50% + var(--cw) * ${offset})`, top: 'calc(50% - var(--ch) * .5 - 10px)' }} delay={i * 0.25} talking={talking === v.id} onTap={() => setTalking(v.id)} />
           </div>
         )
       })}

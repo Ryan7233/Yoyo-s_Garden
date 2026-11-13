@@ -19,8 +19,8 @@ import { PlacementLayer } from '../decorate/PlacementLayer'
 import { AnchoredVisitors, Visitors } from './Visitors'
 import { ComboSparkles, GoalHint } from './GardenGoals'
 import { WishBar } from './WishBar'
-import { Horizon, Meadow } from './Scenery'
-import { gardenCell } from './projection'
+import { Horizon, GroundDecor } from './Scenery'
+import { gridCell } from './grid'
 import { CourageSunflower } from '../courage/CourageSunflower'
 import './garden.css'
 
@@ -32,7 +32,7 @@ type Fx = { id: string; kind: 'water' | 'grow' }
 
 /**
  * 室外花园：天空 → 远景树丛 → 小屋和种植区 → 前景草地。
- * 地块、直立物件、拖放目标共享存档坐标和菱形投影；
+ * 平面花园的地块、植物和拖放目标共用同一套行列坐标。
  * 格子最小 64px，屏幕放不下时整片花园可以滑动，而不是继续缩小。
  */
 export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
@@ -94,9 +94,9 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
             <Horizon night={phase === 'night'} />
           </div>
           <div className="ground-wrap">
+            <GroundDecor />
             <div className="ground">
-              <Meadow />
-              <button className="house-cell" style={gardenCell(HOUSE_RECT.x, HOUSE_RECT.y, HOUSE_RECT.w, HOUSE_RECT.h)} onClick={onEnterHouse} aria-label="进入小屋">
+              <button className="house-cell" style={gridCell(HOUSE_RECT.x, HOUSE_RECT.y, HOUSE_RECT.w, HOUSE_RECT.h)} onClick={onEnterHouse} aria-label="进入小屋">
                 <House roof={child.houseColor} fluid />
               </button>
               {!decorating && <CourageSunflower />}
@@ -105,18 +105,18 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
                 <button
                   key={`${p.x}-${p.y}`}
                   className={`plot ${p.kind}`}
-                  style={gardenCell(p.x, p.y)}
+                  style={gridCell(p.x, p.y)}
                   onClick={() => tapPlot(p.x, p.y)}
                   aria-label="地块"
                 />
               ))}
 
               {outdoorPlaced.map((p) => (
-                <PlacedView outdoor key={p.id} {...placedProps(p)} onTap={p.catalogId === POND_ID ? () => tapPond(p.id, p.x, p.y) : undefined} />
+                <PlacedView key={p.id} {...placedProps(p)} onTap={p.catalogId === POND_ID ? () => tapPond(p.id, p.x, p.y) : undefined} />
               ))}
 
               {outdoorPlants.map((p) => (
-                <div key={p.id} className={`plant${p.pondId ? ' in-pond' : ''}`} style={p.pondId ? gardenCell(p.x, p.y, 2, 2) : gardenCell(p.x, p.y)}>
+                <div key={p.id} className={`plant${p.pondId ? ' in-pond' : ''}`} style={p.pondId ? gridCell(p.x, p.y, 2, 2) : gridCell(p.x, p.y)}>
                   <PlantArt plant={p} today={today} fluid hop={fx?.id === p.id && fx.kind === 'grow'} />
                   {fx?.id === p.id && <span className="fx">{fx.kind === 'grow' ? '💗' : '💧'}</span>}
                 </div>
@@ -128,7 +128,7 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
               {decorating && <PlacementLayer scene="outdoor" layer="ground" cols={BALANCE.gridWidth} rows={BALANCE.gridHeight} />}
 
               {candidates.map((c) => (
-                <button key={`c${c.x}-${c.y}`} className="expand-cell pop" style={gardenCell(c.x, c.y)} onClick={() => setExpandAt(c)} aria-label="扩建这里">
+                <button key={`c${c.x}-${c.y}`} className="expand-cell pop" style={gridCell(c.x, c.y)} onClick={() => setExpandAt(c)} aria-label="扩建这里">
                   <span>＋</span>
                 </button>
               ))}
