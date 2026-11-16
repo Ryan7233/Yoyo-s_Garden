@@ -8,6 +8,7 @@ describe('每日拼读卡片', () => {
     expect(pinyinCardFor('2026-11-04')?.title).toContain('ie üe er')
     expect(pinyinCardFor('2026-11-05')?.title).toContain('an en in')
     expect(pinyinCardFor('2026-11-09')?.title).toContain('ang eng ing ong')
+    expect(pinyinCardFor('2026-11-16')?.title).toContain('词语拼读')
   })
 
   it('每张卡片的图都在 public 里，日期不重复', () => {
