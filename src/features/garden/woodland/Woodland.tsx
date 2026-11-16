@@ -14,7 +14,8 @@ import { dropAt } from '../../decorate/actions'
 import { toast } from '../../../ui/Toast'
 import { play } from '../../../ui/sfx'
 import { animal, furniture } from './furniture'
-import { cottage, plant } from './models'
+import { cottage, harvestTint, plant } from './models'
+import type { PlantInstance } from '../../../data/types'
 import { bed, createWorld, orchardYard, pit, type Toy } from './world'
 import { ORCHARD_PITS, pitAt, plantRect } from '../../../engine/plots'
 import './woodland.css'
@@ -28,8 +29,10 @@ interface Props {
   onExit: () => void
   /** A plant or seed card is open over the bottom of the screen. */
   carded?: boolean
+  /** Something that just happened to a plant: play it out in the garden. */
+  fx?: { id: string; kind: 'water' | 'grow' | 'harvest'; plant?: PlantInstance } | null
 }
-export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand, onExit, carded = false }: Props) {
+export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand, onExit, carded = false, fx }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const world = useRef<ReturnType<typeof createWorld> | null>(null)
   const pointer = useRef<{ x: number; y: number; lastX: number; lastY: number; moved: boolean } | null>(null)
@@ -82,11 +85,15 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
       z = p.y + span.h / 2
     const tap = () => (p.pondId ? onPond(p.pondId, p.x, p.y) : onPlot(p.x, p.y))
     const fruit = spec && p.catalogId.endsWith('-tree') ? fruitLevel(p, spec) : 0
+    const thirsty = !!spec && isThirsty(p, today, spec)
+    const mood = spec && canHarvest(p, spec) ? 'ripe' : thirsty ? 'sad' : 'happy'
     add(
       {
         key: p.id,
-        model: p.catalogId + p.stage + '/' + fruit,
-        carve: (m) => plant(m, p.catalogId, p.stage, fruit),
+        model: p.catalogId + p.stage + '/' + fruit + mood,
+        carve: (m) => plant(m, p.catalogId, p.stage, fruit, mood),
+        face: true,
+        droop: thirsty ? 1 : 0,
         x,
         z,
         // In the orchard trees stand on the grass and get room to be big; elsewhere they sit in a bed.
@@ -201,6 +208,8 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
     try {
       world.current = createWorld(el, setNear)
       canvasCells.set(el, world.current.cell)
+      // Dev server only: lets the effects be triggered by hand when checking how they look.
+      if (import.meta.env.DEV) (window as unknown as { __wood?: unknown }).__wood = world.current
     } catch {
       setFailed(true)
       return
@@ -220,6 +229,23 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
       world.current = null
     }
   }, [])
+  // Before the toys are updated, so a watered plant can keep its old shape until the water has fallen.
+  useEffect(() => {
+    const p = fx?.plant,
+      w = world.current
+    if (!fx || !p || !w || p.scene !== 'outdoor') return
+    const span = plantRect(p),
+      orchard = !p.pondId && span.w > 1,
+      tree = p.catalogId.endsWith('-tree') && p.stage === 3
+    const x = p.x + span.w / 2,
+      z = p.y + span.h / 2,
+      top = tree ? (orchard ? 2.7 : 1.6) : p.catalogId.includes('sunflower') && p.stage === 3 ? 1.25 : 0.85
+    if (fx.kind === 'harvest') w.harvest(x, z, top, harvestTint(p.catalogId), tree ? 6 : 3)
+    else {
+      w.hold(p.id, 780)
+      w.water(x, z, top)
+    }
+  }, [fx])
   useEffect(() => {
     world.current?.update(toys)
   })
@@ -290,6 +316,9 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
     }
     if (decorating) return
     const key = world.current?.pick(e.clientX, e.clientY)
+    // Whatever she taps answers: the frog dives, other animals hop, everything else wiggles.
+    if (key && key !== 'house')
+      world.current?.poke(key, key === 'frog' ? 'dive' : visitors.some(({ v }) => v.id === key) ? 'hop' : 'wiggle')
     if (key && actions.has(key)) {
       // Plants, beds and pits: the camera glides in to them while their card opens.
       const toy = spots.get(key)

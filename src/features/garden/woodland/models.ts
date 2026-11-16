@@ -84,6 +84,40 @@ function basis(y: P3, z: P3): P3 {
   return [e.x, e.y, e.z]
 }
 
+export type Mood = 'happy' | 'sad' | 'ripe'
+/**
+ * A little face on the +Z side of a plant: bean eyes, pink cheeks and a mouth.
+ * `s` is roughly the radius of the head it sits on. Sad faces (thirsty plants) have
+ * low half-closed eyes, worried brows and a downturned mouth; ripe ones laugh.
+ */
+export function face(m: Carving, at: P3, s: number, mood: Mood = 'happy') {
+  const [x, y, z] = at
+  const sad = mood === 'sad',
+    ink = '#3e2b25'
+  const eyeY = y + (sad ? 0.0 : 0.08) * s
+  for (const k of [-1, 1]) {
+    m.ball(ink, [x + k * 0.36 * s, eyeY, z], [0.12 * s, (sad ? 0.085 : 0.145) * s, 0.05 * s])
+    m.ball('#ffffff', [x + k * 0.36 * s - 0.035 * s, eyeY + 0.05 * s, z + 0.04 * s], [0.04 * s, 0.04 * s, 0.02 * s])
+    m.ball('#f79bb0', [x + k * 0.68 * s, y - 0.2 * s, z - 0.02 * s], [0.14 * s, 0.085 * s, 0.03 * s])
+    if (sad) m.beam(ink, [x + k * 0.52 * s, eyeY + 0.17 * s, z], [x + k * 0.2 * s, eyeY + 0.28 * s, z], 0.026 * s)
+  }
+  if (mood === 'ripe') {
+    m.ball('#8a3b3b', [x, y - 0.27 * s, z], [0.15 * s, 0.12 * s, 0.04 * s])
+    m.ball('#f08a8a', [x, y - 0.32 * s, z + 0.02 * s], [0.09 * s, 0.05 * s, 0.03 * s])
+    return
+  }
+  // The mouth is a little curve of three short strokes: a U when happy, upside down when thirsty.
+  const dip = sad ? 0.07 : -0.08
+  const pts: [number, number][] = [
+    [-0.17, -0.25],
+    [-0.07, -0.25 + dip],
+    [0.07, -0.25 + dip],
+    [0.17, -0.25],
+  ]
+  for (let i = 0; i < 3; i++)
+    m.beam(ink, [x + pts[i][0] * s, y + pts[i][1] * s, z], [x + pts[i + 1][0] * s, y + pts[i + 1][1] * s, z], 0.028 * s)
+}
+
 type Kind = 'apple' | 'orange' | 'peach' | 'cherry' | 'pine' | 'star' | 'plain'
 const kindOf = (id: string): Kind =>
   (['apple', 'orange', 'peach', 'cherry', 'pine', 'star'] as const).find((k) => id.includes(k + '-tree')) ?? 'plain'
@@ -220,8 +254,13 @@ function shape(m: Carving, kind: Kind): Crown[] {
  * A grown tree. `fruit` is what is on the branches right now:
  * 0 leaves only (just picked), 1 in blossom, 2 small green fruit, 3 ripe and ready to pick.
  */
-export function tree(m: Carving, id: string, stage: 0 | 1 | 2 | 3 = 0) {
+export function tree(m: Carving, id: string, stage: 0 | 1 | 2 | 3 = 0, mood?: Mood) {
   const kind = kindOf(id)
+  // Planted trees have a face on the trunk; the decorative big tree does not.
+  if (mood) {
+    const r = kind === 'orange' ? 0.12 : kind === 'peach' ? 0.11 : 0.13
+    face(m, [0, kind === 'peach' ? 0.3 : 0.42, r + 0.012], r * 0.85, mood)
+  }
   if (kind === 'pine') {
     trunk(m, [0, 0.7, 0], 0.13)
     for (let i = 0; i < 4; i++)
@@ -253,13 +292,14 @@ export function tree(m: Carving, id: string, stage: 0 | 1 | 2 | 3 = 0) {
 }
 
 /** Young trees already look like trees of their own kind, not like flower sprouts. */
-export function sapling(m: Carving, id: string, stage: 1 | 2) {
+export function sapling(m: Carving, id: string, stage: 1 | 2, mood: Mood = 'happy') {
   const kind = kindOf(id),
     tall = stage === 1 ? 0.36 : 0.72
   m.beam(oak, [0, 0, 0], [0.01, tall, 0], stage === 1 ? 0.035 : 0.06)
   if (kind === 'pine') {
     for (let i = 0; i < stage + 1; i++)
       m.cone(LEAVES.pine[i % 3], [0, tall * 0.55 + i * 0.16, 0], [0.26 - i * 0.06, 0.32, 0.26 - i * 0.06])
+    face(m, [0, tall * 0.5, 0.2], 0.1, mood)
     return
   }
   if (stage === 1) {
@@ -267,9 +307,12 @@ export function sapling(m: Carving, id: string, stage: 1 | 2) {
       const a = i * 1.7
       m.ball(LEAVES[kind][i % 3], [Math.sin(a) * 0.08, tall - 0.02 + (i % 2) * 0.05, Math.cos(a) * 0.08], [0.05, 0.026, 0.09], [0.3, a, 0])
     }
+    m.ball(LEAVES[kind][0], [0, tall + 0.03, 0.02], [0.085, 0.085, 0.08])
+    face(m, [0, tall + 0.03, 0.1], 0.085, mood)
     return
   }
   crown(m, { c: [0, tall + 0.15, 0], r: [0.3, 0.27, 0.3] }, LEAVES[kind], id.length, 0.6)
+  face(m, [0, tall + 0.13, 0.33], 0.17, mood)
 }
 function leaves(m: Carving, h: number) {
   m.beam('#698844', [0, 0.04, 0], [0.024, h, 0], 0.044)
@@ -282,23 +325,28 @@ function leaves(m: Carving, h: number) {
     )
   }
 }
-export function plant(m: Carving, id: string, stage: number, fruitStage: 0 | 1 | 2 | 3 = 0) {
+export function plant(m: Carving, id: string, stage: number, fruitStage: 0 | 1 | 2 | 3 = 0, mood: Mood = 'happy') {
   if (stage === 0) {
     m.ball('#96623d', [0, 0.04, 0], [0.18, 0.09, 0.15])
     m.ball('#dac085', [0.018, 0.114, 0], [0.075, 0.048, 0.045])
+    face(m, [0, 0.06, 0.145], 0.1, mood)
     return
   }
   if (id.endsWith('-tree') && (stage === 1 || stage === 2)) {
-    sapling(m, id, stage)
+    sapling(m, id, stage, mood)
     return
   }
   if (stage === 1 || stage === 2) {
-    leaves(m, stage === 1 ? 0.27 : 0.55)
-    if (stage === 2) m.ball(lime, [0.03, 0.55, 0], [0.086, 0.13, 0.082])
+    // A sprout is a stem, two leaves and a round little head.
+    const h = stage === 1 ? 0.27 : 0.55,
+      r = stage === 1 ? 0.085 : 0.115
+    leaves(m, h)
+    m.ball(lime, [0.02, h + r * 0.5, 0], [r, r, r * 0.92])
+    face(m, [0.02, h + r * 0.5, r * 0.9], r * 0.95, mood)
     return
   }
   if (id.endsWith('-tree')) {
-    tree(m, id, fruitStage)
+    tree(m, id, fruitStage, mood)
     return
   }
   if (/pumpkin|watermelon|carrot|corn|tomato|strawberry/.test(id)) {
@@ -314,8 +362,12 @@ export function plant(m: Carving, id: string, stage: number, fruitStage: 0 | 1 |
       for (let i = 0; i < 8; i++)
         m.ball(color, [Math.cos((i * turn) / 8) * 0.14, 0.25, Math.sin((i * turn) / 8) * 0.14], [0.17, 0.21, 0.16])
       m.beam(leaf, [0, 0.41, 0], [0.04, 0.54, 0], 0.045)
-    } else if (id.includes('carrot')) m.cone(color, [0, 0.12, 0.07], [0.14, 0.36, 0.14], [Math.PI, 0, 0])
-    else
+      face(m, [0, 0.25, 0.3], 0.15, mood)
+    } else if (id.includes('carrot')) {
+      // The carrot's shoulders poke out of the soil in front of its greens.
+      m.ball(color, [0, 0.1, 0.13], [0.13, 0.19, 0.13])
+      face(m, [0, 0.14, 0.26], 0.1, mood)
+    } else {
       for (let i = 0; i < (/tomato|strawberry/.test(id) ? 3 : 1); i++) {
         const a = (i * turn) / 3
         m.ball(
@@ -324,6 +376,8 @@ export function plant(m: Carving, id: string, stage: number, fruitStage: 0 | 1 |
           [0.17, id.includes('corn') ? 0.29 : 0.17, 0.15],
         )
       }
+      face(m, [0, 0.25, 0.285], 0.12, mood)
+    }
     return
   }
   const tall = id.includes('sunflower'),
@@ -353,6 +407,7 @@ export function plant(m: Carving, id: string, stage: number, fruitStage: 0 | 1 |
           [0.2 * Math.cos(a), 0, -0.2 * Math.sin(a)],
         )
       }
+    face(m, [0, h + 0.02, 0.2], 0.1, mood)
   } else {
     const n = tall ? 15 : 9,
       rad = tall ? 0.227 : 0.15
@@ -365,12 +420,17 @@ export function plant(m: Carving, id: string, stage: number, fruitStage: 0 | 1 |
         [0, 0, -a],
       )
     }
-    m.ball(tall ? '#71462b' : '#ebad45', [0, h, 0.106], [rad * 0.81, rad * 0.81, 0.115])
-    if (tall)
-      for (let i = 0; i < 15; i++) {
-        const a = i * 2.4,
-          r = 0.031 * Math.sqrt(i)
-        m.ball('#a97b40', [r * Math.sin(a), h + r * Math.cos(a), 0.202], [0.012, 0.014, 0.011])
-      }
+    m.ball(tall ? '#c08a4a' : '#ebad45', [0, h, 0.106], [rad * 0.81, rad * 0.81, 0.115])
+    face(m, [0, h, 0.222], rad * 0.6, mood)
   }
+}
+
+/** The colour a plant's harvest flies off in: its fruit, or its petals. */
+export function harvestTint(id: string): string {
+  const fruit: Record<string, string> = {
+    apple: '#d9473f', orange: '#f39a2e', peach: '#ffc48c', star: '#ffd23f', strawberry: '#da564a', tomato: '#da564a',
+    carrot: '#e89442', pumpkin: '#e89442', corn: '#f5c652', watermelon: '#67965a', sunflower: '#ffc43c', daisy: '#fff6dd',
+    rose: '#ee758b', hibiscus: '#ee94a8', tulip: '#ff9f91', hyacinth: '#af96de', lotus: '#ffc0cc',
+  }
+  return Object.entries(fruit).find(([k]) => id.includes(k))?.[1] ?? '#f6c98d'
 }

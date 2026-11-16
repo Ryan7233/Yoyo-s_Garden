@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { PlantInstance } from '../../data/types'
 import { useStore, act } from '../../app/store'
 import { getCatalogItem } from '../../data/catalog'
 import { harvestInfo } from '../../data/plants'
@@ -13,7 +14,7 @@ import { play } from '../../ui/sfx'
 
 const STAGE = ['种子', '发芽了', '长大了', '开花啦']
 
-export function PlantSheet({ plantId, onClose, onWatered, sheet }: { plantId: string; onClose: () => void; onWatered: (id: string, stageUp: boolean) => void; sheet?: boolean }) {
+export function PlantSheet({ plantId, onClose, onWatered, onHarvested, sheet }: { plantId: string; onClose: () => void; onWatered: (id: string, stageUp: boolean) => void; onHarvested?: (plant: PlantInstance) => void; sheet?: boolean }) {
   const { plants, today, balance } = useStore()
   const [digging, setDigging] = useState(false)
   const [party, setParty] = useState(0)
@@ -42,6 +43,7 @@ export function PlantSheet({ plantId, onClose, onWatered, sheet }: { plantId: st
     const r = await act(() => harvestPlant(plant.id))
     if (!r) return
     play('harvest')
+    onHarvested?.(plant)
     setParty((n) => n + 1)
     const name = harvestInfo(r.harvestId ?? '')?.name ?? item.name
     toast(`${r.firstTime ? `图鉴里点亮了${item.name}！` : `收获了${name}！`}${r.coins ? ` +${r.coins} 金币` : ''}`)

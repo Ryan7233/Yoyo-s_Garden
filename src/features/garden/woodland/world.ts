@@ -15,6 +15,41 @@ export type Toy = {
   size?: number
   fly?: boolean
   hit?: boolean
+  /** Turns to face the camera, so its face is always toward the child. */
+  face?: boolean
+  /** 0–1: how far it hangs its head (thirsty plants). Eases, so watering makes it perk up. */
+  droop?: number
+}
+/** How a toy answers a tap. */
+export type Poke = 'wiggle' | 'hop' | 'dive'
+type Anim = { kind: Poke | 'pop'; from: number }
+const ANIM_MS: Record<Anim['kind'], number> = { wiggle: 900, hop: 700, dive: 1100, pop: 600 }
+
+function wateringCan(m: Carving) {
+  m.box('#6fb1b5', [0, 0.16, 0], [0.34, 0.3, 0.26])
+  m.box('#8ac6c9', [0, 0.32, 0], [0.36, 0.05, 0.28])
+  m.beam('#6fb1b5', [0.15, 0.12, 0], [0.42, 0.34, 0], 0.035)
+  m.ball('#8ac6c9', [0.44, 0.36, 0], [0.07, 0.05, 0.07])
+  m.ring('#5c9a9e', [-0.2, 0.18, 0], [0.11, 0.13, 0.11], [Math.PI / 2, 0, 0])
+}
+function basket(m: Carving) {
+  // A woven tub: plump body, darker hollow, a rim, and a hoop handle over the top.
+  m.ball('#c99a62', [0, 0.16, 0], [0.34, 0.2, 0.34])
+  for (let i = 0; i < 10; i++) {
+    const a = (i * Math.PI) / 5
+    m.ball(i % 2 ? '#b98850' : '#d6aa72', [Math.cos(a) * 0.31, 0.17, Math.sin(a) * 0.31], [0.07, 0.15, 0.07])
+  }
+  m.ball('#7d5836', [0, 0.3, 0], [0.28, 0.05, 0.28])
+  m.ring('#a97a48', [0, 0.31, 0], [0.31, 0.31, 0.31], [Math.PI / 2, 0, 0])
+  m.ring('#a97a48', [0, 0.36, 0], [0.26, 0.34, 0.26])
+}
+const drop = (m: Carving) => {
+  m.ball('#59abcf', [0, 0, 0], [0.05, 0.06, 0.05])
+  m.cone('#71c5dc', [0, 0.06, 0], [0.042, 0.09, 0.042])
+}
+const coin = (m: Carving) => {
+  m.ball('#ffcf4a', [0, 0, 0], [0.09, 0.09, 0.03])
+  m.ball('#ffe48a', [0, 0, 0.02], [0.055, 0.055, 0.02])
 }
 const W = BALANCE.gridWidth,
   H = BALANCE.gridHeight
@@ -166,8 +201,7 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
   shadow.receiveShadow = true
   scene.add(shadow)
   const fixed: Toy = { key: 'land', model: 'land', carve: landscape, x: 0, z: 0, hit: false }
-  let toys: Toy[] = [],
-    yaw = 0.54,
+  let yaw = 0.54,
     destYaw = 0.54,
     zoom = START_ZOOM,
     destZoom = START_ZOOM,
@@ -176,8 +210,7 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
     raise = 0,
     destRaise = 0,
     frame = 0,
-    last = 0,
-    dirty = true
+    last = 0
   let focusX = W / 2,
     focusZ = H / 2,
     destX = focusX,
@@ -196,11 +229,9 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
     clampFocus()
     const now = destZoom > 1.05
     if (now !== zoomedIn) onZoom?.((zoomedIn = now))
-    dirty = true
   }
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
   const update = (rows: Toy[]) => {
-    toys = rows
     const keys = new Set(['land', ...rows.map((t) => t.key)])
     for (const [key, obj] of objects)
       if (!keys.has(key)) {
@@ -216,24 +247,194 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
         cache.set(t.model, geo)
       }
       let obj = objects.get(t.key)
+      const fresh = !obj
       if (!obj) {
         obj = new T.Mesh(geo, mat)
         obj.castShadow = true
         obj.receiveShadow = true
+        obj.rotation.order = 'YXZ'
         scene.add(obj)
         objects.set(t.key, obj)
       }
-      obj.geometry = geo
-      obj.position.set(t.x, t.y ?? 0, t.z)
-      obj.rotation.y = t.angle ?? 0
-      obj.scale.setScalar(t.size ?? 1)
-      obj.userData = { key: t.key, hit: t.hit !== false }
+      if (obj.geometry !== geo) {
+        // While water is still falling the plant keeps its old shape; then it changes with a pop.
+        const wait = (holds.get(t.key) ?? 0) - performance.now()
+        if (!fresh && wait > 0) pending.set(t.key, geo)
+        else {
+          obj.geometry = geo
+          if (!fresh && t.face && !reduced) anims.set(t.key, { kind: 'pop', from: performance.now() })
+        }
+      }
+      obj.userData = { ...t, hit: t.hit !== false, droopNow: obj.userData.droopNow ?? t.droop ?? 0 }
     }
-    dirty = true
+  }
+  // Effects are drawn in their own pass over the finished garden, so a tree in front never hides them.
+  const stage = new T.Scene()
+  stage.add(new T.HemisphereLight('#fff1d8', '#cfbca7', 2.15))
+  const stageSun = new T.DirectionalLight('#fff3d9', 2.25)
+  stageSun.position.set(-2, 13, 9)
+  stage.add(stageSun)
+  renderer.autoClear = false
+  const anims = new Map<string, Anim>()
+  /** Plants whose new shape waits for the watering to finish: key → time to swap. */
+  const holds = new Map<string, number>()
+  const pending = new Map<string, T.BufferGeometry>()
+  /** Short-lived things flying about: water drops, fruit on its way to the basket, coins. */
+  let effects: ((at: number) => boolean)[] = []
+  const ease = (p: number) => 1 - (1 - p) ** 3
+  /** A temporary carved thing (watering can, basket, a flying fruit) that is not one of the garden's toys. */
+  const prop = (model: string, carve: (m: Carving) => void) => {
+    let geo = cache.get(model)
+    if (!geo) {
+      const m = new Carving()
+      carve(m)
+      cache.set(model, (geo = m.finish()))
+    }
+    const mesh = new T.Mesh(geo, mat)
+    mesh.rotation.order = 'YXZ'
+    stage.add(mesh)
+    return mesh
+  }
+  /** Scale that pops in over the first `inMs` and shrinks away over the last 160 ms of `life`. */
+  const blip = (t: number, life: number, inMs = 180) =>
+    t < inMs ? ease(t / inMs) * 1.12 - 0.12 * ease(t / inMs) ** 2 : t > life - 160 ? Math.max(0, (life - t) / 160) : 1
+  /** Runs `step` with the milliseconds since `from` until `life` is over, then clears the meshes away. */
+  const play = (from: number, life: number, meshes: T.Mesh[], step: (t: number) => void) => {
+    for (const m of meshes) m.visible = false
+    effects.push((at) => {
+      const t = at - from
+      if (t >= life) {
+        for (const m of meshes) stage.remove(m)
+        return false
+      }
+      if (t >= 0) step(t)
+      return true
+    })
+  }
+  /** Toward the camera and to its right, flat on the ground: where helpers stand so the plant stays in view. */
+  const beside = (right: number, toward: number): [number, number] => [
+    Math.cos(yaw) * right + Math.sin(yaw) * toward,
+    -Math.sin(yaw) * right + Math.cos(yaw) * toward,
+  ]
+  /** The watering can flies in over a plant, tips, and drops of water fall onto it. */
+  function water(x: number, z: number, top: number) {
+    if (reduced) return
+    const now = performance.now(),
+      can = prop('fx-can', wateringCan),
+      drops = Array.from({ length: 7 }, () => prop('fx-drop', drop))
+    const [dx, dz] = beside(-0.42, 0.1)
+    const life = 1250
+    play(now, life, [can, ...drops], (t) => {
+      const tip = T.MathUtils.clamp((t - 150) / 250, 0, 1) - T.MathUtils.clamp((t - 950) / 200, 0, 1)
+      can.visible = true
+      can.position.set(x + dx, top + 0.42 + 0.12 * (1 - ease(Math.min(1, t / 200))), z + dz)
+      can.rotation.set(0, yaw, -0.75 * ease(tip))
+      can.scale.setScalar(blip(t, life) * 1.35)
+      drops.forEach((d, i) => {
+        const p = (t - 330 - i * 75) / 420
+        d.visible = p > 0 && p < 1
+        if (!d.visible) return
+        const spread = beside(((i % 3) - 1) * 0.09, ((i % 2) - 0.5) * 0.1)
+        d.position.set(x + spread[0], top + 0.4 - (top + 0.3) * p * p, z + spread[1])
+        d.scale.setScalar(1.5 - 0.5 * p)
+      })
+    })
+  }
+  /** Fruit (or flower heads) jump off the plant one by one into a basket, then coins spring out of it. */
+  function harvest(x: number, z: number, top: number, color: string, count: number) {
+    if (reduced) return
+    const now = performance.now(),
+      tub = prop('fx-basket', basket),
+      fruit = Array.from({ length: count }, () =>
+        prop('fx-fruit' + color, (m) => {
+          m.ball(color, [0, 0, 0], [0.15, 0.15, 0.15])
+          m.ball('#ffffff', [-0.05, 0.055, 0.115], [0.035, 0.035, 0.02])
+        }),
+      ),
+      coins = Array.from({ length: 4 }, () => prop('fx-coin', coin))
+    const [bx, bz] = beside(0.72, 0.5),
+      landed = 250 + count * 110 + 430,
+      life = landed + 900
+    play(now, life, [tub, ...fruit, ...coins], (t) => {
+      tub.visible = true
+      tub.position.set(x + bx, 0.02, z + bz)
+      // The basket gives a little squash each time something lands in it.
+      const since = (t - 680) % 110,
+        thud = t > 680 && t < landed + 80 ? 0.1 * Math.exp(-Math.max(0, since) / 40) : 0
+      const s = blip(t, life)
+      tub.scale.set(s * (1 + thud), s * (1 - thud), s * (1 + thud))
+      fruit.forEach((f, i) => {
+        const p = (t - 250 - i * 110) / 430
+        f.visible = p > 0 && p < 1
+        if (!f.visible) return
+        const a = i * 2.4,
+          r = 0.32 + (i % 3) * 0.08
+        const sx = x + Math.sin(a) * r,
+          sz = z + Math.cos(a) * r,
+          sy = top * (0.62 + (i % 3) * 0.12)
+        f.position.set(sx + (x + bx - sx) * p, sy + (0.32 - sy) * p + 0.9 * Math.sin(Math.PI * p), sz + (z + bz - sz) * p)
+        f.rotation.set(p * 5, 0, p * 3)
+        f.scale.setScalar(p < 0.15 ? 0.6 + (p / 0.15) * 0.5 : 1.1 - 0.25 * p)
+      })
+      coins.forEach((c, i) => {
+        const p = (t - landed - i * 70) / 620
+        c.visible = p > 0 && p < 1
+        if (!c.visible) return
+        const side = beside((i - 1.5) * 0.34 * p, 0)
+        c.position.set(x + bx + side[0], 0.4 + 1.5 * ease(p) - 0.35 * p * p, z + bz + side[1])
+        c.rotation.set(0, yaw + p * 9, 0)
+        c.scale.setScalar(p < 0.8 ? 1.7 : 1.7 * (1 - (p - 0.8) / 0.2))
+      })
+    })
+  }
+  /** Put one toy where it belongs this frame: its resting pose, plus whatever it is doing. */
+  const pose = (o: T.Mesh, at: number, weight: number) => {
+    const u = o.userData as Toy & { droopNow: number }
+    let x = u.x,
+      y = u.y ?? 0,
+      z = u.z,
+      ry = u.face ? yaw + (u.angle ?? 0) * 0.3 : (u.angle ?? 0),
+      rz = 0,
+      wide = 1,
+      tall = 1
+    u.droopNow += ((u.droop ?? 0) - u.droopNow) * weight
+    if (u.fly && !reduced) {
+      const phase = at * 0.0015 + u.x
+      x += Math.cos(phase) * 0.19
+      y += Math.sin(phase * 2) * 0.085
+      z += Math.sin(phase) * 0.14
+      rz = Math.sin(phase * 2) * 0.13
+    }
+    const a = anims.get(u.key)
+    if (a) {
+      const t = (at - a.from) / 1000,
+        p = Math.min(1, (at - a.from) / ANIM_MS[a.kind])
+      if (a.kind === 'wiggle') {
+        rz += 0.3 * Math.sin(t * 19) * Math.exp(-t * 4.2)
+        tall *= 1 + 0.16 * Math.sin(t * 15 + 1.6) * Math.exp(-t * 6)
+        wide *= 1 - 0.08 * Math.sin(t * 15 + 1.6) * Math.exp(-t * 6)
+      } else if (a.kind === 'hop') {
+        y += 0.5 * Math.sin(Math.PI * p)
+        ry += Math.PI * 2 * ease(p)
+        tall *= 1 + 0.18 * Math.sin(Math.PI * p)
+      } else if (a.kind === 'dive') {
+        // Down under the water and back up with a little bob.
+        y -= 0.3 * Math.sin(Math.PI * Math.min(1, p * 1.4)) - (p > 0.72 ? 0.12 * Math.sin((p - 0.72) * 11) : 0)
+        tall *= 1 - 0.3 * Math.sin(Math.PI * Math.min(1, p * 1.4))
+      } else {
+        const s = p < 0.3 ? 0.7 + 0.5 * ease(p / 0.3) : 1.2 - 0.2 * ease((p - 0.3) / 0.7)
+        tall *= s
+        wide *= 2 - s > 1.25 ? 1.25 : 2 - s
+      }
+      if (p >= 1) anims.delete(u.key)
+    }
+    const size = u.size ?? 1
+    o.position.set(x, y, z)
+    o.rotation.set(u.droopNow * 0.42, ry, rz)
+    o.scale.set(size * wide, size * tall * (1 - 0.06 * u.droopNow), size * wide)
   }
   const resize = () => {
     renderer.setSize(canvas.clientWidth || 1, canvas.clientHeight || 1, false)
-    dirty = true
   }
   const observer = new ResizeObserver(resize)
   observer.observe(canvas)
@@ -264,16 +465,7 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
   }
   const draw = (at: number) => {
     frame = requestAnimationFrame(draw)
-    if (document.hidden || at - last < 32) return
-    const animating =
-      Math.abs(destYaw - yaw) > 0.002 ||
-      Math.abs(destZoom - zoom) > 0.002 ||
-      Math.abs(destRaise - raise) > 0.002 ||
-      Math.abs(destY - focusY) > 0.002 ||
-      Math.abs(destX - focusX) > 0.002 ||
-      Math.abs(destZ - focusZ) > 0.002
-    const flies = !reduced && toys.some((t) => t.fly)
-    if (!dirty && !animating && !flies) return
+    if (document.hidden || at - last < 15) return
     const dt = Math.min(0.2, (at - last) / 1000)
     last = at
     const weight = reduced ? 1 : 1 - Math.exp(-dt * 10)
@@ -283,21 +475,27 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
     focusY += (destY - focusY) * weight
     focusX += (destX - focusX) * weight
     focusZ += (destZ - focusZ) * weight
-    if (flies)
-      for (const t of toys)
-        if (t.fly) {
-          const o = objects.get(t.key)!,
-            phase = at * 0.0015 + t.x
-          o.position.set(
-            t.x + Math.cos(phase) * 0.19,
-            (t.y ?? 0) + Math.sin(phase * 2) * 0.085,
-            t.z + Math.sin(phase) * 0.14,
-          )
-          o.rotation.z = Math.sin(phase * 2) * 0.13
+    for (const [key, when] of holds)
+      if (performance.now() >= when) {
+        holds.delete(key)
+        const geo = pending.get(key),
+          obj = objects.get(key)
+        pending.delete(key)
+        // Grown or not, a freshly watered plant gives a happy little pop.
+        if (obj) {
+          if (geo) obj.geometry = geo
+          if (!reduced) anims.set(key, { kind: 'pop', from: at })
         }
+      }
+    for (const o of objects.values()) pose(o, at, weight)
+    effects = effects.filter((run) => run(at))
     layout()
+    renderer.clear()
     renderer.render(scene, camera)
-    dirty = false
+    if (stage.children.length > 2) {
+      renderer.clearDepth()
+      renderer.render(stage, camera)
+    }
   }
   frame = requestAnimationFrame(draw)
   onZoom?.(zoomedIn)
@@ -310,9 +508,18 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
   }
   return {
     update,
+    water,
+    harvest,
+    /** A tap: the toy answers with a wiggle, a hop or a dive. */
+    poke(key: string, kind: Poke = 'wiggle') {
+      if (!reduced && objects.has(key)) anims.set(key, { kind, from: performance.now() })
+    },
+    /** Keep a plant's old shape for a moment (while it is being watered), then swap with a pop. */
+    hold(key: string, ms: number) {
+      holds.set(key, performance.now() + ms)
+    },
     rotate() {
       destYaw += Math.PI / 2
-      dirty = true
     },
     near(next: boolean) {
       destRaise = 0
@@ -322,7 +529,6 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
     /** Lower cards come and go: lift the focused spot above them, or settle back. */
     lift(on: boolean) {
       destRaise = on ? 1 : 0
-      dirty = true
     },
     /** Pinch or wheel: multiply the zoom. */
     zoomBy(factor: number) {
@@ -343,7 +549,6 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
       clampFocus()
       focusX = destX
       focusZ = destZ
-      dirty = true
     },
     pick(x: number, y: number) {
       aim(x, y)

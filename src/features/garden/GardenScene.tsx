@@ -1,4 +1,5 @@
 import { lazy, Suspense, useState, type CSSProperties } from 'react'
+import type { PlantInstance } from '../../data/types'
 import { useStore, act } from '../../app/store'
 import { BALANCE } from '../../data/balance'
 import { POND_ID } from '../../data/plants'
@@ -28,7 +29,8 @@ const Woodland = lazy(() => import('./woodland/Woodland'))
 const preview = new URLSearchParams(location.search)
 let woodView = preview.get('view') === '3d' || preview.has('wood-demo')
 
-type Fx = { id: string; kind: 'water' | 'grow' }
+/** 刚发生的一件事：浇水、长大一阶，或者收获（plant 是收获前的那一株，3D 里播动画用） */
+type Fx = { id: string; kind: 'water' | 'grow' | 'harvest'; plant?: PlantInstance }
 
 /**
  * 室外花园：天空 → 远景树丛 → 小屋和种植区 → 前景草地。
@@ -88,7 +90,7 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
 
   return (
     <>
-      {wood ? <Suspense fallback={<p role="status">正在打开木作花园…</p>}><Woodland onHouse={onEnterHouse} onPlot={tapPlot} onPond={tapPond} candidates={candidates} onExpand={setExpandAt} onExit={()=>switchView(false)} carded={!!plantId || !!emptyPlot} /></Suspense> : <>
+      {wood ? <Suspense fallback={<p role="status">正在打开木作花园…</p>}><Woodland onHouse={onEnterHouse} onPlot={tapPlot} onPond={tapPond} candidates={candidates} onExpand={setExpandAt} onExit={()=>switchView(false)} carded={!!plantId || !!emptyPlot} fx={fx} /></Suspense> : <>
       <ScrollHints />
       <div className="scene-scroll">
         <div className={`garden phase-${phase}`} style={gridStyle}>
@@ -131,7 +133,7 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
               {outdoorPlants.map((p) => (
                 <div key={p.id} className={`plant${p.pondId ? ' in-pond' : plantRect(p).w > 1 ? ' in-orchard' : ''}`} style={gridCell(p.x, p.y, plantRect(p).w, plantRect(p).h)}>
                   <PlantArt plant={p} today={today} fluid hop={fx?.id === p.id && fx.kind === 'grow'} />
-                  {fx?.id === p.id && <span className="fx">{fx.kind === 'grow' ? '💗' : '💧'}</span>}
+                  {fx?.id === p.id && fx.kind !== 'harvest' && <span className="fx">{fx.kind === 'grow' ? '💗' : '💧'}</span>}
                 </div>
               ))}
 
@@ -183,7 +185,8 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
         <PlantSheet
           plantId={plantId}
           onClose={() => setPlantId(null)}
-          onWatered={(id, stageUp) => showFx({ id, kind: stageUp ? 'grow' : 'water' })}
+          onWatered={(id, stageUp) => showFx({ id, kind: stageUp ? 'grow' : 'water', plant: outdoorPlants.find((p) => p.id === id) })}
+          onHarvested={(plant) => showFx({ id: plant.id, kind: 'harvest', plant })}
           sheet={wood}
         />
       )}
