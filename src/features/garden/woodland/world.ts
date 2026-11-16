@@ -19,6 +19,45 @@ export type Toy = {
   face?: boolean
   /** 0–1: how far it hangs its head (thirsty plants). Eases, so watering makes it perk up. */
   droop?: number
+  /** How much the wind moves it: 0 stands firm, about 1 for flowers, less for trees. */
+  wind?: number
+  /** Petals of this colour keep drifting down from its crown. */
+  petals?: string
+  /** Places it goes round and round between, pausing `stay` seconds at each. */
+  route?: Stop[]
+  /** How it gets along its route, and how fast (units per second). */
+  gait?: 'fly' | 'hop' | 'walk'
+  speed?: number
+  /** Gives a little hop of its own every few seconds. */
+  fidget?: boolean
+}
+export type Stop = { x: number; y: number; z: number; stay: number }
+const hash = (key: string) => [...key].reduce((n, c) => (n * 31 + c.charCodeAt(0)) % 9973, 7) / 9973
+/** Where something is on its route at `time`, whether it is on the move, and which way it is heading. */
+function along(route: Stop[], speed: number, time: number) {
+  const legs = route.map((a, i) => {
+    const b = route[(i + 1) % route.length]
+    return { a, b, run: Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z) / speed }
+  })
+  let t = time % legs.reduce((sum, l) => sum + l.a.stay + l.run, 0)
+  for (const { a, b, run } of legs) {
+    if (t < a.stay) return { ...a, moving: false, p: 0, far: 0, heading: 0 }
+    t -= a.stay
+    if (t < run) {
+      const p = t / run
+      return {
+        x: a.x + (b.x - a.x) * p,
+        y: a.y + (b.y - a.y) * p,
+        z: a.z + (b.z - a.z) * p,
+        moving: true,
+        p,
+        far: run * speed,
+        heading: Math.atan2(b.x - a.x, b.z - a.z),
+      }
+    }
+    t -= run
+  }
+  return { ...route[0], moving: false, p: 0, far: 0, heading: 0 }
 }
 /** How a toy answers a tap. */
 export type Poke = 'wiggle' | 'hop' | 'dive'
@@ -191,7 +230,7 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
   sun.shadow.normalBias = 0.025
   sun.shadow.bias = -0.0004
   scene.add(sun, sun.target)
-  const { material: mat, noise } = carvedMaterial()
+  const { material: mat, noise, wind } = carvedMaterial()
   const cache = new Map<string, T.BufferGeometry>()
   const objects = new Map<string, T.Mesh<T.BufferGeometry, T.MeshStandardMaterial>>()
   const ray = new T.Raycaster()
@@ -203,6 +242,9 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
   const fixed: Toy = { key: 'land', model: 'land', carve: landscape, x: 0, z: 0, hit: false }
   let yaw = 0.54,
     destYaw = 0.54,
+    /** How steeply the camera looks down, in radians: low is nearly side-on, high is nearly straight down. */
+    elev = 0.7,
+    destElev = 0.7,
     zoom = START_ZOOM,
     destZoom = START_ZOOM,
     zoomedIn = true,
@@ -244,6 +286,9 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
         const m = new Carving()
         t.carve(m)
         geo = m.finish()
+        // Every copy of a model sways the same amount, so it is stored with the shape.
+        const n = geo.getAttribute('position').count
+        geo.setAttribute('sway', new T.BufferAttribute(new Float32Array(n).fill(t.wind ?? 0), 1))
         cache.set(t.model, geo)
       }
       let obj = objects.get(t.key)
@@ -265,8 +310,25 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
           if (!fresh && t.face && !reduced) anims.set(t.key, { kind: 'pop', from: performance.now() })
         }
       }
-      obj.userData = { ...t, hit: t.hit !== false, droopNow: obj.userData.droopNow ?? t.droop ?? 0 }
+      obj.userData = {
+        ...t,
+        hit: t.hit !== false,
+        droopNow: obj.userData.droopNow ?? t.droop ?? 0,
+        turn: obj.userData.turn ?? t.angle ?? 0,
+      }
+      if (t.petals && !drifts.has(t.key) && !reduced)
+        drifts.set(
+          t.key,
+          Array.from({ length: 5 }, () =>
+            prop('petal' + t.petals, (m) => m.ball(t.petals!, [0, 0, 0], [0.07, 0.012, 0.05]), scene),
+          ),
+        )
     }
+    for (const [key, petals] of drifts)
+      if (!rows.some((t) => t.key === key && t.petals)) {
+        for (const p of petals) scene.remove(p)
+        drifts.delete(key)
+      }
   }
   // Effects are drawn in their own pass over the finished garden, so a tree in front never hides them.
   const stage = new T.Scene()
@@ -275,6 +337,8 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
   stageSun.position.set(-2, 13, 9)
   stage.add(stageSun)
   renderer.autoClear = false
+  /** Petals drifting down from blossoming trees: tree key → its petals. */
+  const drifts = new Map<string, T.Mesh[]>()
   const anims = new Map<string, Anim>()
   /** Plants whose new shape waits for the watering to finish: key → time to swap. */
   const holds = new Map<string, number>()
@@ -283,7 +347,7 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
   let effects: ((at: number) => boolean)[] = []
   const ease = (p: number) => 1 - (1 - p) ** 3
   /** A temporary carved thing (watering can, basket, a flying fruit) that is not one of the garden's toys. */
-  const prop = (model: string, carve: (m: Carving) => void) => {
+  const prop = (model: string, carve: (m: Carving) => void, into: T.Scene = stage) => {
     let geo = cache.get(model)
     if (!geo) {
       const m = new Carving()
@@ -292,7 +356,7 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
     }
     const mesh = new T.Mesh(geo, mat)
     mesh.rotation.order = 'YXZ'
-    stage.add(mesh)
+    into.add(mesh)
     return mesh
   }
   /** Scale that pops in over the first `inMs` and shrinks away over the last 160 ms of `life`. */
@@ -389,7 +453,8 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
   }
   /** Put one toy where it belongs this frame: its resting pose, plus whatever it is doing. */
   const pose = (o: T.Mesh, at: number, weight: number) => {
-    const u = o.userData as Toy & { droopNow: number }
+    const u = o.userData as Toy & { droopNow: number; turn: number }
+    const time = at / 1000 + hash(u.key) * 40
     let x = u.x,
       y = u.y ?? 0,
       z = u.z,
@@ -398,12 +463,38 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
       wide = 1,
       tall = 1
     u.droopNow += ((u.droop ?? 0) - u.droopNow) * weight
-    if (u.fly && !reduced) {
+    if (u.route && u.route.length > 1 && !reduced) {
+      // Out and about: flying between flowers, hopping to a snack, walking the paths.
+      const w = along(u.route, u.speed ?? 1, time)
+      x = w.x
+      y = w.y
+      z = w.z
+      // On the move it looks where it is going; at a stop it turns back to the child.
+      let want = w.moving ? w.heading : yaw
+      want = u.turn + Math.atan2(Math.sin(want - u.turn), Math.cos(want - u.turn))
+      u.turn += (want - u.turn) * Math.min(1, weight * 1.4)
+      ry = u.turn
+      if (u.gait === 'fly') {
+        y += Math.sin(time * 5) * 0.05 + (w.moving ? Math.sin(Math.PI * w.p) * 0.25 : 0)
+        rz = Math.sin(time * 9) * 0.1
+      } else if (w.moving) {
+        const steps = Math.max(1, Math.round(w.far / (u.gait === 'hop' ? 0.5 : 0.28)))
+        const beat = Math.abs(Math.sin(Math.PI * w.p * steps))
+        y += beat * (u.gait === 'hop' ? 0.2 : 0.045)
+        tall *= 1 + beat * (u.gait === 'hop' ? 0.12 : 0.04)
+        if (u.gait === 'walk') rz = Math.sin(Math.PI * w.p * steps * 2) * 0.07
+      }
+    } else if (u.fly && !reduced) {
       const phase = at * 0.0015 + u.x
       x += Math.cos(phase) * 0.19
       y += Math.sin(phase * 2) * 0.085
       z += Math.sin(phase) * 0.14
       rz = Math.sin(phase * 2) * 0.13
+    }
+    if (u.fidget && !reduced) {
+      // Every few seconds, a little hop for no reason at all.
+      const beat = time % (5 + hash(u.key) * 4)
+      if (beat < 0.5) y += 0.2 * Math.sin((Math.PI * beat) / 0.5)
     }
     const a = anims.get(u.key)
     if (a) {
@@ -443,7 +534,6 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
     const aspect = (canvas.clientWidth || 1) / (canvas.clientHeight || 1),
       sin = Math.abs(Math.sin(yaw)),
       cos = Math.abs(Math.cos(yaw))
-    const elev = 0.7
     const horizontal = (W + 0.9) * cos + (H + 0.9) * sin
     const vertical = ((W + 0.8) * sin + (H + 0.8) * cos) * Math.sin(elev) + 2.15
     const height = Math.max(vertical * 1.11, (horizontal / aspect) * 1.08) / zoom
@@ -470,6 +560,7 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
     last = at
     const weight = reduced ? 1 : 1 - Math.exp(-dt * 10)
     yaw += (destYaw - yaw) * weight
+    elev += (destElev - elev) * weight
     zoom += (destZoom - zoom) * weight
     raise += (destRaise - raise) * weight
     focusY += (destY - focusY) * weight
@@ -487,7 +578,27 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
           if (!reduced) anims.set(key, { kind: 'pop', from: at })
         }
       }
+    wind.value = reduced ? 0 : at / 1000
     for (const o of objects.values()) pose(o, at, weight)
+    for (const [key, petals] of drifts) {
+      const u = objects.get(key)?.userData as Toy | undefined
+      if (!u) continue
+      const size = u.size ?? 1
+      petals.forEach((p, i) => {
+        const fall = (at / 5200 + i / petals.length + hash(key)) % 1,
+          a = i * 2.4 + Math.floor(at / 5200 + i / petals.length) * 1.7
+        const high = (u.y ?? 0) + 1.75 * size,
+          down = Math.min(1, fall / 0.8)
+        p.position.set(
+          u.x + Math.sin(a) * 0.55 * size + Math.sin(at / 700 + i) * 0.22 * down,
+          high - (high - 0.03) * down ** 1.3,
+          u.z + Math.cos(a) * 0.55 * size + Math.cos(at / 900 + i) * 0.16 * down,
+        )
+        p.rotation.set(down < 1 ? at / 300 + i : 0, a, down < 1 ? at / 420 : 0)
+        // It rests on the grass for a moment, then fades away as the next one starts.
+        p.scale.setScalar(fall < 0.06 ? fall / 0.06 : fall > 0.9 ? (1 - fall) / 0.1 : 1)
+      })
+    }
     effects = effects.filter((run) => run(at))
     layout()
     renderer.clear()
@@ -519,7 +630,17 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
       holds.set(key, performance.now() + ms)
     },
     rotate() {
-      destYaw += Math.PI / 2
+      // The button still gives a clean quarter turn, from wherever the garden was dragged to.
+      destYaw = 0.54 + (Math.floor((destYaw - 0.54) / (Math.PI / 2) + 0.05) + 1) * (Math.PI / 2)
+      destElev = 0.7
+    },
+    /** One finger dragging: turn the garden any way round, and tilt between side-on and bird's-eye. */
+    orbit(dx: number, dy: number) {
+      destYaw -= dx * 0.007
+      destElev = T.MathUtils.clamp(destElev + dy * 0.005, 0.2, 1.35)
+      // Follow the finger directly; the easing is only for the button and for letting go.
+      yaw += (destYaw - yaw) * 0.6
+      elev += (destElev - elev) * 0.6
     },
     near(next: boolean) {
       destRaise = 0
@@ -544,8 +665,8 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
     pan(dx: number, dy: number) {
       if (destZoom <= 1.05) return
       const unit = (camera.top - camera.bottom) / (canvas.clientHeight || 1)
-      destX -= dx * unit * Math.cos(yaw) + (dy * unit * Math.sin(yaw)) / Math.sin(0.7)
-      destZ += dx * unit * Math.sin(yaw) - (dy * unit * Math.cos(yaw)) / Math.sin(0.7)
+      destX -= dx * unit * Math.cos(yaw) + (dy * unit * Math.sin(yaw)) / Math.sin(elev)
+      destZ += dx * unit * Math.sin(yaw) - (dy * unit * Math.cos(yaw)) / Math.sin(elev)
       clampFocus()
       focusX = destX
       focusZ = destZ

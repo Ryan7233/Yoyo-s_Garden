@@ -14,9 +14,10 @@ import { dropAt } from '../../decorate/actions'
 import { toast } from '../../../ui/Toast'
 import { play } from '../../../ui/sfx'
 import { animal, furniture } from './furniture'
-import { cottage, harvestTint, plant } from './models'
+import { cottage, harvestTint, mascot, plant } from './models'
+import { stroll } from './stroll'
 import type { PlantInstance } from '../../../data/types'
-import { bed, createWorld, orchardYard, pit, type Toy } from './world'
+import { bed, createWorld, orchardYard, pit, type Stop, type Toy } from './world'
 import { ORCHARD_PITS, pitAt, plantRect } from '../../../engine/plots'
 import './woodland.css'
 
@@ -73,6 +74,7 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
         x: p.x + w / 2,
         z: p.y + h / 2,
         angle: p.flipped ? Math.PI : 0,
+        wind: p.catalogId === 'out-big-tree' ? 0.3 : 0,
       },
       p.catalogId === POND_ID ? () => onPond(p.id, p.x, p.y) : undefined,
     )
@@ -94,6 +96,15 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
         carve: (m) => plant(m, p.catalogId, p.stage, fruit, mood),
         face: true,
         droop: thirsty ? 1 : 0,
+        // Flowers and sprouts nod in the wind; trees only stir at the top.
+        wind: p.catalogId.endsWith('-tree') ? 0.3 : 1,
+        // Cherry trees, and peach trees in blossom, shed petals.
+        petals:
+          p.stage === 3 && p.catalogId === 'seed-cherry-tree'
+            ? '#f7c3ca'
+            : fruit === 1 && p.catalogId === 'seed-peach-tree'
+              ? '#f5a3b7'
+              : undefined,
         x,
         z,
         // In the orchard trees stand on the grass and get room to be big; elsewhere they sit in a bed.
@@ -131,25 +142,67 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
         key: 'courage',
         model: 'courage',
         carve: (m) => plant(m, 'seed-sunflower', 3),
+        face: true,
+        wind: 0.8,
         x: 0.5,
         z: 2.52,
         size: 0.85 + level * 0.13,
       },
       () => setCourage(true),
     )
+  // Flowers in bloom: where bees and butterflies have business.
+  const blooms = plants
+    .filter((p) => p.scene === 'outdoor' && !p.pondId && p.stage === 3 && !p.catalogId.endsWith('-tree'))
+    .map((p) => ({ x: p.x + 0.5, z: p.y + 0.5, top: p.catalogId.includes('sunflower') ? 1.32 : 1.0 }))
+  const nearest = (x: number, z: number) =>
+    [...blooms].sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z))
   if (!decorating)
     for (const { v, anchor, offset } of visitors) {
       const fly = ['butterfly', 'bee'].includes(v.id),
         bird = v.id === 'bird'
+      const x = (anchor ? anchor.x + anchor.w / 2 : 9.4) + offset * 0.42 + (fly ? 0.34 : 0.04),
+        z = (anchor ? anchor.y + anchor.h / 2 : 6.2) + (fly ? -0.24 : bird ? 0.05 : 0.47),
+        y = fly ? 1.36 : bird ? (anchor?.catalogId === 'out-birdhouse' ? 1.78 : 1.27) : 0.18
+      // Each kind has its own little round: the bee works the flowers nearest its hive and flies home,
+      // the butterfly wanders further, the bird comes down to the grass, the rabbit hops about.
+      let route: Stop[] | undefined
+      if (v.id === 'bee') {
+        const hive = outdoors.find((p) => p.catalogId === 'out-beehive')
+        const home = hive ? { x: hive.x + 0.5, z: hive.y + 0.7 } : { x, z }
+        route = [
+          ...(hive ? [{ x: home.x, y: 0.62, z: home.z, stay: 1.4 }] : []),
+          ...nearest(home.x, home.z).slice(0, 3).map((f) => ({ x: f.x + 0.1, y: f.top + 0.16, z: f.z + 0.18, stay: 1.7 })),
+        ]
+      } else if (v.id === 'butterfly')
+        route = nearest(x, z)
+          .filter((_, i) => i % 2 === 0)
+          .slice(0, 4)
+          .map((f) => ({ x: f.x - 0.08, y: f.top + 0.22, z: f.z + 0.12, stay: 2.4 }))
+      else if (bird)
+        route = [
+          { x, y, z, stay: 3.5 },
+          { x: x + 0.9, y: 0.03, z: z + 0.75, stay: 2.6 },
+          { x: x + 0.45, y: 0.03, z: z + 1.05, stay: 1.2 },
+        ]
+      else if (v.id === 'rabbit')
+        route = [
+          { x, y: 0.02, z, stay: 3 },
+          { x: x + 0.5, y: 0.02, z: z + 0.12, stay: 2.2 },
+          { x: x + 0.2, y: 0.02, z: z + 0.4, stay: 1.5 },
+        ]
       add(
         {
           key: v.id,
           model: 'animal-' + v.id,
           carve: (m) => animal(m, v.id),
-          x: (anchor ? anchor.x + anchor.w / 2 : 9.4) + offset * 0.42 + (fly ? 0.34 : 0.04),
-          z: (anchor ? anchor.y + anchor.h / 2 : 6.2) + (fly ? -0.24 : bird ? 0.05 : 0.47),
-          y: fly ? 1.36 : bird ? (anchor?.catalogId === 'out-birdhouse' ? 1.78 : 1.27) : 0.18,
+          x,
+          z,
+          y,
           fly,
+          route: route && route.length > 1 ? route : undefined,
+          gait: fly || bird ? 'fly' : 'hop',
+          speed: v.id === 'butterfly' ? 0.8 : bird ? 1.7 : 1.15,
+          fidget: !fly && !bird && v.id !== 'rabbit',
           angle: 0.48,
         },
         () => {
@@ -158,6 +211,23 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
         },
       )
     }
+  // The mascot lives here too: she strolls the grass, and stops beside any plant that is thirsty.
+  const needy = plants.filter((p) => {
+    const spec = getCatalogItem(p.catalogId)?.plant
+    return p.scene === 'outdoor' && !p.pondId && !!spec && isThirsty(p, today, spec)
+  })
+  const walk = decorating ? [] : stroll(plots, outdoors, needy)
+  if (walk.length) {
+    const tint = { sakura: '#ff9ec0', lavender: '#b79ced', mint: '#7ed7b5' }[child?.theme ?? 'sakura']
+    add(
+      { key: 'mascot', model: 'mascot' + tint, carve: (m) => mascot(m, tint), x: walk[0].x, z: walk[0].z, route: walk, gait: 'walk', speed: 1.05 },
+      () => {
+        play('visitor')
+        const name = needy[0] && getCatalogItem(needy[0].catalogId)?.name
+        toast((child?.mascotName ?? '团团') + '：' + (name ? name + '口渴啦，我们给它浇点水吧' : '今天的花园真好看，谢谢你照顾它们'))
+      },
+    )
+  }
   for (const c of candidates)
     add(
       {
@@ -291,7 +361,8 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
     const p = pointer.current
     if (!p || !e.isPrimary) return
     if (Math.hypot(p.x - e.clientX, p.y - e.clientY) > 7) p.moved = true
-    if (p.moved && !decorating) world.current?.pan(e.clientX - p.lastX, e.clientY - p.lastY)
+    // One finger turns and tilts the garden; sliding it around is done with two fingers (see the pinch above).
+    if (p.moved) world.current?.orbit(e.clientX - p.lastX, e.clientY - p.lastY)
     p.lastX = e.clientX
     p.lastY = e.clientY
   }
@@ -318,11 +389,14 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
     const key = world.current?.pick(e.clientX, e.clientY)
     // Whatever she taps answers: the frog dives, other animals hop, everything else wiggles.
     if (key && key !== 'house')
-      world.current?.poke(key, key === 'frog' ? 'dive' : visitors.some(({ v }) => v.id === key) ? 'hop' : 'wiggle')
+      world.current?.poke(
+        key,
+        key === 'frog' ? 'dive' : key === 'mascot' || visitors.some(({ v }) => v.id === key) ? 'hop' : 'wiggle',
+      )
     if (key && actions.has(key)) {
       // Plants, beds and pits: the camera glides in to them while their card opens.
       const toy = spots.get(key)
-      if (toy && key !== 'house' && !key.startsWith('expand'))
+      if (toy && key !== 'house' && !key.startsWith('expand') && !toy.route)
         // Look at the middle of a tree's crown, so the whole tree fits above the card.
         world.current?.focus(toy.x, toy.z, undefined, toy.model.includes('-tree3') ? 1.4 * (toy.size ?? 1) : 0.55)
       actions.get(key)!()

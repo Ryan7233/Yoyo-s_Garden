@@ -84,6 +84,17 @@ function basis(y: P3, z: P3): P3 {
   return [e.x, e.y, e.z]
 }
 
+/** The mascot: a flower-bud sprite on a short stem with two leaves, in the garden's theme colour. */
+export function mascot(m: Carving, color: string) {
+  m.beam('#4f9146', [0, 0, 0], [0, 0.2, 0], 0.035)
+  for (const s of [-1, 1]) m.ball(s === 1 ? '#7cc160' : '#8fcd6b', [s * 0.17, 0.09, 0.02], [0.15, 0.045, 0.085], [0, 0, s * 0.35])
+  m.ball(color, [0, 0.46, 0], [0.27, 0.3, 0.25])
+  m.cone(color, [0, 0.78, 0], [0.165, 0.3, 0.155])
+  m.ball(tint(color, 0.55), [0, 0.7, 0.1], [0.06, 0.2, 0.06])
+  m.ball(tint(color, -0.25), [0.13, 0.36, -0.1], [0.17, 0.2, 0.16])
+  face(m, [0, 0.44, 0.245], 0.2, 'happy')
+}
+
 export type Mood = 'happy' | 'sad' | 'ripe'
 /**
  * A little face on the +Z side of a plant: bean eyes, pink cheeks and a mouth.

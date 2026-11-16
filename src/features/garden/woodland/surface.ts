@@ -15,12 +15,22 @@ export function carvedMaterial() {
   noise.generateMipmaps = true
   noise.needsUpdate = true
   const material = new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.86 })
+  /** Seconds of wind so far; the world advances it every frame. */
+  const wind = { value: 0 }
   material.onBeforeCompile = (shader) => {
     shader.uniforms.carvingNoise = { value: noise }
-    shader.vertexShader = 'varying vec3 toyPos;\nvarying vec3 toyNormal;\n' + shader.vertexShader
+    shader.uniforms.windTime = wind
+    shader.vertexShader =
+      'attribute float sway;\nuniform float windTime;\nvarying vec3 toyPos;\nvarying vec3 toyNormal;\n' + shader.vertexShader
     shader.vertexShader = shader.vertexShader.replace(
       '#include <begin_vertex>',
-      '#include <begin_vertex>\ntoyPos=position; toyNormal=normal;',
+      `#include <begin_vertex>
+      toyPos=position; toyNormal=normal;
+      // Wind: things that sway bend more the higher up they are, each with its own timing.
+      float bend = sway * pow(clamp(position.y, 0.0, 2.4), 1.5);
+      float gust = modelMatrix[3].x * 1.3 + modelMatrix[3].z * 0.9;
+      transformed.x += bend * (sin(windTime * 1.7 + gust) * 0.034 + sin(windTime * 3.3 + gust * 2.0 + position.y * 2.5) * 0.011);
+      transformed.z += bend * cos(windTime * 1.3 + gust) * 0.018;`,
     )
     shader.fragmentShader =
       'uniform sampler2D carvingNoise;\nvarying vec3 toyPos;\nvarying vec3 toyNormal;\n' + shader.fragmentShader
@@ -36,5 +46,5 @@ export function carvedMaterial() {
     `,
     )
   }
-  return { material, noise }
+  return { material, noise, wind }
 }
