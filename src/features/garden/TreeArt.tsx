@@ -8,7 +8,7 @@ export const fruitKindOf = (catalogId: string): FruitKind | null =>
 const CROWN: Record<FruitKind, string[]> = {
   apple: ['#8FCD6B', '#7CC160', '#9AD776'],
   orange: ['#6DB25A', '#5EA04E', '#7CC066'],
-  peach: ['#B5D97A', '#A6CF6C', '#C3E28A'],
+  peach: ['#A6D268', '#94C457', '#B5DC78'],
 }
 /** 桃花先开花后长叶，开花的桃树几乎是粉色的 */
 const PEACH_BLOOM = ['#F7B6C8', '#F3A3BB', '#FAC6D3']

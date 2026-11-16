@@ -55,14 +55,16 @@ export function stroll(plots: Plot[], placed: PlacedItem[], visit: PlantInstance
     }
     return null
   }
-  const free = (near: Cell) => search(near, (c) => !blocked[at(c)], true)?.at(-1)
-  const goals: (Cell & { stay: number })[] = []
-  const door = free({ x: 1, y: 3 })
+  const door = search({ x: 1, y: 3 }, (c) => !blocked[at(c)], true)?.at(-1)
   if (!door) return []
-  goals.push({ ...door, stay: 2.5 })
+  // Only grass she can actually walk to from the door counts: furniture can wall off little pockets.
+  const reach = new Uint8Array(W * H)
+  search(door, (c) => ((reach[at(c)] = 1), false))
+  const free = (near: Cell) => search(near, (c) => !!reach[at(c)], true)?.at(-1)
+  const goals: (Cell & { stay: number })[] = [{ ...door, stay: 2.5 }]
   // Stand next to up to two plants that need something, for a good long look.
   for (const p of visit.slice(0, 2)) {
-    const beside = NEAR.map((d) => ({ x: p.x + d.x, y: p.y + d.y })).find((c) => inside(c) && !blocked[at(c)])
+    const beside = NEAR.map((d) => ({ x: p.x + d.x, y: p.y + d.y })).find((c) => inside(c) && reach[at(c)])
     if (beside) goals.push({ ...beside, stay: 5 })
   }
   for (const spot of [
@@ -71,7 +73,7 @@ export function stroll(plots: Plot[], placed: PlacedItem[], visit: PlantInstance
     { x: 6, y: 7 },
   ]) {
     const c = free(spot)
-    if (c) goals.push({ ...c, stay: 2.5 })
+    if (c && !goals.some((g) => g.x === c.x && g.y === c.y)) goals.push({ ...c, stay: 2.5 })
   }
   const stops: Stop[] = []
   for (let i = 0; i < goals.length; i++) {

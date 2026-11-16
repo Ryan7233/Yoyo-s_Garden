@@ -1,6 +1,7 @@
 import { BACKUP_TABLES, SCHEMA_VERSION, db, type BackupTable } from './schema'
 import { balanceOf } from '../engine/ledger'
-import type { LedgerEntry, Settings } from '../data/types'
+import type { LedgerEntry, PlantInstance, Settings } from '../data/types'
+import { moveTreesToOrchard } from '../engine/plots'
 
 export interface BackupFile {
   app: 'little-garden'
@@ -187,6 +188,8 @@ export function parseBackup(text: string): BackupFile {
   // 版本 6 之前没有举手记录
   if (f.schemaVersion < 6) f.tables.handRaises ??= []
   validateTables(f.tables as Record<BackupTable, unknown[]>)
+  // 版本 9 之前树种在菜畦里：导入时搬进果园，和数据库升级做的一样（校验过了才动数据）
+  if (f.schemaVersion < 9) f.tables.plants = moveTreesToOrchard(f.tables.plants as PlantInstance[])
   return f as BackupFile
 }
 

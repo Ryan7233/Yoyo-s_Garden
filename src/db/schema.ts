@@ -9,7 +9,7 @@ import {
 } from '../data/tasks'
 import { daysToFreeze, freezePlan } from '../engine/plans'
 import { toTaskDay } from '../engine/taskDay'
-import { ORCHARD_PITS, pitAt } from '../engine/plots'
+import { moveTreesToOrchard } from '../engine/plots'
 
 export const SCHEMA_VERSION = 9
 
@@ -144,16 +144,9 @@ export class GardenDB extends Dexie {
     // 版本 9：花园右边加了果园。以前种在菜畦里的树搬进果园的空树坑，生长、结果进度都不变
     this.version(9).stores({}).upgrade(async (tx) => {
       await snapshotBeforeMigration(tx, 8, [...V1_TABLES, 'dayPlans', 'spellWords', 'spellSessions', 'handRaises'])
-      for (const child of await tx.table<Child>('children').toArray()) {
-        const plants = await tx.table<PlantInstance>('plants').where('childId').equals(child.id).toArray()
-        const outdoor = plants.filter((p) => p.scene === 'outdoor' && !p.pondId)
-        const free = ORCHARD_PITS.filter((r) => !outdoor.some((p) => p.x === r.x && p.y === r.y))
-        for (const tree of outdoor.filter((p) => p.catalogId.endsWith('-tree') && !pitAt(p.x, p.y))) {
-          const pit = free.shift()
-          if (!pit) break
-          await tx.table<PlantInstance>('plants').put({ ...tree, x: pit.x, y: pit.y })
-        }
-      }
+      const plants = await tx.table<PlantInstance>('plants').toArray()
+      const moved = moveTreesToOrchard(plants).filter((p, i) => p !== plants[i])
+      await tx.table<PlantInstance>('plants').bulkPut(moved)
     })
   }
 }

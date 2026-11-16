@@ -28,6 +28,26 @@ export function plantRect(p: Pick<PlantInstance, 'x' | 'y' | 'pondId'>): Rect {
   return { x: p.x, y: p.y, w: big ? 2 : 1, h: big ? 2 : 1 }
 }
 
+/**
+ * 果园出现以前，树是种在菜畦里的。把它们搬进各自花园的空树坑（生长进度不动），
+ * 树坑不够时多出来的留在原地。数据库升级和导入旧备份都用它。
+ */
+export function moveTreesToOrchard<T extends Pick<PlantInstance, 'childId' | 'scene' | 'x' | 'y' | 'pondId' | 'catalogId'>>(plants: T[]): T[] {
+  const free = new Map<string, Rect[]>()
+  const outdoor = (p: T) => p.scene === 'outdoor' && !p.pondId
+  for (const p of plants)
+    if (!free.has(p.childId))
+      free.set(
+        p.childId,
+        ORCHARD_PITS.filter((r) => !plants.some((q) => q.childId === p.childId && outdoor(q) && q.x === r.x && q.y === r.y)),
+      )
+  return plants.map((p) => {
+    if (!outdoor(p) || !p.catalogId.endsWith('-tree') || pitAt(p.x, p.y)) return p
+    const pit = free.get(p.childId)!.shift()
+    return pit ? { ...p, x: pit.x, y: pit.y } : p
+  })
+}
+
 export function inRect(x: number, y: number, r: Rect): boolean {
   return x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h
 }
