@@ -1,0 +1,26 @@
+/* 当天的数学作业卡：三类问题并排三张小卡，每张一句话、一个算式、一个打勾按钮 */
+.math-hw { text-align: left; }
+.math-hw .modal-title { text-align: center; }
+.math-teacher,
+.math-where { margin: 0 0 var(--sp-3); font-size: var(--fs-m); line-height: 1.6; }
+.math-where { color: var(--text-soft); }
+.math-prompts {
+  list-style: none;
+  margin: var(--sp-4) 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--sp-3);
+}
+.math-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border-radius: var(--r-l);
+}
+.math-prompt.said { background: var(--mint-light, #e7f7ec); }
+.math-kind { display: flex; align-items: baseline; gap: var(--sp-2); flex-wrap: wrap; }
+.math-kind .title { font-size: var(--fs-l); }
+.math-ask { margin: 0; font-size: var(--fs-m); line-height: 1.7; flex: 1; }
+.math-shape { margin: 0; font-size: var(--fs-l); letter-spacing: 2px; text-align: center; }

@@ -5,9 +5,10 @@ import { countsByWeek } from '../../engine/schedule'
 import { cardRecords, dayProgress } from '../../engine/rewards'
 import { earnedOn } from '../../engine/ledger'
 import { childReportTask } from '../../db/actions'
-import { ETON_HOMEWORK_TASK_ID, EXERCISE_TASK_ID, PINYIN_TASK_ID, RAISE_HAND_TASK_ID, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../../data/tasks'
+import { ETON_HOMEWORK_TASK_ID, EXERCISE_TASK_ID, MATH_TASK_ID, PINYIN_TASK_ID, RAISE_HAND_TASK_ID, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../../data/tasks'
 import { lessonFor } from '../../data/etonLessons'
 import { pinyinCardFor } from '../../data/pinyinCards'
+import { mathHomeworkFor } from '../../data/mathHomework'
 import type { TaskDef, TaskRecord } from '../../data/types'
 import { spellQueue, weekQuizWords } from '../../engine/spelling'
 import { submitSpellSession, type SubmittedResult } from '../../db/spelling'
@@ -15,6 +16,7 @@ import { SpellingSheet, type DictationItem } from '../spelling/SpellingSheet'
 import { RaiseHandSheet } from '../courage/RaiseHandSheet'
 import { EtonLessonSheet } from '../eton/EtonLessonSheet'
 import { PinyinCardSheet } from '../pinyin/PinyinCardSheet'
+import { MathHomeworkSheet } from '../math/MathHomeworkSheet'
 import { Celebrate } from '../../ui/Celebrate'
 import { ExerciseSheet } from './Exercise'
 import { bestTodayByExercise, exercisesForDay } from '../../engine/exercise'
@@ -31,13 +33,16 @@ export function TodayTasks() {
   const [raising, setRaising] = useState(false)
   const [lessonOpen, setLessonOpen] = useState(false)
   const [pinyinOpen, setPinyinOpen] = useState(false)
+  const [mathOpen, setMathOpen] = useState(false)
   if (!child) return null
   const lesson = lessonFor(today)
   const pinyin = pinyinCardFor(today)
+  const math = mathHomeworkFor(today)
   // 当天有伊顿课 / 拼读卡时，点“我完成了”先弹出来，学完再交
   const lessonOf = (task: TaskDef) => {
     if (task.id === ETON_HOMEWORK_TASK_ID && lesson) return () => setLessonOpen(true)
     if (task.id === PINYIN_TASK_ID && pinyin) return () => setPinyinOpen(true)
+    if (task.id === MATH_TASK_ID && math) return () => setMathOpen(true)
     return undefined
   }
 
@@ -159,6 +164,14 @@ export function TodayTasks() {
           onClose={() => setPinyinOpen(false)}
         />
       )}
+      {mathOpen && math && (
+        <MathHomeworkSheet
+          homework={math}
+          // 交过以后再打开只是再看一遍，不会重复交
+          onFinish={['done', 'pending'].includes(latest.get(MATH_TASK_ID)?.status ?? '') ? undefined : () => act(() => childReportTask(child.id, MATH_TASK_ID, today))}
+          onClose={() => setMathOpen(false)}
+        />
+      )}
       {dictation && (
         <SpellingSheet
           items={dictation.items}
@@ -212,7 +225,7 @@ function TaskCard({ task, record, sport, spelling, onLesson, onReport }: {
       )}
       {/* 当天的课 / 拼读卡交过以后，同一个位置换成“再做一遍”：小游戏重新开始，不会再交一次、不会重复发奖励 */}
       {onLesson && (status === 'done' || status === 'pending') && (
-        <button className="btn btn-ghost btn-big task-btn" onClick={onLesson}>{task.id === PINYIN_TASK_ID ? '↺ 再读一遍' : '↺ 再做一遍'}</button>
+        <button className="btn btn-ghost btn-big task-btn" onClick={onLesson}>{task.id === PINYIN_TASK_ID ? '↺ 再读一遍' : task.id === MATH_TASK_ID ? '↺ 再看一遍' : '↺ 再做一遍'}</button>
       )}
     </div>
   )
