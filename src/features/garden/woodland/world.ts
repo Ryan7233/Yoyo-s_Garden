@@ -47,14 +47,17 @@ const LIGHT: Record<Phase, { sky: string; ground: string; hemi: number; sun: str
   morning: { sky: '#fff0d6', ground: '#d6c6ac', hemi: 2.05, sun: '#ffe3b4', power: 2.3, shade: 0.17 },
   afternoon: { sky: '#fff1d8', ground: '#cfbca7', hemi: 2.15, sun: '#fff3d9', power: 2.25, shade: 0.18 },
   evening: { sky: '#ffd6bd', ground: '#b9a0aa', hemi: 1.75, sun: '#ffab72', power: 2.1, shade: 0.16 },
-  night: { sky: '#8ea2dc', ground: '#3c4568', hemi: 1.25, sun: '#b6c6ff', power: 0.9, shade: 0.1 },
+  // Moonlight is kept bright enough to read every face; the blue tint is what says night.
+  night: { sky: '#a9b8ee', ground: '#59618c', hemi: 1.75, sun: '#c9d4ff', power: 1.35, shade: 0.1 },
 }
 function cloud(m: Carving) {
-  m.ball('#ffffff', [0, 0, 0], [1.1, 0.5, 0.7])
-  m.ball('#ffffff', [-0.85, -0.08, 0.1], [0.75, 0.4, 0.55])
-  m.ball('#fbf7ef', [0.9, -0.1, -0.05], [0.8, 0.42, 0.6])
-  m.ball('#ffffff', [0.25, 0.32, 0], [0.7, 0.45, 0.55])
-  m.ball('#f4efe6', [0, -0.3, 0], [1.5, 0.22, 0.75])
+  // Flat underneath, puffed on top: a long low base with a few rounded heaps of different heights.
+  m.ball('#ffffff', [0, 0, 0], [1.7, 0.26, 0.8])
+  m.ball('#ffffff', [-0.75, 0.24, 0.02], [0.6, 0.42, 0.5])
+  m.ball('#ffffff', [0.02, 0.4, 0], [0.78, 0.58, 0.6])
+  m.ball('#ffffff', [0.8, 0.22, 0.04], [0.56, 0.38, 0.48])
+  m.ball('#ffffff', [1.3, 0.07, 0], [0.42, 0.24, 0.4])
+  m.ball('#ffffff', [-1.3, 0.06, 0], [0.4, 0.22, 0.36])
 }
 export type Stop = { x: number; y: number; z: number; stay: number }
 const hash = (key: string) => [...key].reduce((n, c) => (n * 31 + c.charCodeAt(0)) % 9973, 7) / 9973

@@ -336,6 +336,102 @@ function leaves(m: Carving, h: number) {
     )
   }
 }
+/** Grown vegetables, each growing the way it really does: on a stake, along the ground, up a stalk. */
+function veggie(m: Carving, id: string, mood: Mood) {
+  if (id.includes('tomato')) {
+    // A vine tied to a stake, with tomatoes hanging at different heights.
+    m.beam(honey, [0, 0, -0.06], [0, 0.98, -0.06], 0.028)
+    m.beam('#5f8f45', [0.02, 0, 0], [0.03, 0.84, 0], 0.03)
+    for (let i = 0; i < 6; i++) {
+      const a = i * 2.4
+      m.ball(i % 2 ? leaf : lime, [Math.sin(a) * 0.17, 0.2 + i * 0.13, Math.cos(a) * 0.1 - 0.03], [0.14, 0.03, 0.085], [0, a, 0.3])
+    }
+    const fruit: [number, number, number, number, string][] = [
+      [0.02, 0.36, 0.17, 0.15, '#dd4b3f'],
+      [-0.18, 0.57, 0.1, 0.105, '#dd4b3f'],
+      [0.17, 0.7, 0.08, 0.095, '#e9884a'],
+    ]
+    for (const [x, y, z, r, c] of fruit) {
+      m.ball(c, [x, y, z], [r, r * 0.92, r])
+      for (let n = 0; n < 5; n++) {
+        const a = n * 1.257
+        m.ball('#4f8a45', [x + Math.sin(a) * r * 0.42, y + r * 0.84, z + Math.cos(a) * r * 0.42], [r * 0.32, r * 0.1, r * 0.15], [0, a + Math.PI / 2, 0])
+      }
+      m.beam('#5f8f45', [x, y + r * 0.85, z], [x * 0.3, y + r * 1.5, z * 0.3], 0.014)
+    }
+    face(m, [0.02, 0.36, 0.315], 0.11, mood)
+  } else if (id.includes('strawberry')) {
+    // A low tuft of leaves with the berries lying out round the edge.
+    for (let i = 0; i < 8; i++) {
+      const a = i * 0.8
+      m.ball(i % 2 ? leaf : '#6f9d4c', [Math.sin(a) * 0.2, 0.13 + (i % 3) * 0.035, Math.cos(a) * 0.2 - 0.05], [0.12, 0.035, 0.17], [-0.35, a, 0])
+    }
+    for (const [x, z] of [
+      [-0.1, -0.02],
+      [0.14, -0.1],
+    ]) {
+      for (let n = 0; n < 5; n++) m.ball('#fff6e6', [x + Math.sin(n * 1.257) * 0.04, 0.27, z + Math.cos(n * 1.257) * 0.04], [0.032, 0.012, 0.032])
+      m.ball('#f4c84f', [x, 0.275, z], [0.022, 0.014, 0.022])
+    }
+    const berries: [number, number, number, number][] = [
+      [0, 0.15, 0.26, 0.12],
+      [-0.27, 0.11, 0.1, 0.085],
+      [0.27, 0.11, 0.08, 0.085],
+    ]
+    for (const [x, y, z, r] of berries) {
+      m.ball('#e0453f', [x, y, z], [r, r * 1.02, r * 0.95])
+      m.cone('#e0453f', [x, y - r * 0.72, z], [r * 0.72, r * 0.95, r * 0.68], [Math.PI, 0, 0])
+      for (let n = 0; n < 6; n++)
+        m.ball('#ffe08a', [x + ((n % 3) - 1) * r * 0.42, y - r * 0.15 - Math.floor(n / 3) * r * 0.5, z + r * 0.86], [r * 0.07, r * 0.09, r * 0.05])
+      for (let n = 0; n < 5; n++) {
+        const a = n * 1.257
+        m.ball('#4f8a45', [x + Math.sin(a) * r * 0.5, y + r * 0.92, z + Math.cos(a) * r * 0.5], [r * 0.34, r * 0.1, r * 0.17], [0, a + Math.PI / 2, 0])
+      }
+    }
+    face(m, [0, 0.19, 0.375], 0.085, mood)
+  } else if (id.includes('watermelon')) {
+    // A big striped melon resting on the soil at the end of its vine.
+    m.beam('#6f9d4c', [-0.38, 0.03, -0.2], [0.05, 0.05, -0.3], 0.025)
+    m.beam('#6f9d4c', [0.05, 0.05, -0.3], [0.38, 0.04, -0.12], 0.025)
+    m.beam('#6f9d4c', [-0.3, 0.2, 0.06], [-0.4, 0.3, -0.04], 0.02)
+    for (let i = 0; i < 4; i++)
+      m.ball(i % 2 ? leaf : lime, [-0.36 + i * 0.24, 0.1, -0.24 + (i % 2) * 0.06], [0.15, 0.03, 0.12], [0.2, i * 1.3, 0.2])
+    m.ball('#6aa65c', [0, 0.21, 0.08], [0.31, 0.22, 0.25])
+    for (let n = -2; n <= 2; n++) m.ball('#3f7743', [n * 0.115, 0.21, 0.08], [0.034, 0.224 - Math.abs(n) * 0.022, 0.254 - Math.abs(n) * 0.03])
+    face(m, [0, 0.2, 0.335], 0.13, mood)
+  } else if (id.includes('corn')) {
+    // A tall stalk with long drooping leaves, a tassel on top and cobs in their husks.
+    m.beam('#7fa04c', [0, 0, 0], [0, 1.02, 0], 0.042)
+    for (let i = 0; i < 6; i++) {
+      const a = i * 1.9
+      m.ball(i % 2 ? leaf : lime, [Math.sin(a) * 0.2, 0.2 + i * 0.14, Math.cos(a) * 0.2], [0.06, 0.03, 0.25], [0.5, a, 0])
+    }
+    for (let n = 0; n < 6; n++) m.beam('#e3c77a', [0, 1.0, 0], [Math.sin(n * 1.05) * 0.11, 1.2, Math.cos(n * 1.05) * 0.11], 0.012)
+    const cobs: [number, number, number, number][] = [
+      [0.11, 0.54, 0.13, 1],
+      [-0.13, 0.36, -0.02, 0.75],
+    ]
+    for (const [x, y, z, k] of cobs) {
+      m.ball('#f6cb4f', [x, y, z], [0.1 * k, 0.2 * k, 0.1 * k], [0.2, 0, -Math.sign(x) * 0.25])
+      for (const s of [-1, 1]) m.ball('#8db454', [x + s * 0.075 * k, y - 0.07 * k, z - 0.02], [0.05 * k, 0.17 * k, 0.09 * k], [0.2, 0, -Math.sign(x) * 0.25 - s * 0.2])
+      m.ball('#c98f4a', [x + Math.sign(x) * 0.05 * k, y + 0.21 * k, z + 0.04 * k], [0.035 * k, 0.05 * k, 0.035 * k])
+    }
+    face(m, [0.12, 0.56, 0.228], 0.075, mood)
+  } else {
+    leaves(m, 0.47)
+    if (id.includes('pumpkin')) {
+      for (let i = 0; i < 8; i++)
+        m.ball('#e89442', [Math.cos((i * turn) / 8) * 0.14, 0.25, Math.sin((i * turn) / 8) * 0.14], [0.17, 0.21, 0.16])
+      m.beam(leaf, [0, 0.41, 0], [0.04, 0.54, 0], 0.045)
+      face(m, [0, 0.25, 0.3], 0.15, mood)
+    } else {
+      // The carrot's shoulders poke out of the soil in front of its greens.
+      m.ball('#e89442', [0, 0.1, 0.13], [0.13, 0.19, 0.13])
+      face(m, [0, 0.14, 0.26], 0.1, mood)
+    }
+  }
+}
+
 export function plant(m: Carving, id: string, stage: number, fruitStage: 0 | 1 | 2 | 3 = 0, mood: Mood = 'happy') {
   if (stage === 0) {
     m.ball('#96623d', [0, 0.04, 0], [0.18, 0.09, 0.15])
@@ -361,34 +457,7 @@ export function plant(m: Carving, id: string, stage: number, fruitStage: 0 | 1 |
     return
   }
   if (/pumpkin|watermelon|carrot|corn|tomato|strawberry/.test(id)) {
-    leaves(m, 0.47)
-    const color = id.includes('watermelon')
-      ? '#67965a'
-      : /corn/.test(id)
-        ? '#f5c652'
-        : /pumpkin|carrot/.test(id)
-          ? '#e89442'
-          : '#da564a'
-    if (id.includes('pumpkin')) {
-      for (let i = 0; i < 8; i++)
-        m.ball(color, [Math.cos((i * turn) / 8) * 0.14, 0.25, Math.sin((i * turn) / 8) * 0.14], [0.17, 0.21, 0.16])
-      m.beam(leaf, [0, 0.41, 0], [0.04, 0.54, 0], 0.045)
-      face(m, [0, 0.25, 0.3], 0.15, mood)
-    } else if (id.includes('carrot')) {
-      // The carrot's shoulders poke out of the soil in front of its greens.
-      m.ball(color, [0, 0.1, 0.13], [0.13, 0.19, 0.13])
-      face(m, [0, 0.14, 0.26], 0.1, mood)
-    } else {
-      for (let i = 0; i < (/tomato|strawberry/.test(id) ? 3 : 1); i++) {
-        const a = (i * turn) / 3
-        m.ball(
-          color,
-          [0.12 * Math.sin(a), 0.24 + i * 0.065, 0.13 * Math.cos(a)],
-          [0.17, id.includes('corn') ? 0.29 : 0.17, 0.15],
-        )
-      }
-      face(m, [0, 0.25, 0.285], 0.12, mood)
-    }
+    veggie(m, id, mood)
     return
   }
   const tall = id.includes('sunflower'),
