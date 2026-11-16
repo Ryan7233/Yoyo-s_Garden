@@ -11,7 +11,7 @@ import { PlantArt } from './PlantArt'
 import { PlantSheet } from './PlantSheet'
 import { SeedPicker } from './SeedPicker'
 import { SKY, skyPhase } from './sky'
-import { HOUSE_RECT, expandCandidates } from '../../engine/plots'
+import { HOUSE_RECT, ORCHARD_PITS, ORCHARD_RECT, expandCandidates, pitAt, plantRect } from '../../engine/plots'
 import { getCatalogItem } from '../../data/catalog'
 import { expandPlot } from '../../db/garden'
 import { PlacedView, placedProps } from '../decorate/PlacedView'
@@ -70,6 +70,12 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
 
   const tapPlot = (x: number, y: number) => {
     if (expanding || decorating) return
+    // 点树坑里任何一格，都算这个树坑（树记在左上角）
+    const pit = pitAt(x, y)
+    if (pit) {
+      x = pit.x
+      y = pit.y
+    }
     const p = outdoorPlants.find((q) => !q.pondId && q.x === x && q.y === y)
     if (p) setPlantId(p.id)
     else setEmptyPlot({ x, y })
@@ -82,7 +88,7 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
 
   return (
     <>
-      {wood ? <Suspense fallback={<p role="status">正在打开木作花园…</p>}><Woodland onHouse={onEnterHouse} onPlot={tapPlot} onPond={tapPond} candidates={candidates} onExpand={setExpandAt} onExit={()=>switchView(false)} /></Suspense> : <>
+      {wood ? <Suspense fallback={<p role="status">正在打开木作花园…</p>}><Woodland onHouse={onEnterHouse} onPlot={tapPlot} onPond={tapPond} candidates={candidates} onExpand={setExpandAt} onExit={()=>switchView(false)} carded={!!plantId || !!emptyPlot} /></Suspense> : <>
       <ScrollHints />
       <div className="scene-scroll">
         <div className={`garden phase-${phase}`} style={gridStyle}>
@@ -101,6 +107,13 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
               </button>
               {!decorating && <CourageSunflower />}
 
+              <div className="orchard-yard" style={gridCell(ORCHARD_RECT.x, ORCHARD_RECT.y, ORCHARD_RECT.w, ORCHARD_RECT.h)} aria-hidden>
+                <span className="orchard-sign">果园</span>
+              </div>
+              {ORCHARD_PITS.map((r) => (
+                <button key={`pit${r.x}-${r.y}`} className="plot pit" style={gridCell(r.x, r.y, r.w, r.h)} onClick={() => tapPlot(r.x, r.y)} aria-label="树坑" />
+              ))}
+
               {plots.map((p) => (
                 <button
                   key={`${p.x}-${p.y}`}
@@ -116,7 +129,7 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
               ))}
 
               {outdoorPlants.map((p) => (
-                <div key={p.id} className={`plant${p.pondId ? ' in-pond' : ''}`} style={p.pondId ? gridCell(p.x, p.y, 2, 2) : gridCell(p.x, p.y)}>
+                <div key={p.id} className={`plant${p.pondId ? ' in-pond' : plantRect(p).w > 1 ? ' in-orchard' : ''}`} style={gridCell(p.x, p.y, plantRect(p).w, plantRect(p).h)}>
                   <PlantArt plant={p} today={today} fluid hop={fx?.id === p.id && fx.kind === 'grow'} />
                   {fx?.id === p.id && <span className="fx">{fx.kind === 'grow' ? '💗' : '💧'}</span>}
                 </div>
@@ -171,9 +184,10 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
           plantId={plantId}
           onClose={() => setPlantId(null)}
           onWatered={(id, stageUp) => showFx({ id, kind: stageUp ? 'grow' : 'water' })}
+          sheet={wood}
         />
       )}
-      {emptyPlot && <SeedPicker x={emptyPlot.x} y={emptyPlot.y} pondId={emptyPlot.pondId} onClose={() => setEmptyPlot(null)} />}
+      {emptyPlot && <SeedPicker x={emptyPlot.x} y={emptyPlot.y} pondId={emptyPlot.pondId} orchard={!!pitAt(emptyPlot.x, emptyPlot.y)} sheet={wood} onClose={() => setEmptyPlot(null)} />}
       {expandAt && (
         <ConfirmDialog
           title={`花 ${BALANCE.plotExpandCost} 金币开一块新地？`}

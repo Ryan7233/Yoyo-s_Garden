@@ -221,6 +221,6 @@ describe('数据库升级到版本 3', () => {
     expect(plans.length).toBeGreaterThanOrEqual(4)
     expect(plans.every((p) => !p.more.some((id) => SPELLING_TASK_IDS.includes(id) || id === RAISE_HAND_TASK_ID || id === PINYIN_TASK_ID || WEEK7_TASK_IDS.includes(id)))).toBe(true)
     expect(plans.some((p) => p.date === addDays(toTaskDay(new Date()), -1))).toBe(true)
-    expect((await next.snapshots.toArray()).map((s) => s.schemaVersion).sort()).toEqual([2, 5, 6, 7])
+    expect((await next.snapshots.toArray()).map((s) => s.schemaVersion).sort()).toEqual([2, 5, 6, 7, 8])
   })
 })

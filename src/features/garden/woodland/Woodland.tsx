@@ -3,7 +3,7 @@ import { useStore } from '../../../app/store'
 import { BALANCE } from '../../../data/balance'
 import { getCatalogItem } from '../../../data/catalog'
 import { POND_ID } from '../../../data/plants'
-import { canHarvest, isThirsty } from '../../../engine/growth'
+import { canHarvest, fruitLevel, isThirsty } from '../../../engine/growth'
 import { buildSceneState, canPlace, footprintOf, slotFor } from '../../../engine/placement'
 import { sunflowerLevel } from '../../../engine/courage'
 import { useHere } from '../Visitors'
@@ -15,7 +15,8 @@ import { toast } from '../../../ui/Toast'
 import { play } from '../../../ui/sfx'
 import { animal, furniture } from './furniture'
 import { cottage, plant } from './models'
-import { bed, createWorld, type Toy } from './world'
+import { bed, createWorld, orchardYard, pit, type Toy } from './world'
+import { ORCHARD_PITS, pitAt, plantRect } from '../../../engine/plots'
 import './woodland.css'
 
 interface Props {
@@ -25,12 +26,17 @@ interface Props {
   candidates: { x: number; y: number }[]
   onExpand: (cell: { x: number; y: number }) => void
   onExit: () => void
+  /** A plant or seed card is open over the bottom of the screen. */
+  carded?: boolean
 }
-export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand, onExit }: Props) {
+export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand, onExit, carded = false }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const world = useRef<ReturnType<typeof createWorld> | null>(null)
   const pointer = useRef<{ x: number; y: number; lastX: number; lastY: number; moved: boolean } | null>(null)
   const tapped = useRef(false)
+  /** Every finger on the canvas, so two of them can pinch to zoom. */
+  const fingers = useRef(new Map<number, { x: number; y: number }>())
+  const pinch = useRef<{ dist: number; midX: number; midY: number } | null>(null)
   const [near, setNear] = useState(false),
     [failed, setFailed] = useState(false),
     [courage, setCourage] = useState(false)
@@ -40,12 +46,17 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
   const level = sunflowerLevel(settings?.courageWeeks?.length ?? 0)
   const actions = new Map<string, () => void>()
   const toys: Toy[] = []
+  const spots = new Map<string, Toy>()
   const add = (toy: Toy, action?: () => void) => {
     toys.push(toy)
+    spots.set(toy.key, toy)
     if (action) actions.set(toy.key, action)
   }
   const roof = child?.houseColor ?? '#e995ad'
   add({ key: 'house', model: 'house' + roof, carve: (m) => cottage(m, roof), x: 1.5, z: 1.5 }, onHouse)
+  add({ key: 'orchard', model: 'orchard', carve: orchardYard, x: 0, z: 0, hit: false })
+  for (const r of ORCHARD_PITS)
+    add({ key: 'pit-' + r.x + '-' + r.y, model: 'pit', carve: pit, x: r.x + 1, z: r.y + 1 }, () => onPlot(r.x, r.y))
   for (const p of plots)
     add({ key: 'bed-' + p.x + '-' + p.y, model: 'bed', carve: bed, x: p.x + 0.5, z: p.y + 0.5 }, () => onPlot(p.x, p.y))
   const outdoors = placed.filter((p) => p.scene === 'outdoor')
@@ -65,19 +76,23 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
   }
   for (const p of plants.filter((p) => p.scene === 'outdoor')) {
     const spec = getCatalogItem(p.catalogId)?.plant
-    const x = p.x + (p.pondId ? 1 : 0.5),
-      z = p.y + (p.pondId ? 1 : 0.5)
+    const span = plantRect(p),
+      orchard = !p.pondId && span.w > 1
+    const x = p.x + span.w / 2,
+      z = p.y + span.h / 2
     const tap = () => (p.pondId ? onPond(p.pondId, p.x, p.y) : onPlot(p.x, p.y))
+    const fruit = spec && p.catalogId.endsWith('-tree') ? fruitLevel(p, spec) : 0
     add(
       {
         key: p.id,
-        model: p.catalogId + p.stage,
-        carve: (m) => plant(m, p.catalogId, p.stage),
+        model: p.catalogId + p.stage + '/' + fruit,
+        carve: (m) => plant(m, p.catalogId, p.stage, fruit),
         x,
         z,
-        y: 0.204,
+        // In the orchard trees stand on the grass and get room to be big; elsewhere they sit in a bed.
+        y: orchard ? 0.03 : 0.204,
         angle: 0.25 + Math.sin(p.x * 3 + p.y) * 0.44,
-        size: p.catalogId.endsWith('-tree') ? 0.74 : 1,
+        size: orchard ? 1.3 : p.catalogId.endsWith('-tree') ? 0.74 : 1,
       },
       tap,
     )
@@ -184,15 +199,22 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
       setFailed(true)
     }
     try {
-      world.current = createWorld(el)
+      world.current = createWorld(el, setNear)
       canvasCells.set(el, world.current.cell)
     } catch {
       setFailed(true)
       return
     }
+    // Trackpad pinch and mouse wheel zoom (desktop preview); iPad uses two-finger pinch below.
+    const wheel = (e: WheelEvent) => {
+      e.preventDefault()
+      world.current?.zoomBy(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.002)))
+    }
     el.addEventListener('webglcontextlost', lost)
+    el.addEventListener('wheel', wheel, { passive: false })
     return () => {
       el.removeEventListener('webglcontextlost', lost)
+      el.removeEventListener('wheel', wheel)
       canvasCells.delete(el)
       world.current?.dispose()
       world.current = null
@@ -201,7 +223,22 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
   useEffect(() => {
     world.current?.update(toys)
   })
+  useEffect(() => {
+    world.current?.lift(carded)
+  }, [carded])
+  const pinchState = () => {
+    const [a, b] = [...fingers.current.values()]
+    return { dist: Math.hypot(a.x - b.x, a.y - b.y) || 1, midX: (a.x + b.x) / 2, midY: (a.y + b.y) / 2 }
+  }
   function down(e: PointerEvent<HTMLCanvasElement>) {
+    fingers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (fingers.current.size === 2 && !decorating) {
+      // A second finger turns the drag into a pinch; nothing gets tapped.
+      e.currentTarget.setPointerCapture(e.pointerId)
+      pinch.current = pinchState()
+      if (pointer.current) pointer.current.moved = true
+      return
+    }
     if (!e.isPrimary) return
     tapped.current = false
     const key = world.current?.pick(e.clientX, e.clientY)
@@ -216,6 +253,15 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
     pointer.current = { x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, moved: false }
   }
   function move(e: PointerEvent<HTMLCanvasElement>) {
+    if (fingers.current.has(e.pointerId)) fingers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (pinch.current && fingers.current.size === 2) {
+      const now = pinchState(),
+        was = pinch.current
+      world.current?.zoomBy(now.dist / was.dist)
+      world.current?.pan(now.midX - was.midX, now.midY - was.midY)
+      pinch.current = now
+      return
+    }
     const p = pointer.current
     if (!p || !e.isPrimary) return
     if (Math.hypot(p.x - e.clientX, p.y - e.clientY) > 7) p.moved = true
@@ -223,7 +269,12 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
     p.lastX = e.clientX
     p.lastY = e.clientY
   }
+  function lift(e: PointerEvent<HTMLCanvasElement>) {
+    fingers.current.delete(e.pointerId)
+    if (fingers.current.size < 2) pinch.current = null
+  }
   function up(e: PointerEvent<HTMLCanvasElement>) {
+    lift(e)
     if (!e.isPrimary) return
     const p = pointer.current
     pointer.current = null
@@ -240,10 +291,15 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
     if (decorating) return
     const key = world.current?.pick(e.clientX, e.clientY)
     if (key && actions.has(key)) {
+      // Plants, beds and pits: the camera glides in to them while their card opens.
+      const toy = spots.get(key)
+      if (toy && key !== 'house' && !key.startsWith('expand'))
+        // Look at the middle of a tree's crown, so the whole tree fits above the card.
+        world.current?.focus(toy.x, toy.z, undefined, toy.model.includes('-tree3') ? 1.4 * (toy.size ?? 1) : 0.55)
       actions.get(key)!()
       return
     }
-    if (cell && plots.some((b) => b.x === cell.x && b.y === cell.y)) onPlot(cell.x, cell.y)
+    if (cell && (pitAt(cell.x, cell.y) || plots.some((b) => b.x === cell.x && b.y === cell.y))) onPlot(cell.x, cell.y)
   }
   return (
     <div className="woodland">
@@ -254,7 +310,8 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
         onPointerMove={move}
         onPointerUp={up}
         onClick={click}
-        onPointerCancel={() => {
+        onPointerCancel={(e) => {
+          lift(e)
           pointer.current = null
         }}
       />
@@ -274,7 +331,6 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
             aria-pressed={near}
             onClick={() => {
               world.current?.near(!near)
-              setNear(!near)
             }}
           >
             {near ? '⤢ 看全园' : '⊕ 看近些'}

@@ -4,11 +4,11 @@ import { loadPlanOf } from './plans'
 import { addInventory, takeInventory } from './inventory'
 import type { LedgerEntry, PlantInstance } from '../data/types'
 import { getCatalogItem } from '../data/catalog'
-import { harvestInfo, plantableInPond, POND_ID } from '../data/plants'
+import { harvestInfo, plantableInOrchard, plantableInPond, plantableOutdoors, POND_ID } from '../data/plants'
 import { BALANCE } from '../data/balance'
 import { balanceOf } from '../engine/ledger'
 import { canHarvest, canWater, harvest, water } from '../engine/growth'
-import { expandCandidates } from '../engine/plots'
+import { expandCandidates, pitAt } from '../engine/plots'
 import { type ProgressStats } from '../engine/unlocks'
 import { itemUnlocked } from '../engine/progress'
 import { dayProgress, latestRecordByTask } from '../engine/rewards'
@@ -76,11 +76,17 @@ export async function buyItem(childId: string, catalogId: string, now = new Date
 
 export async function plantSeed(childId: string, catalogId: string, x: number, y: number, now = new Date()): Promise<boolean> {
   const item = getCatalogItem(catalogId)
-  if (!item?.plant || item.plant.needs !== 'soil') return false
+  if (!item?.plant) return false
+  // 树种进果园的树坑（记在树坑左上角），花和菜种进泥土菜畦
+  const pit = pitAt(x, y)
+  if (pit) {
+    if (!plantableInOrchard(item)) return false
+    x = pit.x
+    y = pit.y
+  } else if (!plantableOutdoors(item)) return false
   return db.transaction('rw', [db.inventory, db.plants, db.plots], async () => {
-    const plot = await db.plots.get([childId, x, y])
-    if (plot?.kind !== 'soil') return false
-    const taken = await db.plants.where('childId').equals(childId).filter((p) => p.scene === 'outdoor' && p.x === x && p.y === y).count()
+    if (!pit && (await db.plots.get([childId, x, y]))?.kind !== 'soil') return false
+    const taken = await db.plants.where('childId').equals(childId).filter((p) => p.scene === 'outdoor' && !p.pondId && p.x === x && p.y === y).count()
     if (taken) return false
     if (!(await takeInventory(childId, catalogId))) return false
     await db.plants.add({ id: uid(), childId, scene: 'outdoor', x, y, catalogId, plantedAt: now.toISOString(), waterCount: 0, stage: 0 })

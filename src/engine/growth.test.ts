@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { PlantInstance } from '../data/types'
 import { SEEDS } from '../data/plants'
-import { canHarvest, canWater, harvest, isThirsty, stageFor, water } from './growth'
+import { canHarvest, canWater, fruitLevel, harvest, isThirsty, stageFor, water } from './growth'
 
 const spec = (id: string) => SEEDS.find((s) => s.id === id)!.plant!
 const plant = (catalogId: string, extra: Partial<PlantInstance> = {}): PlantInstance => ({
@@ -62,5 +62,17 @@ describe('生长', () => {
     expect(canWater(p, '2026-10-20', s)).toBe(false)
     expect(canHarvest(p, s)).toBe(false)
     expect(isThirsty(p, '2026-11-20', s)).toBe(false)
+  })
+  it('果树枝头：熟了 → 摘完只剩叶子 → 开花 → 青果 → 又熟了', () => {
+    const s = spec('seed-peach-tree')
+    const at = (waterCount: number, lastHarvestWater?: number) =>
+      fruitLevel(plant('seed-peach-tree', { stage: 3, waterCount, lastHarvestWater }), s)
+    expect(at(10)).toBe(3)
+    expect(at(10, 10)).toBe(0)
+    expect(at(11, 10)).toBe(1)
+    expect(at(12, 10)).toBe(2)
+    expect(at(13, 10)).toBe(3)
+    expect(fruitLevel(plant('seed-peach-tree', { stage: 2, waterCount: 7 }), s)).toBe(0)
+    expect(fruitLevel(plant('seed-cherry-tree', { stage: 3, waterCount: 12 }), spec('seed-cherry-tree'))).toBe(0)
   })
 })

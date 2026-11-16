@@ -69,6 +69,31 @@ export async function prepareWoodDemo() {
         plantedAt: at,
       })
     }
+    // 果园：熟了的苹果、开花的桃树、挂青果的橘子、樱花，还有一棵刚长起来的小桃树
+    const trees: [string, number, number, PlantInstance['stage'], number?][] = [
+      ['apple-tree', 12, 0, 3],
+      ['peach-tree', 14, 0, 3, 11],
+      ['orange-tree', 12, 2, 3, 12],
+      ['cherry-tree', 14, 2, 3],
+      ['peach-tree', 12, 4, 3],
+      ['apple-tree', 14, 4, 2],
+    ]
+    for (const [kind, x, y, stage, water] of trees) {
+      const catalogId = 'seed-' + kind
+      const grown = getCatalogItem(catalogId)!.plant!.waterToMature
+      await db.plants.put({
+        id: 'tree-' + x + '-' + y,
+        childId,
+        x,
+        y,
+        scene: 'outdoor',
+        catalogId,
+        stage,
+        waterCount: stage === 3 ? (water ?? grown) : grown - 2,
+        lastHarvestWater: water ? grown : undefined,
+        plantedAt: at,
+      })
+    }
     for (const [kind, x, y] of props)
       await db.placed.put({
         id: 'toy-' + kind + '-' + x,

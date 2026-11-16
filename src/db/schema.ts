@@ -9,8 +9,9 @@ import {
 } from '../data/tasks'
 import { daysToFreeze, freezePlan } from '../engine/plans'
 import { toTaskDay } from '../engine/taskDay'
+import { ORCHARD_PITS, pitAt } from '../engine/plots'
 
-export const SCHEMA_VERSION = 8
+export const SCHEMA_VERSION = 9
 
 export interface VideoBlob { id: string; blob: Blob; createdAt: string }
 export interface Snapshot { id: string; schemaVersion: number; at: string; data: string }
@@ -138,6 +139,20 @@ export class GardenDB extends Dexie {
         const days = daysToFreeze(toTaskDay(new Date(child.createdAt)), today, new Set(frozen.map((p) => p.date)))
         await tx.table<DayPlan>('dayPlans').bulkPut(days.map((d) => freezePlan(tasks, child.id, d)))
         if (!tasks.some((t) => t.id === PINYIN_TASK_ID)) await tx.table<TaskDef>('tasks').add(pinyinTask(child.id, tasks.length))
+      }
+    })
+    // 版本 9：花园右边加了果园。以前种在菜畦里的树搬进果园的空树坑，生长、结果进度都不变
+    this.version(9).stores({}).upgrade(async (tx) => {
+      await snapshotBeforeMigration(tx, 8, [...V1_TABLES, 'dayPlans', 'spellWords', 'spellSessions', 'handRaises'])
+      for (const child of await tx.table<Child>('children').toArray()) {
+        const plants = await tx.table<PlantInstance>('plants').where('childId').equals(child.id).toArray()
+        const outdoor = plants.filter((p) => p.scene === 'outdoor' && !p.pondId)
+        const free = ORCHARD_PITS.filter((r) => !outdoor.some((p) => p.x === r.x && p.y === r.y))
+        for (const tree of outdoor.filter((p) => p.catalogId.endsWith('-tree') && !pitAt(p.x, p.y))) {
+          const pit = free.shift()
+          if (!pit) break
+          await tx.table<PlantInstance>('plants').put({ ...tree, x: pit.x, y: pit.y })
+        }
       }
     })
   }

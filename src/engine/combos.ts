@@ -1,3 +1,4 @@
+import { plantRect } from './plots'
 // 花园里的“东西”和相邻组合：两样东西挨着放（上下左右和斜角都算）就组成一个组合。
 // 组合只是让摆放有讲究：挨着时闪光，第一次发现进图鉴、送一点金币，不改浇水和收获。
 import type { PlacedItem, PlantInstance } from '../data/types'
@@ -25,7 +26,7 @@ export function thingsOf(plants: PlantInstance[], placed: PlacedItem[]): Thing[]
     })
   const grown: Thing[] = plants
     .filter((p) => p.scene === 'outdoor')
-    .map((p) => ({ id: p.id, kind: 'plant', catalogId: p.catalogId, x: p.x, y: p.y, w: p.pondId ? 2 : 1, h: p.pondId ? 2 : 1, mature: p.stage === 3 }))
+    .map((p) => ({ id: p.id, kind: 'plant', catalogId: p.catalogId, ...plantRect(p), mature: p.stage === 3 }))
   return [...items, ...grown]
 }
 

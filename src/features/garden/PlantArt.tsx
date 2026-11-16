@@ -1,6 +1,7 @@
 import type { PlantInstance } from '../../data/types'
 import { getCatalogItem } from '../../data/catalog'
-import { canHarvest, isThirsty } from '../../engine/growth'
+import { canHarvest, fruitLevel, isThirsty } from '../../engine/growth'
+import { TreeArt, fruitKindOf } from './TreeArt'
 import { Icon } from '../../ui/Icon'
 
 /** 生长阶段图标：种子是小土堆，发芽、长大（树是小树苗）用自绘图，成熟显示植物自己的图标 */
@@ -25,7 +26,11 @@ export function PlantArt({ plant, today, size = 48, hop, fluid }: { plant: Plant
   const ready = canHarvest(plant, item.plant)
   return (
     <span className={`plant-art${hop ? ' hop' : ''}${ready ? ' ready' : ''}${fluid ? ' fluid' : ''}`}>
-      <Icon icon={icon} size={size} fluid={fluid} />
+      {plant.stage === 3 && fruitKindOf(plant.catalogId) ? (
+        <TreeArt kind={fruitKindOf(plant.catalogId)!} level={fruitLevel(plant, item.plant)} size={size} fluid={fluid} />
+      ) : (
+        <Icon icon={icon} size={size} fluid={fluid} />
+      )}
       {thirsty && <span className="plant-flag thirsty" aria-label="口渴了">💧</span>}
       {ready && <span className="plant-flag ready-flag" aria-label="可以收获">✨</span>}
     </span>

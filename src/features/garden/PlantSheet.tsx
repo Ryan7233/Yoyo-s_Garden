@@ -13,7 +13,7 @@ import { play } from '../../ui/sfx'
 
 const STAGE = ['种子', '发芽了', '长大了', '开花啦']
 
-export function PlantSheet({ plantId, onClose, onWatered }: { plantId: string; onClose: () => void; onWatered: (id: string, stageUp: boolean) => void }) {
+export function PlantSheet({ plantId, onClose, onWatered, sheet }: { plantId: string; onClose: () => void; onWatered: (id: string, stageUp: boolean) => void; sheet?: boolean }) {
   const { plants, today, balance } = useStore()
   const [digging, setDigging] = useState(false)
   const [party, setParty] = useState(0)
@@ -50,10 +50,13 @@ export function PlantSheet({ plantId, onClose, onWatered }: { plantId: string; o
 
   return (
     <>
-      <Modal onClose={onClose}>
-        <div className="plant-hero">
-          <PlantArt plant={plant} today={today} size={110} />
-        </div>
+      <Modal onClose={onClose} sheet={sheet}>
+        {/* 3D 里树本身就在上半屏，卡片里不再画一遍大图 */}
+        {!sheet && (
+          <div className="plant-hero">
+            <PlantArt plant={plant} today={today} size={110} />
+          </div>
+        )}
         <h2 className="modal-title">{item.name}</h2>
         <p className="title stage-label">{stageLabel}</p>
         {plant.stage < 3 && (

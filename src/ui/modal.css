@@ -33,3 +33,23 @@
   flex-wrap: wrap;
   margin-top: var(--sp-3);
 }
+
+/* 底部弹出：背景几乎不变暗，上半屏照样看得见 3D 花园里刚点的那棵树 */
+.modal-backdrop.as-sheet {
+  align-items: flex-end;
+  background: linear-gradient(to bottom, transparent 45%, rgba(79, 59, 90, 0.18));
+  padding-bottom: calc(8px + var(--safe-bottom));
+}
+.modal-sheet {
+  width: min(720px, 100%);
+  max-height: 48%;
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--r-xl) var(--r-xl) var(--r-lg) var(--r-lg);
+  animation: sheet-up 0.32s var(--ease-out, ease-out);
+}
+@keyframes sheet-up {
+  from { transform: translateY(40px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal-sheet { animation: none; }
+}

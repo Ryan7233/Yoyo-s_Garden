@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { expandCandidates, isOccupied, starterPlots } from './plots'
+import { ORCHARD_PITS, expandCandidates, isOccupied, pitAt, plantRect, starterPlots } from './plots'
 import { BALANCE } from '../data/balance'
 
 describe('扩建地块', () => {
@@ -20,6 +20,15 @@ describe('扩建地块', () => {
     expect(isOccupied(1, 1, [], [])).toBe(true)
     const plots2 = [{ childId: 'c1', x: 3, y: 1, kind: 'soil' as const }]
     expect(expandCandidates(plots2, [])).not.toContainEqual({ x: 2, y: 1 })
+  })
+  it('果园整片不能扩建菜畦；树坑 2 × 2，一共 8 个', () => {
+    expect(ORCHARD_PITS).toHaveLength(8)
+    expect(isOccupied(12, 3, [], [])).toBe(true)
+    const edge = [{ childId: 'c1', x: 11, y: 4, kind: 'soil' as const }]
+    expect(expandCandidates(edge, [])).not.toContainEqual({ x: 12, y: 4 })
+    expect(pitAt(15, 7)).toEqual({ x: 14, y: 6, w: 2, h: 2 })
+    expect(plantRect({ x: 14, y: 6 })).toEqual({ x: 14, y: 6, w: 2, h: 2 })
+    expect(plantRect({ x: 3, y: 4 })).toEqual({ x: 3, y: 4, w: 1, h: 1 })
   })
   it('达到上限后不能再扩建', () => {
     const many = Array.from({ length: BALANCE.maxPlots }, (_, i) => ({ childId: 'c1', x: 3 + (i % 8), y: 4 + Math.floor(i / 8), kind: 'soil' as const }))

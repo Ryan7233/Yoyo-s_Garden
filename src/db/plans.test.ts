@@ -61,16 +61,24 @@ describe('数据库升级', () => {
     await v1.table('children').add({ id: 'c', name: '小花', gardenName: '园', houseColor: '#fff', theme: 'mint', mascotName: '苞', createdAt: createdAt.toISOString() })
     await v1.table('tasks').bulkAdd(defaultTasks('c'))
     await v1.table('ledger').add({ id: 'l1', childId: 'c', at: createdAt.toISOString(), currency: 'coin', amount: 7, reason: 'gift' })
+    const plant = { childId: 'c', scene: 'outdoor', plantedAt: createdAt.toISOString(), stage: 3, waterCount: 11, lastHarvestWater: 10 }
+    await v1.table('plants').bulkAdd([
+      { ...plant, id: 'peach', catalogId: 'seed-peach-tree', x: 3, y: 4 },
+      { ...plant, id: 'sun', catalogId: 'seed-sunflower', x: 4, y: 4 },
+    ])
     v1.close()
 
     const next = new GardenDB(name)
     useDatabase(next)
     await next.open()
     const snaps = (await next.snapshots.toArray()).sort((a, b) => a.schemaVersion - b.schemaVersion)
-    expect(snaps.map((s) => s.schemaVersion)).toEqual([1, 2, 5, 6, 7])
+    expect(snaps.map((s) => s.schemaVersion)).toEqual([1, 2, 5, 6, 7, 8])
     expect(JSON.parse(snaps[0].data).ledger).toHaveLength(1)
     expect(await next.ledger.get('l1')).toMatchObject({ amount: 7 })
     expect(await next.dayPlans.count()).toBeGreaterThanOrEqual(3)
+    // 版本 9：菜畦里的树搬进果园第一个树坑，长到哪儿还是哪儿；花不动
+    expect(await next.plants.get('peach')).toMatchObject({ x: 12, y: 0, waterCount: 11, lastHarvestWater: 10 })
+    expect(await next.plants.get('sun')).toMatchObject({ x: 4, y: 4 })
   })
 })
 

@@ -36,6 +36,19 @@ describe('商店', () => {
   })
 })
 
+describe('果园', () => {
+  it('树只能种进果园树坑，点树坑哪一格都种在坑的左上角；花不能种进果园', async () => {
+    await db.inventory.add({ id: 'i-apple', childId, catalogId: 'seed-apple-tree', count: 2 })
+    expect(await plantSeed(childId, 'seed-apple-tree', 3, 4, day(1))).toBe(false) // 菜畦不种树
+    expect(await plantSeed(childId, 'seed-sunflower', 12, 0, day(1))).toBe(false) // 果园不种花
+    expect(await plantSeed(childId, 'seed-apple-tree', 13, 1, day(1))).toBe(true)
+    expect(await db.plants.toArray()).toMatchObject([{ catalogId: 'seed-apple-tree', x: 12, y: 0 }])
+    expect(await plantSeed(childId, 'seed-apple-tree', 12, 0, day(1))).toBe(false) // 坑里已经有树
+    expect(await plantSeed(childId, 'seed-apple-tree', 14, 6, day(1))).toBe(true)
+    expect(await count('seed-apple-tree')).toBe(0)
+  })
+})
+
 describe('种植、浇水、收获', () => {
   it('向日葵：种下 → 三天浇三次 → 收获 → 地块变空', async () => {
     expect(await plantSeed(childId, 'seed-sunflower', 3, 4, day(1))).toBe(true)

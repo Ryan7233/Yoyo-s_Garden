@@ -24,7 +24,8 @@ export const BALANCE = {
   bonusReasons: ['主动做家务', '照顾弟弟', '讲一件学校的事', '读写坐姿端正'],
 
   /** 花园 */
-  gridWidth: 12,
+  /** 右边 4 列是果园（见 engine/plots ORCHARD_RECT） */
+  gridWidth: 16,
   gridHeight: 8,
   plotExpandCost: 20,
   maxPlots: 24,

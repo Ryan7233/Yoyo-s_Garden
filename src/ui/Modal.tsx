@@ -8,7 +8,8 @@ const FOCUSABLE = 'button:not(:disabled), [href], input:not(:disabled), select:n
  * 弹窗：挂到 body 上，不受所在面板滚动或动画的影响。
  * 打开时把焦点移进弹窗，Tab 只在弹窗内切换，Esc 关闭，关闭后焦点回到打开它的按钮。
  */
-export function Modal({ children, onClose, wide }: { children: ReactNode; onClose?: () => void; wide?: boolean }) {
+/** sheet：从底部升起、只占下半屏，上半屏还能看到被点的东西（3D 花园里用） */
+export function Modal({ children, onClose, wide, sheet }: { children: ReactNode; onClose?: () => void; wide?: boolean; sheet?: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -47,10 +48,10 @@ export function Modal({ children, onClose, wide }: { children: ReactNode; onClos
   }
 
   return createPortal(
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className={`modal-backdrop${sheet ? ' as-sheet' : ''}`} onClick={onClose}>
       <div
         ref={ref}
-        className={`modal card pop${wide ? ' modal-wide' : ''}`}
+        className={`modal card${sheet ? ' modal-sheet' : ' pop'}${wide ? ' modal-wide' : ''}`}
         role="dialog"
         aria-modal="true"
         tabIndex={-1}

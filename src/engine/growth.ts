@@ -47,3 +47,16 @@ export function harvest(p: PlantInstance, spec: PlantSpec): PlantInstance | null
   if (!spec.perennial) return null
   return { ...p, lastHarvestWater: p.waterCount }
 }
+
+/**
+ * 果树枝头现在的样子：0 刚摘完（只有叶子）、1 开花、2 青果、3 果子熟了可以摘。
+ * 一次性植物成熟即是 3；纯观赏的树没有果子，返回 0。
+ */
+export function fruitLevel(p: PlantInstance, spec: PlantSpec): 0 | 1 | 2 | 3 {
+  if (p.stage !== 3) return 0
+  if (canHarvest(p, spec)) return 3
+  if (!spec.perennial || !spec.regrowWater) return 0
+  const step = (p.waterCount - spec.waterToMature) % spec.regrowWater
+  if (step === 0) return 0
+  return step >= spec.regrowWater - 1 ? 2 : 1
+}

@@ -25,6 +25,8 @@
   );
   --obj: min(var(--cw), var(--ch));
   position: relative;
+  /* 访客从屏幕右边飞进来时不能把花园撑宽，否则会多出一个“往右滑”的提示 */
+  overflow-x: clip;
   display: flex;
   flex-direction: column;
   min-height: 100%;
@@ -211,6 +213,8 @@
   background: radial-gradient(closest-side, var(--sh-contact), transparent);
 }
 .plant.in-pond { padding-bottom: calc(var(--ch) * 0.3); }
+/* 果园里的树占 2 × 2，画得更大，扎根在树坑中间 */
+.plant.in-orchard { --obj: calc(min(var(--cw), var(--ch)) * 1.95); padding-bottom: calc(var(--ch) * 0.42); }
 .plant.in-pond::before { display: none; }
 
 .plant-art { position: relative; display: inline-flex; align-items: flex-end; justify-content: center; }
@@ -383,3 +387,34 @@
 .wish-text .num { font-size: 16px; }
 
 .wood-entry { position:absolute; bottom:10px; right:12px; z-index:5; }
+
+/* ---- 果园：右边 4 列草地，四周一圈矮篱笆，8 个圆树坑 ---- */
+.orchard-yard {
+  position: relative;
+  margin: 4px;
+  border-radius: 22px;
+  border: 3px dashed rgba(150, 105, 64, 0.45);
+  background: radial-gradient(120% 90% at 50% 40%, rgba(214, 236, 160, 0.55), rgba(176, 210, 120, 0.35));
+  pointer-events: none;
+  z-index: 0;
+}
+.orchard-sign {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  translate: -50% 0;
+  padding: 2px 12px;
+  border-radius: 10px;
+  border: 2px solid var(--soil-dark);
+  background: #f6dcae;
+  color: #7a5233;
+  font-size: 15px;
+  white-space: nowrap;
+}
+.plot.pit::before {
+  inset: 22% 18% 20%;
+  border-radius: 50%;
+  border-width: 2px;
+  background: radial-gradient(60% 55% at 45% 40%, #b48356, #8a5b3a 75%);
+  box-shadow: inset 0 3px 0 rgba(255, 230, 190, 0.25), 0 3px 0 rgba(110, 72, 44, 0.35);
+}

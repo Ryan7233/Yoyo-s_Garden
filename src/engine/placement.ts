@@ -1,7 +1,7 @@
 // 摆放规则与占格校验（SPEC 5.5）
 import type { CatalogItem, PlacedItem, PlantInstance, Plot } from '../data/types'
 import { BALANCE } from '../data/balance'
-import { HOUSE_RECT, type Rect } from './plots'
+import { HOUSE_RECT, ORCHARD_RECT, plantRect, type Rect } from './plots'
 import { getCatalogItem } from '../data/catalog'
 import { TILE_IDS } from '../data/indoor'
 
@@ -66,12 +66,13 @@ export function canPlace(
   if (!fp.tile) {
     for (const pl of s.plants) {
       if (pl.id === ignoreId) continue
-      if (overlaps(fp, { x: pl.x, y: pl.y, w: 1, h: 1 })) return false
+      if (overlaps(fp, plantRect(pl))) return false
     }
   }
   if (scene === 'outdoor') {
     // 户外装饰只能放在草地或小路：不能压小屋和地块
-    if (overlaps(fp, HOUSE_RECT)) return false
+    // 果园整片留给果树
+    if (overlaps(fp, HOUSE_RECT) || overlaps(fp, ORCHARD_RECT)) return false
     if (s.plots.some((p) => overlaps(fp, { x: p.x, y: p.y, w: 1, h: 1 }))) return false
   }
   return true

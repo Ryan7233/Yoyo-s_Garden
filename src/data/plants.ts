@@ -107,8 +107,19 @@ export function harvestInfo(harvestId: string): HarvestInfo | undefined {
 }
 
 /** 一颗种子能否种在室外泥土地块 */
+/** 树：只能种在果园的树坑里 */
+export function isTreeSeed(item: CatalogItem): boolean {
+  return !!item.plant && item.id.endsWith('-tree')
+}
+
+/** 菜畦里能种的：花和菜（树要去果园） */
 export function plantableOutdoors(item: CatalogItem): boolean {
-  return item.plant?.needs === 'soil'
+  return item.plant?.needs === 'soil' && !isTreeSeed(item)
+}
+
+/** 果园树坑里能种的 */
+export function plantableInOrchard(item: CatalogItem): boolean {
+  return item.plant?.needs === 'soil' && isTreeSeed(item)
 }
 
 /** 一颗种子能否种在池塘（莲花、水晶莲） */
