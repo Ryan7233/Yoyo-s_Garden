@@ -35,6 +35,12 @@ export class Carving {
   ring(c: string, p: Point, s: Point, r?: Point) {
     this.part(ring, c, p, s, r)
   }
+  /** Half a hoop standing up in the XY plane, feet on y = 0: rainbows and arches. */
+  arc(c: string, radius: number, tube: number, p: Point, r?: Point) {
+    const half = new T.TorusGeometry(radius, tube, 6, 44, Math.PI).toNonIndexed()
+    this.part(half, c, p, [1, 1, 0.4], r)
+    half.dispose()
+  }
   beam(c: string, a: Point, b: Point, radius: number) {
     const start = new T.Vector3(...a),
       end = new T.Vector3(...b)

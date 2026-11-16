@@ -17,7 +17,9 @@ import { animal, furniture } from './furniture'
 import { cottage, harvestTint, mascot, plant } from './models'
 import { stroll } from './stroll'
 import type { PlantInstance } from '../../../data/types'
-import { bed, createWorld, orchardYard, pit, type Stop, type Toy } from './world'
+import { bed, createWorld, orchardYard, pit, rainbow, type Stop, type Toy } from './world'
+import { skyPhase } from '../sky'
+import { ORCHARD_RECT, isOccupied } from '../../../engine/plots'
 import { ORCHARD_PITS, pitAt, plantRect } from '../../../engine/plots'
 import './woodland.css'
 
@@ -33,6 +35,14 @@ interface Props {
   /** Something that just happened to a plant: play it out in the garden. */
   fx?: { id: string; kind: 'water' | 'grow' | 'harvest'; plant?: PlantInstance } | null
 }
+const forcedHour = Number(new URLSearchParams(location.search).get('hour') ?? NaN)
+/** The hour of the day as a number with fractions, e.g. 17.5 for half past five. */
+function clockHour() {
+  if (!Number.isNaN(forcedHour)) return forcedHour
+  const now = new Date()
+  return now.getHours() + now.getMinutes() / 60
+}
+
 export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand, onExit, carded = false, fx }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const world = useRef<ReturnType<typeof createWorld> | null>(null)
@@ -44,7 +54,10 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
   const [near, setNear] = useState(false),
     [failed, setFailed] = useState(false),
     [courage, setCourage] = useState(false)
-  const { child, plots, plants, placed, decorating, settings, today } = useStore()
+  const { child, plots, plants, placed, decorating, settings, today, ledger } = useStore()
+  // The garden keeps the real time of day. `?hour=21` previews another hour.
+  const [hour, setHour] = useState(clockHour)
+  const phase = skyPhase(Math.floor(hour))
   const { holding, hover } = useDecorate()
   const visitors = useHere('outdoor', 'wood')
   const level = sunflowerLevel(settings?.courageWeeks?.length ?? 0)
@@ -58,7 +71,33 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
   }
   const roof = child?.houseColor ?? '#e995ad'
   add({ key: 'house', model: 'house' + roof, carve: (m) => cottage(m, roof), x: 1.5, z: 1.5 }, onHouse)
-  add({ key: 'orchard', model: 'orchard', carve: orchardYard, x: 0, z: 0, hit: false })
+  const sizedOut = placed
+    .filter((p) => p.scene === 'outdoor')
+    .map((p) => ({ ...p, w: getCatalogItem(p.catalogId)?.size[0] ?? 1, h: getCatalogItem(p.catalogId)?.size[1] ?? 1 }))
+  // The orchard gate opens where nothing stands in front of it (a pond, say); the middle if it can.
+  const gateRow =
+    [3, 4, 2, 5, 1, 6, 0].find((y) => [y, y + 1].every((r) => !isOccupied(ORCHARD_RECT.x - 1, r, plots, sizedOut))) ?? 3
+  const gateZ = gateRow + 1
+  add({ key: 'orchard', model: 'orchard' + gateZ, carve: (m) => orchardYard(m, gateZ), x: 0, z: 0, hit: false })
+  // After dark the cottage windows glow and spill warm light onto the grass.
+  add({
+    key: 'house-glow',
+    model: 'house-glow',
+    x: 1.5,
+    z: 1.5,
+    hit: false,
+    glow: true,
+    night: true,
+    light: '#ffc978',
+    carve: (m) => {
+      for (const x of [-0.71, 0.71]) m.box('#ffe08a', [x, 1.07, 1.075], [0.4, 0.47, 0.03])
+      for (const s of [-1, 1]) m.box('#ffe08a', [s * 1.205, 1.06, 0], [0.03, 0.5, 0.48])
+      m.ball('#ffe9a8', [0, 1.96, 0.965], [0.17, 0.17, 0.03])
+    },
+  })
+  // A rainbow stands over the garden on a day when all the must-do tasks are done.
+  if (phase !== 'night' && ledger.some((e) => e.reason === 'allDone' && e.date === today && e.amount > 0))
+    add({ key: 'rainbow', model: 'rainbow', carve: rainbow, x: 8, z: 4, y: -0.4, face: true, glow: true, hit: false, behind: 5 })
   for (const r of ORCHARD_PITS)
     add({ key: 'pit-' + r.x + '-' + r.y, model: 'pit', carve: pit, x: r.x + 1, z: r.y + 1 }, () => onPlot(r.x, r.y))
   for (const p of plots)
@@ -78,6 +117,19 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
       },
       p.catalogId === POND_ID ? () => onPond(p.id, p.x, p.y) : undefined,
     )
+    // Lamps come on at night.
+    if (/street-lamp|star-lamp/.test(p.catalogId))
+      add({
+        key: p.id + '-glow',
+        model: 'lamp-glow',
+        x: p.x + w / 2,
+        z: p.y + h / 2,
+        hit: false,
+        glow: true,
+        night: true,
+        light: '#ffd98a',
+        carve: (m) => m.ball('#fff2ae', [0, 1.39, 0], [0.26, 0.3, 0.26]),
+      })
   }
   for (const p of plants.filter((p) => p.scene === 'outdoor')) {
     const spec = getCatalogItem(p.catalogId)?.plant
@@ -132,6 +184,8 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
           x: x + 0.32,
           z: z + 0.31,
           y: 0.38,
+          // Bobbing about, so it catches the eye.
+          fly: true,
         },
         tap,
       )
@@ -142,11 +196,12 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
         key: 'courage',
         model: 'courage',
         carve: (m) => plant(m, 'seed-sunflower', 3),
-        face: true,
+        // Her courage sunflower: the tallest flower in the garden, and it turns to follow the sun all day.
+        sunward: true,
         wind: 0.8,
         x: 0.5,
         z: 2.52,
-        size: 0.85 + level * 0.13,
+        size: 1.25 + level * 0.16,
       },
       () => setCourage(true),
     )
@@ -280,7 +335,9 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
       canvasCells.set(el, world.current.cell)
       // Dev server only: lets the effects be triggered by hand when checking how they look.
       if (import.meta.env.DEV) (window as unknown as { __wood?: unknown }).__wood = world.current
-    } catch {
+    } catch (error) {
+      // Say why in the console: a silent fallback hides real mistakes as well as missing WebGL.
+      console.error('木作花园打不开', error)
       setFailed(true)
       return
     }
@@ -322,6 +379,18 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
   useEffect(() => {
     world.current?.lift(carded)
   }, [carded])
+  useEffect(() => {
+    const tick = setInterval(() => setHour(clockHour()), 60_000)
+    return () => clearInterval(tick)
+  }, [])
+  useEffect(() => {
+    world.current?.setHour(hour, phase)
+  }, [hour, phase, failed])
+  // Her name over the orchard gate.
+  const owner = child?.name
+  useEffect(() => {
+    if (owner) world.current?.label('orchard', owner + ' 的果园', ORCHARD_RECT.x + 0.08, 1.2, gateZ)
+  }, [owner, gateZ, failed])
   const pinchState = () => {
     const [a, b] = [...fingers.current.values()]
     return { dist: Math.hypot(a.x - b.x, a.y - b.y) || 1, midX: (a.x + b.x) / 2, midY: (a.y + b.y) / 2 }
@@ -405,7 +474,8 @@ export default function Woodland({ onHouse, onPlot, onPond, candidates, onExpand
     if (cell && (pitAt(cell.x, cell.y) || plots.some((b) => b.x === cell.x && b.y === cell.y))) onPlot(cell.x, cell.y)
   }
   return (
-    <div className="woodland">
+    <div className={'woodland sky-' + phase}>
+      <div className="wood-sky" aria-hidden />
       <canvas
         ref={canvas}
         aria-label="立体木作花园"

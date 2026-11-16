@@ -1,7 +1,64 @@
 .woodland {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 40% 36%, #f6f0d9 0%, #e7e6c8 55%, #c8d4b0 100%);
+  overflow: hidden;
+  background: linear-gradient(#aedcf7, #dff2fb 55%, #f6f3df);
+  transition: background 1.2s;
+}
+/* 花园飘在天上：天空跟着真实时间换颜色，太阳或月亮挂在一角，四周稍微压暗 */
+.woodland.sky-morning { background: linear-gradient(#a9dcfa, #d9f0fc 50%, #fdf3d8); }
+.woodland.sky-afternoon { background: linear-gradient(#8fcdf6, #cdeafb 55%, #f3f6e2); }
+.woodland.sky-evening { background: linear-gradient(#7d86c9, #f3a6a0 45%, #ffd9a8 80%, #ffe9c4); }
+.woodland.sky-night { background: linear-gradient(#1d2148, #3a3a7c 55%, #6b5aa8); }
+.wood-sky {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.wood-sky::before {
+  content: '';
+  position: absolute;
+  top: 9%;
+  right: 12%;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffbe0 0 38%, #ffe58a 60%, rgba(255, 229, 138, 0) 72%);
+  box-shadow: 0 0 60px 30px rgba(255, 236, 160, 0.45);
+}
+.sky-morning .wood-sky::before { right: auto; left: 12%; top: 16%; }
+.sky-evening .wood-sky::before {
+  top: 34%;
+  background: radial-gradient(circle, #fff1c9 0 36%, #ffb36b 62%, rgba(255, 179, 107, 0) 74%);
+  box-shadow: 0 0 80px 40px rgba(255, 170, 110, 0.4);
+}
+.sky-night .wood-sky::before {
+  width: 70px;
+  height: 70px;
+  background: radial-gradient(circle at 38% 38%, #fffdf0 0 52%, #e8e6d0 64%, rgba(232, 230, 208, 0) 70%);
+  box-shadow: 0 0 50px 22px rgba(220, 225, 255, 0.28);
+}
+.sky-night .wood-sky {
+  background-image:
+    radial-gradient(1.6px 1.6px at 12% 18%, #fff 60%, transparent), radial-gradient(1.4px 1.4px at 27% 9%, #fff 60%, transparent),
+    radial-gradient(2px 2px at 41% 22%, #fff7c9 60%, transparent), radial-gradient(1.4px 1.4px at 58% 12%, #fff 60%, transparent),
+    radial-gradient(1.8px 1.8px at 72% 27%, #fff 60%, transparent), radial-gradient(1.4px 1.4px at 8% 44%, #fff 60%, transparent),
+    radial-gradient(2px 2px at 93% 38%, #fff7c9 60%, transparent), radial-gradient(1.4px 1.4px at 35% 40%, #fff 60%, transparent),
+    radial-gradient(1.6px 1.6px at 66% 48%, #fff 60%, transparent), radial-gradient(1.4px 1.4px at 50% 6%, #fff 60%, transparent),
+    radial-gradient(1.6px 1.6px at 19% 62%, #fff 60%, transparent), radial-gradient(1.4px 1.4px at 86% 66%, #fff 60%, transparent);
+  animation: wood-twinkle 5s ease-in-out infinite alternate;
+}
+@keyframes wood-twinkle {
+  from { opacity: 0.65; }
+  to { opacity: 1; }
+}
+.woodland::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(ellipse at 50% 46%, transparent 58%, rgba(52, 38, 60, 0.16));
 }
 .woodland canvas {
   position: absolute;

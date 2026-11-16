@@ -30,6 +30,31 @@ export type Toy = {
   speed?: number
   /** Gives a little hop of its own every few seconds. */
   fidget?: boolean
+  /** Shines by itself instead of being lit: window panes, lamp bulbs, the rainbow. */
+  glow?: boolean
+  /** Only there after dark. */
+  night?: boolean
+  /** Casts warm light of this colour around itself after dark. */
+  light?: string
+  /** Turns to follow the sun across the sky instead of facing the camera. */
+  sunward?: boolean
+  /** Stands this far behind the garden as seen from the camera (the rainbow). */
+  behind?: number
+}
+export type Phase = 'morning' | 'afternoon' | 'evening' | 'night'
+/** Light for each part of the day: sky and ground bounce, the sun (or moon), and how dark shadows are. */
+const LIGHT: Record<Phase, { sky: string; ground: string; hemi: number; sun: string; power: number; shade: number }> = {
+  morning: { sky: '#fff0d6', ground: '#d6c6ac', hemi: 2.05, sun: '#ffe3b4', power: 2.3, shade: 0.17 },
+  afternoon: { sky: '#fff1d8', ground: '#cfbca7', hemi: 2.15, sun: '#fff3d9', power: 2.25, shade: 0.18 },
+  evening: { sky: '#ffd6bd', ground: '#b9a0aa', hemi: 1.75, sun: '#ffab72', power: 2.1, shade: 0.16 },
+  night: { sky: '#8ea2dc', ground: '#3c4568', hemi: 1.25, sun: '#b6c6ff', power: 0.9, shade: 0.1 },
+}
+function cloud(m: Carving) {
+  m.ball('#ffffff', [0, 0, 0], [1.1, 0.5, 0.7])
+  m.ball('#ffffff', [-0.85, -0.08, 0.1], [0.75, 0.4, 0.55])
+  m.ball('#fbf7ef', [0.9, -0.1, -0.05], [0.8, 0.42, 0.6])
+  m.ball('#ffffff', [0.25, 0.32, 0], [0.7, 0.45, 0.55])
+  m.ball('#f4efe6', [0, -0.3, 0], [1.5, 0.22, 0.75])
 }
 export type Stop = { x: number; y: number; z: number; stay: number }
 const hash = (key: string) => [...key].reduce((n, c) => (n * 31 + c.charCodeAt(0)) % 9973, 7) / 9973
@@ -151,11 +176,10 @@ function landscape(m: Carving) {
     )
 }
 /** The orchard: a low picket fence round the right-hand strip, with a gap and a little sign facing the beds. */
-export function orchardYard(m: Carving) {
+export function orchardYard(m: Carving, gateZ = ORCHARD_RECT.y + ORCHARD_RECT.h / 2) {
   const { x: x0, y: z0, w, h } = ORCHARD_RECT
   const x1 = x0 + w,
-    z1 = z0 + h,
-    gateZ = z0 + h / 2
+    z1 = z0 + h
   const post = (x: number, z: number) => {
     m.box(honey, [x, 0.2, z], [0.09, 0.4, 0.09])
     m.cone('#c88a55', [x, 0.44, z], [0.075, 0.09, 0.075], [0, Math.PI / 4, 0])
@@ -170,11 +194,18 @@ export function orchardYard(m: Carving) {
   rail([x1 - inset, z0 + inset], [x1 - inset, z1 - inset])
   rail([x1 - inset, z1 - inset], [x0 + inset, z1 - inset])
   // The side facing the beds has a gate gap in the middle.
-  rail([x0 + inset, z1 - inset], [x0 + inset, gateZ + 0.7])
-  rail([x0 + inset, gateZ - 0.7], [x0 + inset, z0 + inset])
-  m.beam(oak, [x0 - 0.15, 0, gateZ - 0.9], [x0 - 0.15, 0.78, gateZ - 0.9], 0.04)
-  m.box('#f2d29e', [x0 - 0.19, 0.74, gateZ - 0.9], [0.06, 0.3, 0.62])
-  for (let i = 0; i < 3; i++) m.ball(['#d9473f', '#f39a2e', '#f0767c'][i], [x0 - 0.235, 0.74, gateZ - 1.07 + i * 0.17], [0.012, 0.06, 0.06])
+  if (z1 - inset - (gateZ + 0.7) > 0.3) rail([x0 + inset, z1 - inset], [x0 + inset, gateZ + 0.7])
+  if (gateZ - 0.7 - (z0 + inset) > 0.3) rail([x0 + inset, gateZ - 0.7], [x0 + inset, z0 + inset])
+  // Tall gateposts with a beam across: the name board hangs under it.
+  for (const s of [-0.7, 0.7]) m.beam(oak, [x0 + inset, 0, gateZ + s], [x0 + inset, 1.5, gateZ + s], 0.06)
+  m.beam(honey, [x0 + inset, 1.5, gateZ - 0.85], [x0 + inset, 1.5, gateZ + 0.85], 0.055)
+  for (let i = 0; i < 3; i++)
+    m.ball(['#d9473f', '#f39a2e', '#f0767c'][i], [x0 + inset, 1.6, gateZ - 0.3 + i * 0.3], [0.09, 0.09, 0.09])
+}
+
+/** A rainbow for a day when every must-do task is done: six bands arching over the whole garden. */
+export function rainbow(m: Carving) {
+  ;['#f2797d', '#f7a85b', '#f9dc6b', '#8fd08b', '#7fbde8', '#b59be0'].forEach((c, i) => m.arc(c, 8.6 - i * 0.34, 0.2, [0, 0, 0]))
 }
 
 /** A round planting pit in the grass: soft soil inside a ring of little stones. */
@@ -231,6 +262,17 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
   sun.shadow.bias = -0.0004
   scene.add(sun, sun.target)
   const { material: mat, noise, wind } = carvedMaterial()
+  /** For things that shine with their own light. */
+  const glowMat = new T.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.9, depthWrite: false })
+  /** Clouds are soft and plain, not carved wood. */
+  const cloudMat = new T.MeshStandardMaterial({ color: '#ffffff', roughness: 1, emissive: '#9fb4d8', emissiveIntensity: 0.35 })
+  let night = false,
+    sunTurn = 0.5,
+    lit = 0
+  /** Lamps and lit windows: toy key → its light. */
+  const lamps = new Map<string, T.PointLight>()
+  /** Wooden signs with writing on them. */
+  const labels = new Map<string, { mesh: T.Mesh<T.PlaneGeometry, T.MeshStandardMaterial>; text: string }>()
   const cache = new Map<string, T.BufferGeometry>()
   const objects = new Map<string, T.Mesh<T.BufferGeometry, T.MeshStandardMaterial>>()
   const ray = new T.Raycaster()
@@ -294,9 +336,9 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
       let obj = objects.get(t.key)
       const fresh = !obj
       if (!obj) {
-        obj = new T.Mesh(geo, mat)
-        obj.castShadow = true
-        obj.receiveShadow = true
+        obj = new T.Mesh(geo, t.glow ? (glowMat as unknown as T.MeshStandardMaterial) : mat)
+        obj.castShadow = !t.glow
+        obj.receiveShadow = !t.glow
         obj.rotation.order = 'YXZ'
         scene.add(obj)
         objects.set(t.key, obj)
@@ -324,6 +366,18 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
           ),
         )
     }
+    for (const t of rows)
+      if (t.light && !lamps.has(t.key)) {
+        const lamp = new T.PointLight(t.light, lit, 5.5, 1.6)
+        lamp.position.set(t.x, (t.y ?? 0) + 1.3, t.z + 0.3)
+        scene.add(lamp)
+        lamps.set(t.key, lamp)
+      }
+    for (const [key, lamp] of lamps)
+      if (!rows.some((t) => t.key === key && t.light)) {
+        scene.remove(lamp)
+        lamps.delete(key)
+      }
     for (const [key, petals] of drifts)
       if (!rows.some((t) => t.key === key && t.petals)) {
         for (const p of petals) scene.remove(p)
@@ -347,18 +401,29 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
   let effects: ((at: number) => boolean)[] = []
   const ease = (p: number) => 1 - (1 - p) ** 3
   /** A temporary carved thing (watering can, basket, a flying fruit) that is not one of the garden's toys. */
-  const prop = (model: string, carve: (m: Carving) => void, into: T.Scene = stage) => {
+  const prop = (model: string, carve: (m: Carving) => void, into: T.Scene = stage, material: T.Material = mat) => {
     let geo = cache.get(model)
     if (!geo) {
       const m = new Carving()
       carve(m)
       cache.set(model, (geo = m.finish()))
     }
-    const mesh = new T.Mesh(geo, mat)
+    const mesh = new T.Mesh(geo, material)
     mesh.rotation.order = 'YXZ'
     into.add(mesh)
     return mesh
   }
+  // The garden floats in the sky: wooden clouds drift slowly round it, some above, some below.
+  const clouds = reduced
+    ? []
+    : Array.from({ length: 9 }, (_, i) => {
+        const c = prop('cloud', cloud, scene, cloudMat)
+        c.scale.setScalar(0.9 + (i % 4) * 0.35)
+        return c
+      })
+  const fireflies = reduced
+    ? []
+    : Array.from({ length: 16 }, () => prop('firefly', (m) => m.ball('#fff3a0', [0, 0, 0], [0.055, 0.055, 0.055]), scene, glowMat))
   /** Scale that pops in over the first `inMs` and shrinks away over the last 160 ms of `life`. */
   const blip = (t: number, life: number, inMs = 180) =>
     t < inMs ? ease(t / inMs) * 1.12 - 0.12 * ease(t / inMs) ** 2 : t > life - 160 ? Math.max(0, (life - t) / 160) : 1
@@ -458,7 +523,7 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
     let x = u.x,
       y = u.y ?? 0,
       z = u.z,
-      ry = u.face ? yaw + (u.angle ?? 0) * 0.3 : (u.angle ?? 0),
+      ry = u.sunward ? sunTurn : u.face ? yaw + (u.angle ?? 0) * 0.3 : (u.angle ?? 0),
       rz = 0,
       wide = 1,
       tall = 1
@@ -520,6 +585,11 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
       if (p >= 1) anims.delete(u.key)
     }
     const size = u.size ?? 1
+    if (u.behind) {
+      x -= Math.sin(yaw) * u.behind
+      z -= Math.cos(yaw) * u.behind
+    }
+    o.visible = !u.night || night
     o.position.set(x, y, z)
     o.rotation.set(u.droopNow * 0.42, ry, rz)
     o.scale.set(size * wide, size * tall * (1 - 0.06 * u.droopNow), size * wide)
@@ -579,6 +649,25 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
         }
       }
     wind.value = reduced ? 0 : at / 1000
+    clouds.forEach((c, i) => {
+      const a = i * 0.7 + (at / 90000) * (i % 2 ? 1 : -0.7),
+        far = 11.5 + (i % 3) * 2.2
+      c.position.set(W / 2 + Math.cos(a) * far * 1.25, [-2.2, 3.4, -1.2, 4.6, -3][i % 5] + Math.sin(at / 4000 + i) * 0.15, H / 2 + Math.sin(a) * far)
+      c.rotation.y = a
+    })
+    fireflies.forEach((f, i) => {
+      f.visible = night
+      if (!night) return
+      const t = at / 1000 + i * 3.1
+      f.position.set(
+        ((i * 2.9) % W) + Math.sin(t * 0.5 + i) * 0.7,
+        0.5 + (i % 4) * 0.35 + Math.sin(t * 0.8) * 0.25,
+        ((i * 1.7) % H) + Math.cos(t * 0.4 + i * 2) * 0.7,
+      )
+      // They wink on and off, each in its own time.
+      f.scale.setScalar(Math.max(0, Math.sin(t * 1.6)) ** 2 * 1.3)
+    })
+    for (const { mesh } of labels.values()) mesh.rotation.y = yaw
     for (const o of objects.values()) pose(o, at, weight)
     for (const [key, petals] of drifts) {
       const u = objects.get(key)?.userData as Toy | undefined
@@ -621,6 +710,78 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
     update,
     water,
     harvest,
+    /** The time of day by the clock: moves the sun, changes the light, and after dark turns the lamps on. */
+    setHour(hour: number, phase: Phase) {
+      const l = LIGHT[phase]
+      night = phase === 'night'
+      hemi.color.set(l.sky)
+      hemi.groundColor.set(l.ground)
+      hemi.intensity = l.hemi
+      sun.color.set(l.sun)
+      sun.intensity = l.power
+      // In the sky there is no table for the island to cast a shadow on.
+      shadow.visible = false
+      cloudMat.emissiveIntensity = night ? 0.12 : 0.35
+      // East in the morning, high at noon, west by evening; at night the moon stands in for it.
+      const a = night ? 2.2 : (T.MathUtils.clamp(hour, 6, 19) - 6) / 13 * Math.PI
+      sun.position.set(8 + Math.cos(a) * 11, 5 + Math.sin(a) * 9, 4 + 8)
+      sunTurn = Math.atan2(Math.cos(a) * 11, 8)
+      for (const lamp of lamps.values()) lamp.intensity = night ? 9 : 0
+      lit = night ? 9 : 0
+    },
+    /** Put up (or rewrite) a little wooden sign that always turns to face the reader. */
+    label(key: string, text: string, x: number, y: number, z: number) {
+      const old = labels.get(key)
+      if (old?.text === text) return void old.mesh.position.set(x, y, z)
+      if (old) {
+        scene.remove(old.mesh)
+        old.mesh.material.map?.dispose()
+        old.mesh.material.dispose()
+        old.mesh.geometry.dispose()
+      }
+      const board = document.createElement('canvas')
+      const paint = () => {
+        const pen = board.getContext('2d')!
+        const font = '600 72px "ZCOOL KuaiLe", "PingFang SC", sans-serif'
+        pen.font = font
+        board.width = Math.ceil(pen.measureText(text).width) + 110
+        board.height = 150
+        pen.font = font
+        pen.fillStyle = '#f4d7a4'
+        pen.strokeStyle = '#8a623c'
+        pen.lineWidth = 10
+        pen.beginPath()
+        pen.roundRect(8, 8, board.width - 16, board.height - 16, 34)
+        pen.fill()
+        pen.stroke()
+        pen.fillStyle = '#5b3d28'
+        pen.textAlign = 'center'
+        pen.textBaseline = 'middle'
+        pen.fillText(text, board.width / 2, board.height / 2 + 4)
+      }
+      paint()
+      const map = new T.CanvasTexture(board)
+      map.colorSpace = T.SRGBColorSpace
+      const tall = 0.5
+      const mesh = new T.Mesh(
+        new T.PlaneGeometry((tall * board.width) / board.height, tall),
+        new T.MeshStandardMaterial({ map, transparent: true, roughness: 0.9, side: T.DoubleSide }),
+      )
+      mesh.position.set(x, y, z)
+      scene.add(mesh)
+      labels.set(key, { mesh, text })
+      // The handwriting font may still be loading the first time; redraw once it is there.
+      void document.fonts?.load('72px "ZCOOL KuaiLe"').then(() => {
+        if (labels.get(key)?.mesh !== mesh) return
+        const before = board.width
+        paint()
+        if (board.width !== before) {
+          mesh.geometry.dispose()
+          mesh.geometry = new T.PlaneGeometry((tall * board.width) / board.height, tall)
+        }
+        map.needsUpdate = true
+      })
+    },
     /** A tap: the toy answers with a wiggle, a hop or a dive. */
     poke(key: string, kind: Poke = 'wiggle') {
       if (!reduced && objects.has(key)) anims.set(key, { kind, from: performance.now() })
@@ -690,6 +851,13 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
       for (const g of cache.values()) g.dispose()
       noise.dispose()
       mat.dispose()
+      glowMat.dispose()
+      cloudMat.dispose()
+      for (const { mesh } of labels.values()) {
+        mesh.material.map?.dispose()
+        mesh.material.dispose()
+        mesh.geometry.dispose()
+      }
       shadow.geometry.dispose()
       shadow.material.dispose()
       sun.shadow.dispose()
