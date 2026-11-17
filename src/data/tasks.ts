@@ -28,6 +28,8 @@ export const ETON_HOMEWORK_TASK_ID = 'eton-homework'
 export const PINYIN_TASK_ID = 'pinyin-reading'
 /** 数学：老师留了当天作业的日子，点“我完成了”先弹出作业卡 */
 export const MATH_TASK_ID = 'math'
+/** 课文背诵：有要背的课文时弹出背诵卡（见 data/reciteTexts.ts） */
+export const RECITE_TASK_ID = 'recite'
 
 /** 向日葵举手：上课举手就记一次，结果不影响奖励（见 engine/courage.ts） */
 export const RAISE_HAND_TASK_ID = 'raise-hand'

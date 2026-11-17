@@ -1,0 +1,22 @@
+/* 今天老师留的作业清单 + 背课文 */
+.school-hw .modal-title, .recite .modal-title { text-align: center; }
+.school-items { list-style: none; margin: var(--sp-3) 0; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
+.school-item { width: 100%; display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); text-align: left; border-radius: var(--r-l); cursor: pointer; font: inherit; color: inherit; }
+.school-item.done { background: var(--mint-light); }
+.school-check { flex: none; width: 36px; height: 36px; border-radius: 10px; border: 3px solid var(--cream-edge); background: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; color: #2f9c72; }
+.school-item.done .school-check { border-color: var(--mint); }
+.school-icon { flex: none; font-size: 30px; }
+.school-text { display: flex; flex-direction: column; gap: 2px; font-size: var(--fs-m); line-height: 1.5; }
+.school-teacher { margin: 0 0 var(--sp-2); font-size: var(--fs-m); line-height: 1.6; }
+
+.recite-due { margin: 0 0 var(--sp-3); text-align: center; font-size: var(--fs-m); color: var(--text-soft); }
+.recite-modes { display: flex; justify-content: center; gap: var(--sp-2); }
+.recite-hint { text-align: center; margin: var(--sp-2) 0 0; }
+.recite-text { margin: var(--sp-4) 0; padding: var(--sp-4); background: #fffdf6; border: 2px solid var(--cream-edge); border-radius: var(--r-l); }
+.recite-para { margin: 0 0 var(--sp-3); text-indent: 2em; line-height: 2; }
+.recite-para:last-child { margin-bottom: 0; }
+.recite-line { display: inline; padding: 2px 0; border: none; background: none; font: inherit; font-size: clamp(24px, 4.2vw, 32px); color: var(--text); cursor: default; text-indent: 0; }
+.recite-line:not(:disabled) { cursor: pointer; }
+.recite-line.covered { color: var(--text); }
+.recite-mask { color: #d9c8b0; letter-spacing: 2px; }
+.recite-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; padding: var(--sp-3) var(--sp-4); background: var(--mint-light); border-radius: var(--r-l); font-size: var(--fs-m); }

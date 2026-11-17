@@ -7,6 +7,10 @@ export interface PinyinCard {
   title: string
   /** public 下的路径 */
   image: string
+  /** 写拼音的作业：她在纸上写完，点开对答案（词 + 拼音） */
+  answers?: { word: string; pinyin: string }[]
+  /** 这张卡怎么做（不写就是读拼读卡） */
+  tip?: string
 }
 
 export const PINYIN_CARDS: PinyinCard[] = [
@@ -15,6 +19,23 @@ export const PINYIN_CARDS: PinyinCard[] = [
   { date: '2026-11-05', title: '第 16 天 · an en in un ün', image: 'pinyin/2026-11-05.jpg' },
   { date: '2026-11-09', title: '第 17–18 天 · ang eng ing ong', image: 'pinyin/2026-11-09.jpg' },
   { date: '2026-11-16', title: '词语拼读 · 鞋子、打雷、望远镜…', image: 'pinyin/2026-11-16.jpg' },
+  {
+    date: '2026-11-17',
+    title: '看图写拼音 · 第二单元',
+    image: 'pinyin/2026-11-17.jpg',
+    tip: '看图，在练习纸的格子里写出拼音，再把这些词读几遍。写完点下面“对答案”。',
+    answers: [
+      { word: '爸爸', pinyin: 'bà ba' },
+      { word: '妈妈', pinyin: 'mā ma' },
+      { word: '大地', pinyin: 'dà dì' },
+      { word: '马路', pinyin: 'mǎ lù' },
+      { word: '泥土', pinyin: 'ní tǔ' },
+      { word: '蜡笔', pinyin: 'là bǐ' },
+      { word: '大米', pinyin: 'dà mǐ' },
+      { word: '扶梯', pinyin: 'fú tī' },
+      { word: '地图', pinyin: 'dì tú' },
+    ],
+  },
 ]
 
 export function pinyinCardFor(today: string): PinyinCard | undefined {

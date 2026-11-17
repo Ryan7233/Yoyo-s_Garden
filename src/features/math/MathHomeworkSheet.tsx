@@ -32,7 +32,7 @@ export function MathHomeworkSheet({ homework, onFinish, onClose }: { homework: M
                 aria-pressed={said[i]}
                 onClick={() => setSaid(said.map((s, k) => (k === i ? !s : s)))}
               >
-                {said[i] ? '✓ 我提过了' : '我提了一个'}
+                {said[i] ? (homework.button?.done ?? '✓ 我提过了') : (homework.button?.todo ?? '我提了一个')}
               </button>
             </li>
           ))}
@@ -48,7 +48,7 @@ export function MathHomeworkSheet({ homework, onFinish, onClose }: { homework: M
                 onClose()
               }}
             >
-              {left > 0 ? `还差 ${left} 个问题` : '✋ 都提好了，交给爸爸妈妈'}
+              {left > 0 ? `还差 ${left} ${homework.button?.left ?? '个问题'}` : homework.button ? '✋ 都说好了，交给爸爸妈妈' : '✋ 都提好了，交给爸爸妈妈'}
             </button>
           ) : (
             <button className="btn btn-primary btn-big" onClick={onClose}>看完了</button>

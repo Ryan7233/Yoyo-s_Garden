@@ -15,3 +15,16 @@
 .pinyin-laps { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; justify-content: center; }
 .pinyin-laps li { padding: 8px 16px; border-radius: var(--r-pill); background: var(--cream); font-size: var(--fs-m); }
 .pinyin-laps li.best { background: var(--coin-light); }
+
+/* 看图写拼音：写完再一个一个翻开对答案 */
+.pinyin-tip { margin: 0; font-size: var(--fs-m); line-height: 1.6; }
+.pinyin-answers { display: flex; flex-direction: column; gap: var(--sp-2); padding: var(--sp-3); background: var(--cream); border-radius: var(--r-l); }
+.pinyin-answers-head { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.pinyin-answers-head b { font-size: var(--fs-l); }
+.pinyin-answers-head .btn { margin-left: auto; }
+.pinyin-answer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: var(--sp-2); }
+.pinyin-answer { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: var(--touch); padding: 10px 8px; background: #fff; border: 2px dashed var(--cream-edge); border-radius: var(--r-m, 14px); cursor: pointer; }
+.pinyin-answer.open { border-style: solid; border-color: var(--mint, #7ed7b5); background: var(--mint-light); }
+.pinyin-answer-py { font-size: var(--fs-l); font-weight: 700; color: var(--text); min-height: 1.3em; }
+.pinyin-answer:not(.open) .pinyin-answer-py { color: var(--text-soft); }
+.pinyin-answer-word { font-size: var(--fs-m); color: var(--text-soft); }
