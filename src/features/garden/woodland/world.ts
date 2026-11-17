@@ -62,26 +62,41 @@ function cloud(m: Carving) {
 export type Stop = { x: number; y: number; z: number; stay: number }
 const hash = (key: string) => [...key].reduce((n, c) => (n * 31 + c.charCodeAt(0)) % 9973, 7) / 9973
 /** Where something is on its route at `time`, whether it is on the move, and which way it is heading. */
-function along(route: Stop[], speed: number, time: number) {
+export function along(route: Stop[], speed: number, time: number) {
   const legs = route.map((a, i) => {
     const b = route[(i + 1) % route.length]
     return { a, b, run: Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z) / speed }
   })
   let t = time % legs.reduce((sum, l) => sum + l.a.stay + l.run, 0)
-  for (const { a, b, run } of legs) {
+  const mid = (a: Stop, b: Stop, p: number) => ({ x: a.x + (b.x - a.x) * p, y: a.y + (b.y - a.y) * p, z: a.z + (b.z - a.z) * p })
+  for (let i = 0; i < legs.length; i++) {
+    const { a, b, run } = legs[i]
     if (t < a.stay) return { ...a, moving: false, p: 0, far: 0, heading: 0 }
     t -= a.stay
     if (t < run) {
       const p = t / run
-      return {
-        x: a.x + (b.x - a.x) * p,
-        y: a.y + (b.y - a.y) * p,
-        z: a.z + (b.z - a.z) * p,
-        moving: true,
-        p,
-        far: run * speed,
-        heading: Math.atan2(b.x - a.x, b.z - a.z),
+      // Corners it does not stop at are rounded off: it cuts from the middle of one leg to the
+      // middle of the next along a curve, so a turn is an arc and not a right angle.
+      const next = legs[(i + 1) % legs.length],
+        last = legs[(i + legs.length - 1) % legs.length]
+      const bend = p > 0.5 && b.stay === 0 ? { from: a, corner: b, to: next.b, u: p - 0.5 } : p < 0.5 && a.stay === 0 ? { from: last.a, corner: a, to: b, u: p + 0.5 } : null
+      if (bend) {
+        const s = mid(bend.from, bend.corner, 0.5),
+          e = mid(bend.corner, bend.to, 0.5),
+          c = bend.corner,
+          u = bend.u,
+          v = 1 - u
+        return {
+          x: v * v * s.x + 2 * v * u * c.x + u * u * e.x,
+          y: v * v * s.y + 2 * v * u * c.y + u * u * e.y,
+          z: v * v * s.z + 2 * v * u * c.z + u * u * e.z,
+          moving: true,
+          p,
+          far: run * speed,
+          heading: Math.atan2(v * (c.x - s.x) + u * (e.x - c.x), v * (c.z - s.z) + u * (e.z - c.z)),
+        }
       }
+      return { ...mid(a, b, p), moving: true, p, far: run * speed, heading: Math.atan2(b.x - a.x, b.z - a.z) }
     }
     t -= run
   }
@@ -484,7 +499,9 @@ export function createWorld(canvas: HTMLCanvasElement, onZoom?: (zoomedIn: boole
         }),
       ),
       coins = Array.from({ length: 4 }, () => prop('fx-coin', coin))
-    const [bx, bz] = beside(0.72, 0.5),
+    // Under a tree the basket tucks in close to the trunk, inside the tree's own pit: further out
+    // it would sit on top of the next tree's crown.
+    const [bx, bz] = count > 4 ? beside(0.46, 0.5) : beside(0.72, 0.5),
       landed = 250 + count * 110 + 430,
       life = landed + 900
     play(now, life, [tub, ...fruit, ...coins], (t) => {

@@ -269,8 +269,10 @@ export function tree(m: Carving, id: string, stage: 0 | 1 | 2 | 3 = 0, mood?: Mo
   const kind = kindOf(id)
   // Planted trees have a face on the trunk; the decorative big tree does not.
   if (mood) {
-    const r = kind === 'orange' ? 0.12 : kind === 'peach' ? 0.11 : 0.13
-    face(m, [0, kind === 'peach' ? 0.3 : 0.42, r + 0.012], r * 0.85, mood)
+    // The face sits on a round burl that bulges out of the trunk, big enough to read from across the garden.
+    const y = kind === 'peach' ? 0.36 : 0.46
+    m.ball(tint(oak, 0.07), [0, y, 0.07], [0.25, 0.23, 0.2])
+    face(m, [0, y + 0.01, 0.275], 0.2, mood)
   }
   if (kind === 'pine') {
     trunk(m, [0, 0.7, 0], 0.13)
@@ -432,6 +434,103 @@ function veggie(m: Carving, id: string, mood: Mood) {
   }
 }
 
+const PETALS: Record<string, string[]> = {
+  'seed-sunflower': ['#ffc43c', '#f6a329'],
+  'seed-daisy': ['#fff6dd', '#ffe6b8'],
+  'seed-rose': ['#ee758b', '#d44a6a'],
+  'seed-hibiscus': ['#ee94a8', '#d76586'],
+  'seed-tulip': ['#ff9f91', '#ea7885'],
+  'seed-hyacinth': ['#af96de', '#8979c5'],
+  'seed-lotus': ['#ffc0cc', '#e99eb4'],
+  'seed-crystal-lotus': ['#a6e0e2', '#8eb6dd'],
+  'seed-rainbow-flower': ['#ed8996', '#ffcb68', '#92c59b', '#99bdde', '#ad94c9'],
+}
+
+/**
+ * Seedlings already show what they will be: a tomato on its little stake, corn as a blade of grass,
+ * a melon vine creeping along the soil, feathery carrot tops. Flowers show a closed bud in their own colour.
+ */
+function sprout(m: Carving, id: string, stage: 1 | 2, mood: Mood) {
+  const big = stage === 2,
+    k = big ? 1 : 0.62
+  /** A round little head for the face to sit on. */
+  const head = (color: string, at: P3, r: number) => {
+    m.ball(color, at, [r, r, r * 0.92])
+    face(m, [at[0], at[1], at[2] + r * 0.9], r * 0.95, mood)
+  }
+  if (id.includes('tomato')) {
+    m.beam(honey, [0, 0, -0.07], [0, 0.72 * k, -0.07], 0.024)
+    m.beam('#5f8f45', [0.02, 0, 0], [0.02, 0.5 * k, 0], 0.028)
+    for (let i = 0; i < (big ? 5 : 3); i++) {
+      const a = i * 2.4
+      m.ball(i % 2 ? leaf : lime, [Math.sin(a) * 0.14, (0.16 + i * 0.09) * k + 0.03, Math.cos(a) * 0.09 - 0.02], [0.12, 0.028, 0.07], [0, a, 0.3])
+    }
+    // The first tomato is still green.
+    head(big ? '#a9cf62' : lime, [0.02, 0.5 * k + 0.06, 0.05], big ? 0.115 : 0.085)
+    if (big) for (let n = 0; n < 5; n++) m.ball('#4f8a45', [0.02 + Math.sin(n * 1.257) * 0.05, 0.47, 0.05 + Math.cos(n * 1.257) * 0.05], [0.04, 0.012, 0.02], [0, n * 1.257 + Math.PI / 2, 0])
+  } else if (id.includes('strawberry')) {
+    for (let i = 0; i < (big ? 7 : 4); i++) {
+      const a = i * 0.9
+      m.ball(i % 2 ? leaf : '#6f9d4c', [Math.sin(a) * 0.17 * k, 0.09 + (i % 3) * 0.03, Math.cos(a) * 0.17 * k - 0.04], [0.1 * k + 0.02, 0.03, 0.14 * k + 0.02], [-0.35, a, 0])
+    }
+    if (big)
+      for (const x of [-0.16, 0.17]) {
+        for (let n = 0; n < 5; n++) m.ball('#fff6e6', [x + Math.sin(n * 1.257) * 0.045, 0.2, 0.08 + Math.cos(n * 1.257) * 0.045], [0.034, 0.012, 0.034])
+        m.ball('#f4c84f', [x, 0.206, 0.08], [0.024, 0.014, 0.024])
+      }
+    head(lime, [0, 0.17 * k + 0.05, 0.1], big ? 0.105 : 0.085)
+  } else if (id.includes('watermelon') || id.includes('pumpkin')) {
+    // A vine along the ground with broad leaves; then a first small fruit (or a pumpkin flower).
+    const melon = id.includes('watermelon')
+    m.beam('#6f9d4c', [-0.3 * k, 0.03, -0.12], [0, 0.05, -0.2], 0.022)
+    m.beam('#6f9d4c', [0, 0.05, -0.2], [0.3 * k, 0.04, -0.06], 0.022)
+    for (let i = 0; i < (big ? 4 : 2); i++)
+      m.ball(i % 2 ? leaf : lime, [(-0.3 + i * 0.2) * k + (big ? 0 : 0.1), 0.09, -0.16 + (i % 2) * 0.07], [0.14, 0.03, 0.115], [0.25, i * 1.3, 0.2])
+    if (!big) head(lime, [0, 0.13, 0.04], 0.085)
+    else if (melon) {
+      m.ball('#7fb968', [0, 0.14, 0.06], [0.16, 0.125, 0.14])
+      for (let n = -1; n <= 1; n++) m.ball('#3f7743', [n * 0.085, 0.14, 0.06], [0.022, 0.128 - Math.abs(n) * 0.014, 0.144 - Math.abs(n) * 0.02])
+      face(m, [0, 0.14, 0.2], 0.09, mood)
+    } else {
+      for (let n = 0; n < 5; n++) m.ball('#f6c33f', [0.2 + Math.sin(n * 1.257) * 0.06, 0.13, -0.02 + Math.cos(n * 1.257) * 0.06], [0.05, 0.016, 0.05])
+      for (let i = 0; i < 6; i++) m.ball('#b9c25a', [Math.cos((i * turn) / 6) * 0.07, 0.14, 0.06 + Math.sin((i * turn) / 6) * 0.07], [0.09, 0.11, 0.085])
+      m.beam(leaf, [0, 0.22, 0.06], [0.02, 0.29, 0.06], 0.026)
+      face(m, [0, 0.14, 0.215], 0.09, mood)
+    }
+  } else if (id.includes('corn')) {
+    // A straight stalk with long blades, like tall grass.
+    const h = big ? 0.74 : 0.36
+    m.beam('#7fa04c', [0, 0, 0], [0, h, 0], big ? 0.036 : 0.028)
+    for (let i = 0; i < (big ? 5 : 3); i++) {
+      const a = i * 1.9
+      m.ball(i % 2 ? leaf : lime, [Math.sin(a) * 0.16 * k, h * (0.3 + i * 0.16), Math.cos(a) * 0.16 * k], [0.05, 0.026, 0.2 * k + 0.03], [0.6, a, 0])
+    }
+    if (big) for (let n = 0; n < 4; n++) m.beam('#e3c77a', [0, h, 0], [Math.sin(n * 1.57) * 0.07, h + 0.13, Math.cos(n * 1.57) * 0.07], 0.01)
+    head(lime, [0, h * 0.62, big ? 0.08 : 0.06], big ? 0.105 : 0.085)
+  } else if (id.includes('carrot')) {
+    // Feathery tops; later the orange shoulder starts to show.
+    for (let i = 0; i < (big ? 7 : 4); i++) {
+      const a = (i - (big ? 3 : 1.5)) * 0.33
+      const tip: P3 = [Math.sin(a) * 0.36 * k, 0.42 * k + 0.05 - Math.abs(a) * 0.08, -0.03 + (i % 2) * 0.05]
+      m.beam(i % 2 ? '#6f9d4c' : leaf, [0, 0.03, 0], tip, 0.018)
+      for (let n = 1; n <= 3; n++)
+        m.ball(i % 2 ? lime : leaf, [tip[0] * (n / 3.2), 0.03 + (tip[1] - 0.03) * (n / 3.2), tip[2] * (n / 3.2)], [0.055, 0.02, 0.03], [0, 0, -a + (n % 2 ? 0.7 : -0.7)])
+    }
+    head(big ? '#eea559' : lime, [0, big ? 0.075 : 0.1, 0.11], big ? 0.105 : 0.085)
+  } else {
+    // Flowers: a stem, two leaves and a round little head, with a closed bud once it has grown.
+    const h = big ? 0.55 : 0.27,
+      r = big ? 0.115 : 0.085
+    leaves(m, h)
+    head(lime, [0.02, h + r * 0.5, 0], r)
+    const petal = PETALS[id]?.[0]
+    if (big && petal) {
+      m.ball(petal, [0.02, h + r * 1.5, 0], [r * 0.5, r * 0.62, r * 0.5])
+      for (let n = 0; n < 3; n++) m.ball(leaf, [0.02 + Math.sin(n * 2.1) * r * 0.42, h + r * 1.28, Math.cos(n * 2.1) * r * 0.42], [r * 0.2, r * 0.36, r * 0.14], [0, n * 2.1, 0])
+    }
+  }
+}
+
 export function plant(m: Carving, id: string, stage: number, fruitStage: 0 | 1 | 2 | 3 = 0, mood: Mood = 'happy') {
   if (stage === 0) {
     m.ball('#96623d', [0, 0.04, 0], [0.18, 0.09, 0.15])
@@ -444,12 +543,7 @@ export function plant(m: Carving, id: string, stage: number, fruitStage: 0 | 1 |
     return
   }
   if (stage === 1 || stage === 2) {
-    // A sprout is a stem, two leaves and a round little head.
-    const h = stage === 1 ? 0.27 : 0.55,
-      r = stage === 1 ? 0.085 : 0.115
-    leaves(m, h)
-    m.ball(lime, [0.02, h + r * 0.5, 0], [r, r, r * 0.92])
-    face(m, [0.02, h + r * 0.5, r * 0.9], r * 0.95, mood)
+    sprout(m, id, stage, mood)
     return
   }
   if (id.endsWith('-tree')) {
@@ -463,18 +557,7 @@ export function plant(m: Carving, id: string, stage: number, fruitStage: 0 | 1 |
   const tall = id.includes('sunflower'),
     h = tall ? 0.9 : id.includes('lotus') ? 0.29 : 0.63
   leaves(m, h)
-  const palette: Record<string, string[]> = {
-    'seed-sunflower': ['#ffc43c', '#f6a329'],
-    'seed-daisy': ['#fff6dd', '#ffe6b8'],
-    'seed-rose': ['#ee758b', '#d44a6a'],
-    'seed-hibiscus': ['#ee94a8', '#d76586'],
-    'seed-tulip': ['#ff9f91', '#ea7885'],
-    'seed-hyacinth': ['#af96de', '#8979c5'],
-    'seed-lotus': ['#ffc0cc', '#e99eb4'],
-    'seed-crystal-lotus': ['#a6e0e2', '#8eb6dd'],
-    'seed-rainbow-flower': ['#ed8996', '#ffcb68', '#92c59b', '#99bdde', '#ad94c9'],
-  }
-  const colors = palette[id] ?? ['#f6c98d', '#f2b4c9']
+  const colors = PETALS[id] ?? ['#f6c98d', '#f2b4c9']
   if (/tulip|hyacinth|rose|lotus/.test(id)) {
     const tiers = id.includes('hyacinth') ? 3 : 1
     for (let j = 0; j < tiers; j++)

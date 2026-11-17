@@ -221,8 +221,27 @@
 .plant-art.fluid { width: calc(var(--obj) * 0.98); height: calc(var(--obj) * 1.05); }
 .plant-art.fluid > svg { width: 100%; height: 100%; overflow: visible; }
 .plant-art.fluid .emoji-fluid { font-size: calc(var(--obj) * 0.86); line-height: 1; filter: drop-shadow(1px 2px 0 rgba(70, 45, 30, 0.14)); }
-.plant-art.hop { animation: hop 0.6s var(--ease-out) 2; }
+.plant-art.hop { animation: hop 0.6s var(--ease-out) 0.85s 2; }
 .plant-art.ready { filter: drop-shadow(0 0 6px rgba(255, 214, 107, 0.95)); }
+/* 小苗旁边插一块木牌，画着它长大以后的样子 */
+.plant-tag {
+  position: absolute;
+  left: -4%;
+  bottom: 2%;
+  width: 1.5em;
+  height: 1.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--obj, 48px) * 0.21);
+  line-height: 1;
+  background: #fff8e6;
+  border: 2px solid #b98a5e;
+  border-radius: 30%;
+  box-shadow: 0 2px 0 rgba(70, 45, 30, 0.18);
+  transform: rotate(-8deg);
+}
+.plant-tag::after { content: ''; position: absolute; left: 50%; top: 100%; width: 3px; height: 0.45em; margin-left: -1.5px; background: #b98a5e; border-radius: 0 0 2px 2px; }
 /* 状态小牌子：口渴（水滴）、可收获（星光），圆牌 + 图标，不只靠颜色 */
 .plant-flag {
   position: absolute;
@@ -257,6 +276,82 @@
   0% { transform: translateY(10px); opacity: 0; }
   30% { opacity: 1; }
   100% { transform: translateY(-30px); opacity: 0; }
+}
+
+/* ---- 过程动画：喷壶浇水、果子进篮子、篮子里蹦金币 ---- */
+.plant-fx { position: relative; min-width: 0; pointer-events: none; z-index: 40; font-size: calc(var(--obj) * 0.56); }
+.plant-fx.big { font-size: calc(var(--obj) * 0.72); }
+.plant-fx .fx { left: 50%; margin-left: -0.5em; }
+.fx-late { animation-delay: 0.85s; }
+.fx-can {
+  position: absolute;
+  left: -22%;
+  top: -52%;
+  width: 2em;
+  height: 1.5em;
+  overflow: visible;
+  transform-origin: 40% 60%;
+  filter: drop-shadow(1px 3px 0 rgba(70, 45, 30, 0.18));
+  animation: fx-can 1.6s ease-in-out both;
+}
+@keyframes fx-can {
+  0% { transform: translate(-0.8em, -0.6em) rotate(-8deg) scale(0.4); opacity: 0; }
+  14% { transform: translate(0, 0) rotate(-8deg) scale(1); opacity: 1; }
+  30%, 76% { transform: translate(0, 0) rotate(34deg) scale(1); opacity: 1; }
+  90% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(-0.4em, -0.5em) rotate(0deg) scale(0.4); opacity: 0; }
+}
+.fx-drop {
+  position: absolute;
+  left: calc(58% + var(--dx));
+  top: 0;
+  width: 0.3em;
+  height: 0.42em;
+  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  background: #6cc3ea;
+  box-shadow: inset 0.06em 0.06em 0 rgba(255, 255, 255, 0.75);
+  opacity: 0;
+  animation: fx-drop 0.5s ease-in var(--d) both;
+}
+@keyframes fx-drop {
+  0% { top: 0; opacity: 0; transform: scale(0.6); }
+  20% { opacity: 1; transform: scale(1); }
+  85% { opacity: 1; }
+  100% { top: 68%; opacity: 0; transform: scale(1.2, 0.6); }
+}
+.fx-basket {
+  position: absolute;
+  left: 74%;
+  top: 58%;
+  font-size: 1.5em;
+  line-height: 1;
+  transform-origin: 50% 100%;
+  animation: fx-basket-in 0.25s var(--ease-out) both, fx-basket-thud 0.13s ease-out 0.72s calc(var(--n)), fx-basket-out 0.25s ease-in 2.1s forwards;
+}
+@keyframes fx-basket-in { from { transform: scale(0); } to { transform: scale(1); } }
+@keyframes fx-basket-thud { 30% { transform: scale(1.14, 0.86); } }
+@keyframes fx-basket-out { to { transform: scale(0); opacity: 0; } }
+.fx-fruit { position: absolute; left: var(--sx); top: var(--sy); opacity: 0; line-height: 1; animation: fx-fruit-go 0.5s linear var(--d) both; }
+.fx-fruit > span { display: block; animation: fx-fruit-arc 0.5s var(--d) both; }
+@keyframes fx-fruit-go {
+  0% { left: var(--sx); top: var(--sy); opacity: 1; }
+  92% { opacity: 1; }
+  100% { left: 82%; top: 64%; opacity: 0; }
+}
+@keyframes fx-fruit-arc {
+  0% { transform: translateY(0) scale(0.7) rotate(0); animation-timing-function: ease-out; }
+  50% { transform: translateY(-1.5em) scale(1.1) rotate(160deg); animation-timing-function: ease-in; }
+  100% { transform: translateY(0) scale(0.8) rotate(320deg); }
+}
+.fx-coin { position: absolute; left: 86%; top: 56%; opacity: 0; line-height: 0; animation: fx-coin 0.7s ease-out var(--d) both; }
+@keyframes fx-coin {
+  0% { transform: translate(0, 0) scale(0.4); opacity: 0; }
+  20% { opacity: 1; }
+  70% { transform: translate(var(--cx), -2em) scale(1.15); opacity: 1; }
+  100% { transform: translate(var(--cx), -2.3em) scale(0.9); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fx-can, .fx-drop, .fx-basket, .fx-fruit, .fx-coin { display: none; }
 }
 
 /* ---- 扩建：虚线小牌 ---- */

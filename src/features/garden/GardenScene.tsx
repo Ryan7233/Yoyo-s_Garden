@@ -25,6 +25,7 @@ import { gridCell } from './grid'
 import { CourageSunflower } from '../courage/CourageSunflower'
 import './garden.css'
 
+import { PlantFx } from './PlantFx'
 const Woodland = lazy(() => import('./woodland/Woodland'))
 const preview = new URLSearchParams(location.search)
 let woodView = preview.get('view') === '3d' || preview.has('wood-demo')
@@ -60,7 +61,7 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
 
   const showFx = (f: Fx) => {
     setFx(f)
-    setTimeout(() => setFx((cur) => (cur === f ? null : cur)), 1200)
+    setTimeout(() => setFx((cur) => (cur === f ? null : cur)), f.kind === 'harvest' ? 2400 : 1700)
   }
 
   const tapPond = (pondId: string, x: number, y: number) => {
@@ -133,9 +134,13 @@ export function GardenScene({ onEnterHouse }: { onEnterHouse: () => void }) {
               {outdoorPlants.map((p) => (
                 <div key={p.id} className={`plant${p.pondId ? ' in-pond' : plantRect(p).w > 1 ? ' in-orchard' : ''}`} style={gridCell(p.x, p.y, plantRect(p).w, plantRect(p).h)}>
                   <PlantArt plant={p} today={today} fluid hop={fx?.id === p.id && fx.kind === 'grow'} />
-                  {fx?.id === p.id && fx.kind !== 'harvest' && <span className="fx">{fx.kind === 'grow' ? '💗' : '💧'}</span>}
                 </div>
               ))}
+              {fx?.plant && fx.plant.scene === 'outdoor' && (
+                <div key={fx.id + fx.kind} className={`plant-fx${plantRect(fx.plant).w > 1 ? ' big' : ''}`} style={gridCell(fx.plant.x, fx.plant.y, plantRect(fx.plant).w, plantRect(fx.plant).h)} aria-hidden>
+                  <PlantFx kind={fx.kind} plant={fx.plant} />
+                </div>
+              )}
 
               <ComboSparkles />
               <AnchoredVisitors />

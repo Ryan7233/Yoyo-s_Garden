@@ -31,6 +31,7 @@ export function PlantArt({ plant, today, size = 48, hop, fluid }: { plant: Plant
       ) : (
         <Icon icon={icon} size={size} fluid={fluid} />
       )}
+      {fluid && plant.stage < 3 && !item.icon.startsWith('svg:') && <span className="plant-tag" aria-hidden>{item.icon}</span>}
       {thirsty && <span className="plant-flag thirsty" aria-label="口渴了">💧</span>}
       {ready && <span className="plant-flag ready-flag" aria-label="可以收获">✨</span>}
     </span>
