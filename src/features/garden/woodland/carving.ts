@@ -2,7 +2,7 @@ import * as T from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 
-type Point = [number, number, number]
+export type Point = [number, number, number]
 const round = new RoundedBoxGeometry(1, 1, 1, 2, 0.09)
 const sphere = new T.SphereGeometry(1, 12, 9).toNonIndexed()
 const rod = new T.CylinderGeometry(1, 1, 1, 12).toNonIndexed()

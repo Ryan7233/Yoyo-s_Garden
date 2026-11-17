@@ -1,4 +1,4 @@
-import { Carving, oak, honey, dark, leaf, lime } from './carving'
+import { Carving, oak, honey, dark, leaf, lime, type Point } from './carving'
 import { tree } from './models'
 const teal = '#669fa0',
   rose = '#e38c8f',
@@ -156,6 +156,10 @@ export function animal(m: Carving, id: string) {
       }
     return
   }
+  if (id === 'ladybug') {
+    ladybug(m)
+    return
+  }
   const colors: Record<string, string> = {
     bird: '#7daebb',
     rabbit: '#f8e7d5',
@@ -163,7 +167,6 @@ export function animal(m: Carving, id: string) {
     squirrel: '#be8357',
     cat: '#ddae75',
     hedgehog: '#a48568',
-    ladybug: '#d66a58',
   }
   const c = colors[id] ?? honey
   m.ball(c, [0, 0.165, 0], [0.174, 0.17, 0.23])
@@ -176,4 +179,53 @@ export function animal(m: Carving, id: string) {
     if (id === 'cat' || id === 'squirrel') m.cone(c, [s * 0.102, 0.46, 0.08], [0.058, 0.124, 0.06])
   }
   if (id === 'bird') m.cone('#edb451', [0, 0.3, 0.275], [0.047, 0.11, 0.046], [Math.PI / 2, 0, 0])
+}
+
+/** A proper ladybird: glossy red domed shell split down the middle, seven black spots,
+ *  a black head with white cheek marks and big friendly eyes, antennae and six little legs. */
+function ladybug(carving: Carving) {
+  // Real ladybirds are tiny; the toy one is drawn larger so she reads from across the garden.
+  const k = 1.6,
+    at = (p: Point): Point => [p[0] * k, p[1] * k, p[2] * k]
+  const m = {
+    ball: (c: string, p: Point, s: Point) => carving.ball(c, at(p), at(s)),
+    beam: (c: string, a: Point, b: Point, radius: number) => carving.beam(c, at(a), at(b), radius * k),
+  }
+  const red = '#dc3f33',
+    ink = '#2a2321',
+    cream = '#fff4db'
+  const c: Point = [0, 0.1, -0.03],
+    r: Point = [0.2, 0.15, 0.25]
+  // Legs first, poking out from under the shell
+  for (const s of [-1, 1])
+    for (const z of [-0.1, 0, 0.1]) {
+      m.beam(ink, [s * 0.13, 0.07, z], [s * 0.22, 0.05, z * 1.35], 0.017)
+      m.beam(ink, [s * 0.22, 0.05, z * 1.35], [s * 0.25, 0.008, z * 1.5], 0.015)
+    }
+  m.ball(ink, [0, 0.07, -0.02], [0.17, 0.06, 0.22])
+  // The shell and the line where the two wing cases meet
+  m.ball(red, c, r)
+  m.ball(ink, [c[0], c[1] + 0.003, c[2] - 0.004], [0.011, r[1] + 0.006, r[2] + 0.004])
+  // Seven spots sitting on the dome
+  const spot = (dx: number, dy: number, dz: number, size: number) => {
+    const l = Math.hypot(dx, dy, dz)
+    m.ball(ink, [c[0] + (r[0] * dx) / l, c[1] + (r[1] * dy) / l, c[2] + (r[2] * dz) / l], [size, size * 0.7, size])
+  }
+  spot(0, 0.75, 0.66, 0.05)
+  for (const s of [-1, 1]) {
+    spot(s * 0.55, 0.75, 0.25, 0.047)
+    spot(s * 0.8, 0.5, -0.25, 0.043)
+    spot(s * 0.4, 0.75, -0.55, 0.04)
+  }
+  // Head with white cheeks, eyes and antennae
+  m.ball(ink, [0, 0.11, 0.21], [0.12, 0.085, 0.085])
+  for (const s of [-1, 1]) {
+    m.ball(cream, [s * 0.085, 0.13, 0.215], [0.03, 0.026, 0.03])
+    m.ball(cream, [s * 0.045, 0.125, 0.278], [0.032, 0.036, 0.022])
+    m.ball(ink, [s * 0.045, 0.125, 0.296], [0.016, 0.019, 0.008])
+    m.ball(cream, [s * 0.04, 0.133, 0.302], [0.005, 0.006, 0.003])
+    m.beam(ink, [s * 0.035, 0.18, 0.25], [s * 0.085, 0.27, 0.32], 0.011)
+    m.ball(ink, [s * 0.088, 0.275, 0.325], [0.022, 0.022, 0.022])
+  }
+  m.ball('#f29a8f', [0, 0.095, 0.29], [0.022, 0.01, 0.01])
 }
