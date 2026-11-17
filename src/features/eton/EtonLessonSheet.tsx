@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import type { BookCard, CompareCard, EtonLesson, LessonCard, PaperCard, ReadCard, ReviewCard, TalkCard, TopicCard, VerbsCard, VocabCard, WordCard } from '../../data/etonLessons'
+import { posterUrl } from '../../data/etonLessons'
+import type { BookCard, CompareCard, EtonLesson, LessonCard, PaperCard, PosterCard, ReadCard, ReviewCard, TalkCard, TopicCard, VerbsCard, VocabCard, WordCard } from '../../data/etonLessons'
 import { Modal } from '../../ui/Modal'
 import { Say, speakEn } from './Say'
-import { PickView, SortView } from './EtonPractice'
+import { MatchView, PickView, SortView } from './EtonPractice'
 import './eton.css'
 
 /**
@@ -55,6 +56,8 @@ function CardView({ card }: { card: LessonCard }) {
     case 'pick': return <PickView card={card} />
     case 'read': return <ReadView card={card} />
     case 'paper': return <PaperView card={card} />
+    case 'poster': return <PosterView card={card} />
+    case 'match': return <MatchView card={card} />
   }
 }
 
@@ -400,6 +403,29 @@ function ReviewView({ card }: { card: ReviewCard }) {
           {card.words.map((w) => <Say key={w.word} text={w.sentence} />)}
         </div>
       </section>
+    </div>
+  )
+}
+
+/** 老师的海报：先看整张，点一下放大；下面是海报上的句子，点读 */
+function PosterView({ card }: { card: PosterCard }) {
+  const [big, setBig] = useState(false)
+  return (
+    <div className="eton-card">
+      <span className="eton-tag">{card.tag}</span>
+      <h3 className="eton-topic">{card.title}</h3>
+      {card.tip && <p className="eton-tip">{card.tip}</p>}
+      <button className={`eton-poster${big ? ' big' : ''}`} onClick={() => setBig(!big)} aria-label={big ? '缩小海报' : '放大海报'}>
+        <img src={posterUrl(card)} alt={card.title} />
+      </button>
+      {card.lines && (
+        <section className="eton-block">
+          <h3 className="eton-sub">Say it</h3>
+          <div className="eton-lines">
+            {card.lines.map((l) => <Say key={l} text={l} />)}
+          </div>
+        </section>
+      )}
     </div>
   )
 }

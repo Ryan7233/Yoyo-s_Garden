@@ -1,7 +1,7 @@
 // 周五自己做的两个自查小游戏：看视频后的勾选题、Land / Water 拖拽分类。
 // 每次打开课都是新的，做错了可以马上再来，不影响交作业。
 import { useRef, useState, type PointerEvent } from 'react'
-import type { LandWord, PickCard, SortCard } from '../../data/etonLessons'
+import type { LandWord, MatchCard, PickCard, SortCard } from '../../data/etonLessons'
 import { play } from '../../ui/sfx'
 import { speakEn } from './Say'
 
@@ -190,6 +190,78 @@ export function SortView({ card }: { card: SortCard }) {
       </div>
 
       {done && <button className="btn btn-ghost" onClick={() => { setPlaced({}); setOrder(shuffled(card.words)) }}>↺ 再玩一次</button>}
+    </div>
+  )
+}
+
+/**
+ * am / are / is 配对：屏幕上一个代词，下面三个按钮。点对了填进去、读出整句；
+ * 点错了那个按钮晃一下，可以再选。6 个代词打乱问两轮，全对算完成。
+ */
+export function MatchView({ card }: { card: MatchCard }) {
+  const deal = () => [0, 1].flatMap((round) => shuffled(card.items).map((item) => ({ ...item, sentence: item.sentences[round] })))
+  const [queue, setQueue] = useState(deal)
+  const [at, setAt] = useState(0)
+  const [wrong, setWrong] = useState<string | null>(null)
+  const [right, setRight] = useState(false)
+  const [misses, setMisses] = useState(0)
+  const done = at >= queue.length
+  const q = queue[Math.min(at, queue.length - 1)]
+
+  const choose = (word: string) => {
+    if (right || done) return
+    if (word !== q.answer) {
+      setWrong(word)
+      setMisses((n) => n + 1)
+      speakEn(`${q.who} ${word}?`)
+      window.setTimeout(() => setWrong((x) => (x === word ? null : x)), 500)
+      return
+    }
+    setRight(true)
+    speakEn(q.sentence)
+    play(at === queue.length - 1 ? 'fanfare' : 'coin')
+    window.setTimeout(() => {
+      setRight(false)
+      setAt((n) => n + 1)
+    }, 1500)
+  }
+  const again = () => {
+    setQueue(deal())
+    setAt(0)
+    setMisses(0)
+  }
+  // 句子里代词后面的部分：选对以后整句显示出来
+  const rest = q.sentence.slice(q.who.length + 1 + q.answer.length)
+
+  return (
+    <div className="eton-card">
+      <span className="eton-tag">{card.tag}</span>
+      <h3 className="eton-topic">🎯 {card.title}</h3>
+      {card.tip && <p className="eton-tip">{card.tip}</p>}
+      <div className="eton-match-dots" aria-label={`第 ${Math.min(at + 1, queue.length)} 题，共 ${queue.length} 题`}>
+        {queue.map((_, i) => <span key={i} className={i < at ? 'on' : i === at ? 'now' : ''} />)}
+      </div>
+      {done ? (
+        <div className="eton-result ok" role="status">
+          <span>🎉 All done! {misses ? `${queue.length} 题都答对了，中间改过 ${misses} 次。` : '一次都没错，太棒了！'}</span>
+          <button className="btn btn-ghost" onClick={again}>↺ 再玩一次</button>
+        </div>
+      ) : (
+        <>
+          <button className={`eton-match-q${right ? ' right' : ''}`} onClick={() => speakEn(right ? q.sentence : q.who)} aria-live="polite">
+            <b>{q.who}</b>
+            <span className="eton-match-blank">{right ? q.answer : '___'}</span>
+            {right && <span className="eton-match-rest">{rest}</span>}
+          </button>
+          <div className="eton-match-choices">
+            {card.choices.map((c) => (
+              <button key={c} className={`eton-match-choice${wrong === c ? ' wrong' : ''}${right && c === q.answer ? ' right' : ''}`} onClick={() => choose(c)}>
+                {c}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }

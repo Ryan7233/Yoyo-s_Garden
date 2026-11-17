@@ -115,3 +115,34 @@
   .eton-qa, .eton-grid.two, .eton-rule { grid-template-columns: minmax(0, 1fr); }
   .eton-picks { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* ---- 海报：默认适合一屏看，点一下放到最大 ---- */
+.eton-poster { display: block; margin: 0 auto; padding: 0; border: none; background: none; cursor: zoom-in; max-width: min(100%, 460px); border-radius: var(--r-l); overflow: hidden; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.08); }
+.eton-poster.big { max-width: 100%; cursor: zoom-out; }
+.eton-poster img { display: block; width: 100%; height: auto; }
+
+/* ---- am / are / is 配对 ---- */
+.eton-match-dots { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 4px 0 14px; }
+.eton-match-dots span { width: 12px; height: 12px; border-radius: 50%; background: #e7e0d6; }
+.eton-match-dots span.on { background: #7ed7b5; }
+.eton-match-dots span.now { background: var(--primary); transform: scale(1.25); }
+.eton-match-q {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 0.3em;
+  width: 100%; min-height: 2.4em; padding: 18px 12px; margin-bottom: 18px;
+  font-size: clamp(34px, 7vw, 54px); line-height: 1.2; color: var(--text);
+  background: #fff; border: 3px solid #eadfce; border-radius: var(--r-l); cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.eton-match-q.right { border-color: #7ed7b5; background: #eafaf3; }
+.eton-match-blank { min-width: 2.2em; text-align: center; color: #b9a58e; border-bottom: 3px dashed #d9c8b0; }
+.eton-match-q.right .eton-match-blank { color: #2f9c72; border-bottom-color: transparent; font-weight: 800; }
+.eton-match-rest { font-size: 0.8em; }
+.eton-match-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.eton-match-choice {
+  min-height: 76px; font-size: clamp(28px, 5vw, 40px); font-weight: 800;
+  background: #fff8e6; border: 3px solid #e7c98f; border-radius: var(--r-l); box-shadow: 0 4px 0 #e7c98f; cursor: pointer;
+}
+.eton-match-choice:active { translate: 0 3px; box-shadow: 0 1px 0 #e7c98f; }
+.eton-match-choice.wrong { animation: eton-shake 0.45s; border-color: #d9534f; background: #fde4e4; box-shadow: 0 4px 0 #d9534f; }
+.eton-match-choice.right { border-color: #7ed7b5; background: #eafaf3; box-shadow: 0 4px 0 #7ed7b5; }
+@media (prefers-reduced-motion: reduce) { .eton-match-choice.wrong { animation: none; } }

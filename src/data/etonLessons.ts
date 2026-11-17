@@ -125,7 +125,29 @@ export interface PaperCard {
   items: { n: string; icon?: string; text: string; options?: string[]; abc?: boolean; tip?: string }[]
 }
 
-export type LessonCard = WordCard | TopicCard | VerbsCard | BookCard | CompareCard | TalkCard | ReviewCard | VocabCard | SortCard | PickCard | ReadCard | PaperCard
+/** 老师发的海报：整张图，点开能看清 */
+export interface PosterCard {
+  kind: 'poster'
+  title: string
+  tag: string
+  tip?: string
+  image: string
+  /** 海报上的句子，点读用 */
+  lines?: string[]
+}
+
+/** am / are / is 配对：出一个代词，选对的那个词，读出整句 */
+export interface MatchCard {
+  kind: 'match'
+  title: string
+  tag: string
+  tip?: string
+  choices: string[]
+  /** 每个代词两句：第一轮用第一句，第二轮用第二句 */
+  items: { who: string; answer: string; sentences: [string, string] }[]
+}
+
+export type LessonCard = WordCard | TopicCard | VerbsCard | BookCard | CompareCard | TalkCard | ReviewCard | VocabCard | SortCard | PickCard | ReadCard | PaperCard | PosterCard | MatchCard
 
 export interface EtonLesson {
   date: string
@@ -257,6 +279,50 @@ const CHECK_P13: PaperCard = {
     { n: '2', icon: '⬆️', text: 'What is the highest form of land?', options: ['a hill', 'a valley', 'a mountain'], abc: true },
     { n: '3', icon: '➖', text: 'What is flat land called?', options: ['a valley', 'a plain', 'a hill'], abc: true },
     { n: '4', icon: '🌊', text: 'A ____ flows into an ocean.', options: ['lake', 'river', 'island'], abc: true },
+  ],
+}
+
+// ---- Unit 3 We Are Friends（11/17–11/22，Sight Word Key 第 16–21 页）----
+
+const U3 = 'Sight Word Key · Unit 3'
+const poster = (title: string, image: string, lines?: string[], tip?: string): PosterCard => ({ kind: 'poster', title, tag: 'Poster', image: `eton/${image}.jpg`, lines, tip })
+
+/** 练习册一词一页：①涂色 ②描写 ③圈词 ④拼写格自己做，⑤和家长一起造句 */
+const workbook = (pages: [number, string, string][], own: string[], tip = '①涂色 ②描写 ③圈词 ④拼写格，自己做。⑤先读书上的句子，再写一句自己的。'): PaperCard => ({
+  kind: 'paper',
+  title: `Workbook · Sight Word ${pages[0][0]}–${pages[pages.length - 1][0]}`,
+  tag: 'Workbook 1 · Make nice sentences',
+  tip,
+  items: [
+    ...pages.map(([n, text, hint]) => ({ n: String(n), text, tip: hint })),
+    { n: '⑤', text: 'My own sentence:', options: own },
+  ],
+})
+
+const U3_WORDS: { word: string; sentence: string }[] = [
+  { word: 'I', sentence: 'I am Tom.' },
+  { word: 'am', sentence: 'I am a girl.' },
+  { word: 'you', sentence: 'I love you.' },
+  { word: 'are', sentence: 'You are tall.' },
+  { word: 'we', sentence: 'We win!' },
+  { word: 'they', sentence: 'They play ball.' },
+  { word: 'he', sentence: 'He is my friend.' },
+  { word: 'she', sentence: 'She is my teacher.' },
+]
+
+const AM_ARE_IS: MatchCard = {
+  kind: 'match',
+  title: 'am, are or is?',
+  tag: 'Unit 3 · Game',
+  tip: 'I am · You / We / They are · He / She is',
+  choices: ['am', 'are', 'is'],
+  items: [
+    { who: 'I', answer: 'am', sentences: ['I am happy.', 'I am at home.'] },
+    { who: 'You', answer: 'are', sentences: ['You are my friend.', 'You are tall.'] },
+    { who: 'We', answer: 'are', sentences: ['We are friends.', 'We are a family.'] },
+    { who: 'They', answer: 'are', sentences: ['They are friends.', 'They are at school.'] },
+    { who: 'He', answer: 'is', sentences: ['He is my friend.', 'He is my brother.'] },
+    { who: 'She', answer: 'is', sentences: ['She is my teacher.', 'She is my mom.'] },
   ],
 }
 
@@ -655,7 +721,307 @@ export const ETON_LESSONS: EtonLesson[] = [
       },
     ],
   },
+  {
+    date: '2026-11-17',
+    title: '11 月 17 日 · 周二',
+    cards: [
+      {
+        kind: 'word',
+        word: 'I',
+        tag: 'Sight Words 17',
+        meaning: '我',
+        spell: ['I'],
+        tip: 'I is always a big letter! I 永远大写。',
+        sentences: ['I am Tom.', 'I am a girl.', 'I am happy.'],
+        remember: { say: 'I am', not: 'i am' },
+      },
+      {
+        kind: 'word',
+        word: 'am',
+        tag: 'Sight Words 18',
+        meaning: '是（只跟 I 一起）',
+        spell: ['A', 'M'],
+        tip: 'I and am are best friends. I am = I’m',
+        sentences: ['I am Yoyo.', 'I am a student.', 'I am at home.'],
+        remember: { say: 'I am', not: 'I is' },
+      },
+      {
+        kind: 'talk',
+        title: 'All About Me',
+        tag: 'Say it · Full sentence',
+        tip: 'Answer with I am …',
+        talk: [
+          { q: 'Who are you?', a: 'I am Yoyo.' },
+          { q: 'Are you a boy or a girl?', a: 'I am a girl.' },
+          { q: 'How do you feel?', a: 'I am happy.' },
+          { q: 'Where are you?', a: 'I am at home.' },
+          { q: 'What are you doing?', a: 'I am reading.' },
+        ],
+      },
+      poster('4 Ways to Use I AM', 'u3-i-am', ['I am a student.', 'I am reading a book.', 'I am happy.', 'I am at home.']),
+      workbook(
+        [
+          [17, 'I', '③ 圈出 3 个单独的 I'],
+          [18, 'am', '④ 拼写格：a m'],
+        ],
+        ['I am Tom.', 'I am Yoyo.', 'I am a girl.', 'I am happy.'],
+      ),
+    ],
+  },
+  {
+    date: '2026-11-18',
+    title: '11 月 18 日 · 周三',
+    cards: [
+      {
+        kind: 'word',
+        word: 'you',
+        tag: 'Sight Words 19',
+        meaning: '你',
+        spell: ['Y', 'O', 'U'],
+        tip: 'you = the person I talk to 👉',
+        sentences: ['I love you.', 'You are tall.', 'You are my friend.'],
+      },
+      {
+        kind: 'word',
+        word: 'are',
+        tag: 'Sight Words 20',
+        meaning: '是（跟 you / we / they）',
+        spell: ['A', 'R', 'E'],
+        tip: 'ar like car and star. The e is quiet. 结尾的 e 不发音',
+        family: [
+          { head: 'c', tail: 'ar' },
+          { head: 'st', tail: 'ar' },
+          { head: 'j', tail: 'ar' },
+          { head: 'f', tail: 'ar' },
+        ],
+        sentences: ['You are tall.', 'You are kind.', 'You are funny.'],
+        remember: { say: 'You are', not: 'You is' },
+      },
+      {
+        kind: 'talk',
+        title: 'Say Something Nice',
+        tag: 'Say it · You are …',
+        tip: 'Every answer starts with You are!',
+        talk: [
+          { q: 'You are tall.', a: 'You are tall, too!' },
+          { q: 'You are my friend.', a: 'You are my dad.' },
+          { q: 'You are kind.', a: 'You are funny.' },
+        ],
+      },
+      {
+        kind: 'read',
+        title: 'I Am a Mouse',
+        tag: `${U3} · p.18`,
+        tip: '🐭 You are the mouse. 🐱 Dad is the cat.',
+        sections: [{ lines: ['I am a mouse.', 'You are a cat.', 'You are running.', 'I am running, too!', 'Eek!'] }],
+      },
+      poster('My Pronouns', 'u3-my-pronouns', ['I am happy.', 'You are kind.', 'He is Tom.', 'She is Mia.', 'We are friends.', 'They are in the park.']),
+      workbook(
+        [
+          [19, 'you', '③ 圈出 2 个 you　④ y _ u 填 o，_ o u 填 y'],
+          [20, 'are', '④ 拼写格：a r e，别忘了最后的 e'],
+        ],
+        ['I love you.', 'You are my friend.', 'You are tall.'],
+      ),
+    ],
+  },
+  {
+    date: '2026-11-19',
+    title: '11 月 19 日 · 周四',
+    cards: [
+      {
+        kind: 'word',
+        word: 'we',
+        tag: 'Sight Words 21',
+        meaning: '我们',
+        spell: ['W', 'E'],
+        tip: 'we = me and you 🤝 The e says its name.',
+        family: [
+          { head: 'w', tail: 'e' },
+          { head: 'm', tail: 'e' },
+          { head: 'h', tail: 'e' },
+          { head: 'sh', tail: 'e' },
+        ],
+        sentences: ['We win!', 'We are friends.', 'We are a family.'],
+        remember: { say: 'We are', not: 'We is' },
+      },
+      {
+        kind: 'word',
+        word: 'they',
+        tag: 'Sight Words 22',
+        meaning: '他们 / 她们 / 它们',
+        spell: ['T', 'H', 'E', 'Y'],
+        tip: 'th + ey. More than one: they are.',
+        sentences: ['They play ball.', 'They are my friends.', 'They are at school.'],
+        remember: { say: 'they', not: 'thay' },
+      },
+      {
+        kind: 'talk',
+        title: 'Who Are We? Who Are They?',
+        tag: 'Say it · More than one: are',
+        talk: [
+          { q: 'Who are we?', a: 'We are a family.' },
+          { q: 'Where are we?', a: 'We are at home.' },
+          { q: 'Who are they?', a: 'They are my friends.' },
+          { q: 'What are they?', a: 'They are toys. They are small.' },
+        ],
+      },
+      {
+        kind: 'read',
+        title: 'They Have Fun',
+        tag: `${U3} · p.19`,
+        tip: 'Can you spell kicks, fast and fun?',
+        sections: [{ lines: ['They play ball.', 'He kicks the ball.', 'She runs fast.', 'They have fun.'] }],
+      },
+      poster('4 Ways to Use THEY / WE / YOU ARE', 'u3-they-we-you-are', ['They are students.', 'We are playing.', 'You are kind.', 'We are at home.']),
+      workbook(
+        [
+          [21, 'we', '题目以练习册为准'],
+          [22, 'they', '题目以练习册为准'],
+        ],
+        ['We are friends.', 'We are happy.', 'They are my friends.', 'They are at school.'],
+        '①–④ 自己做，⑤写一句自己的。',
+      ),
+    ],
+  },
+  {
+    date: '2026-11-20',
+    title: '11 月 20 日 · 周五',
+    cards: [
+      {
+        kind: 'word',
+        word: 'he',
+        tag: 'Sight Words 23',
+        meaning: '他',
+        spell: ['H', 'E'],
+        tip: 'he = one boy 👦 Only one: is.',
+        sentences: ['He is my friend.', 'He is my brother.', 'He is happy.'],
+        remember: { say: 'He is', not: 'He are' },
+      },
+      {
+        kind: 'word',
+        word: 'she',
+        tag: 'Sight Words 24',
+        meaning: '她',
+        spell: ['S', 'H', 'E'],
+        tip: 'sh says "shh" 🤫 she = one girl 👧',
+        sentences: ['She is my teacher.', 'She is my mom.', 'She is kind.'],
+        remember: { say: 'A girl is she.', not: 'A girl is he.' },
+      },
+      {
+        kind: 'talk',
+        title: 'Look at a Photo',
+        tag: 'Say it · He is … / She is …',
+        tip: 'Point at a family photo. A boy is he. A girl is she.',
+        talk: [
+          { q: 'Who is he?', a: 'He is my brother.' },
+          { q: 'Is he big or small?', a: 'He is small.' },
+          { q: 'Who is she?', a: 'She is my mom.' },
+          { q: 'Is she kind?', a: 'Yes. She is kind.' },
+          { q: 'Who is she?', a: 'She is my teacher.' },
+        ],
+      },
+      poster('4 Ways to Use HE / SHE IS', 'u3-he-she-is', ['He is a student.', 'She is a teacher.', 'He is reading.', 'She is painting.', 'He is happy.', 'She is sleepy.', 'He is at home.', 'She is at school.']),
+      workbook(
+        [
+          [23, 'he', '题目以练习册为准'],
+          [24, 'she', '题目以练习册为准'],
+        ],
+        ['He is my brother.', 'He is my dad.', 'She is my mom.', 'She is my teacher.'],
+        '①–④ 自己做，⑤写一句自己的。',
+      ),
+    ],
+  },
+  {
+    date: '2026-11-21',
+    title: '11 月 21 日 · 周六',
+    cards: [
+      {
+        kind: 'read',
+        title: 'We Are Friends',
+        tag: `${U3} · p.20–21`,
+        tip: 'Read it yourself! 自己读，卡住了再点一下听。',
+        sections: [
+          { lines: ['I am Tom.', 'You are Amy.', 'We are friends.'] },
+          { lines: ['He is John.', 'She is Sue.', 'They are friends.'] },
+          { lines: ['She is Ms. Brown.', 'She is my teacher.', 'She is a good teacher.'] },
+          { lines: ['We like school.', 'School is fun!'], words: [{ word: 'friends', note: '朋友' }, { word: 'teacher', note: '老师' }, { word: 'school', note: '学校' }] },
+        ],
+      },
+      {
+        kind: 'talk',
+        title: 'After the Story',
+        tag: 'Say it · Full sentence',
+        talk: [
+          { q: "Who is Tom's friend?", a: 'Amy. She is Amy.' },
+          { q: 'Who is Ms. Brown?', a: 'She is a teacher.' },
+          { q: 'Do they like school?', a: 'Yes. They like school.' },
+        ],
+      },
+      {
+        kind: 'paper',
+        title: 'After Reading',
+        tag: `${U3} · p.21`,
+        tip: '在课本上做：①② 圈出对的词，③④ 勾 Yes 或 No。',
+        items: [
+          { n: '1', text: 'We is / are friends.', options: ['is', 'are'] },
+          { n: '2', text: 'He / She is a good teacher.', options: ['He', 'She'] },
+          { n: '3', text: 'They are friends.', options: ['Yes', 'No'] },
+          { n: '4', text: "We don't like school.", options: ['Yes', 'No'] },
+        ],
+      },
+      {
+        kind: 'paper',
+        title: 'Word List',
+        tag: `${U3} · p.16–17`,
+        tip: '课上没填完的补上：补字母，勾出会读的词。',
+        bank: ['I', 'am', 'you', 'are', 'we', 'they', 'he', 'she'],
+        items: [],
+      },
+      {
+        kind: 'paper',
+        title: 'Write 6 Sentences',
+        tag: 'Notebook · Homework',
+        tip: '先说再写，一行一句，写你自己的事。检查：I 大写，句首大写，句末有句号。',
+        items: [
+          { n: '1', text: 'I am ____.', options: ['I am Yoyo.', 'I am seven.'] },
+          { n: '2', text: 'You are ____.', options: ['You are my dad.'] },
+          { n: '3', text: 'He is ____.', options: ['He is my brother.'] },
+          { n: '4', text: 'She is ____.', options: ['She is my mom.'] },
+          { n: '5', text: 'We are ____.', options: ['We are a family.'] },
+          { n: '6', text: 'They are ____.', options: ['They are my friends.'] },
+        ],
+      },
+    ],
+  },
+  {
+    date: '2026-11-22',
+    title: '11 月 22 日 · 周日',
+    cards: [
+      { kind: 'review', title: 'My 8 Words', tag: 'Unit 3 · Dictation', words: U3_WORDS },
+      AM_ARE_IS,
+      poster('We Are Friends!', 'u3-we-are-friends', ['I am happy.', 'We are friends.'], 'Point · Say · Play'),
+      {
+        kind: 'review',
+        title: 'Unit 2 Words',
+        tag: 'Review · p.17',
+        words: [
+          { word: 'look', sentence: 'Look!' },
+          { word: 'at', sentence: 'Look at the cat.' },
+          { word: 'me', sentence: 'Look at me.' },
+          { word: 'who', sentence: 'Who is it?' },
+          { word: 'this', sentence: 'This is my cat.' },
+          { word: 'that', sentence: 'That is a bird.' },
+          { word: 'is', sentence: 'It is a cat.' },
+          { word: 'not', sentence: 'It is not a dog.' },
+        ],
+      },
+    ],
+  },
 ]
+
+/** 海报的图片地址（部署在子路径下） */
+export const posterUrl = (card: PosterCard) => import.meta.env.BASE_URL + card.image
 
 /** 今天的课；今天没有课时返回 undefined（任务牌上就不显示“看今天的课”） */
 export function lessonFor(today: string): EtonLesson | undefined {
