@@ -1,4 +1,5 @@
 import { Carving, oak, honey, dark, leaf, lime, type Point } from './carving'
+import { frog, hedgehog, squirrel } from './visitors'
 import { tree } from './models'
 const teal = '#669fa0',
   rose = '#e38c8f',
@@ -77,10 +78,12 @@ export function furniture(m: Carving, id: string) {
       m.ball(dark, [0, 0.24, 0.282], [0.087, 0.072, 0.03])
       break
     case 'bucket':
-    case 'picnic':
-      m.box(id === 'out-bucket' ? teal : honey, [0, 0.2, 0], [0.5, 0.37, 0.44])
-      m.box(id === 'out-bucket' ? '#87c7cd' : rose, [0, 0.39, 0], [0.46, 0.036, 0.4])
+      m.box(teal, [0, 0.2, 0], [0.5, 0.37, 0.44])
+      m.box('#87c7cd', [0, 0.39, 0], [0.46, 0.036, 0.4])
       m.ring(oak, [0, 0.39, 0], [0.205, 0.247, 0.24])
+      break
+    case 'picnic':
+      picnicBasket(m)
       break
     case 'street-lamp':
     case 'star-lamp':
@@ -138,7 +141,37 @@ export function furniture(m: Carving, id: string) {
   }
 }
 
+function picnicBasket(m: Carving) {
+  // Coiled wicker expands towards the lip, leaving room for the checked cloth and bread.
+  m.ball(honey, [0, 0.12, 0], [0.34, 0.12, 0.215])
+  for (let row = 0; row < 4; row++) {
+    m.ring(
+      row % 2 ? '#ba804a' : '#d49b56',
+      [0, 0.095 + row * 0.055, 0],
+      [0.327 + row * 0.015, 0.197 + row * 0.012, 0.237],
+      [Math.PI / 2, 0, 0],
+    )
+  }
+  m.arc(oak, 0.246, 0.024, [0, 0.26, 0], [0, Math.PI / 2, 0])
+  m.ball('#e4b175', [-0.15, 0.292, -0.012], [0.105, 0.126, 0.156], [0.4, 0, -0.25])
+  for (let i = 0; i < 3; i++)
+    m.ball('#bd8759', [-0.145, 0.354 + i * 0.014, -0.094 + i * 0.054], [0.074, 0.015, 0.016], [0.15, 0.26, 0])
+  const cloth = ['#fff2d6', '#d96863']
+  for (let row = 0; row < 6; row++)
+    for (let col = 0; col < 4; col++) {
+      const drape = row >= 4
+      m.box(
+        cloth[(row + col) % 2],
+        [0.049 + col * 0.068, drape ? 0.242 - (row - 4) * 0.061 : 0.282, drape ? 0.233 : -0.005 + row * 0.065],
+        [0.07, drape ? 0.065 : 0.021, drape ? 0.025 : 0.068],
+      )
+    }
+}
+
 export function animal(m: Carving, id: string) {
+  if (id === 'hedgehog') return hedgehog(m)
+  if (id === 'squirrel') return squirrel(m)
+  if (id === 'frog') return frog(m)
   if (id === 'bee') {
     honeybee(m)
     return
@@ -166,10 +199,7 @@ export function animal(m: Carving, id: string) {
   const colors: Record<string, string> = {
     bird: '#7daebb',
     rabbit: '#f8e7d5',
-    frog: '#87aa62',
-    squirrel: '#be8357',
     cat: '#ddae75',
-    hedgehog: '#a48568',
   }
   const c = colors[id] ?? honey
   m.ball(c, [0, 0.165, 0], [0.174, 0.17, 0.23])
@@ -179,7 +209,7 @@ export function animal(m: Carving, id: string) {
     m.ball('#fff4db', [s * 0.082, 0.357, 0.247], [0.009, 0.01, 0.006])
     if (id === 'rabbit') m.ball(c, [s * 0.079, 0.53, 0.06], [0.047, 0.14, 0.056], [0, 0, -s * 0.17])
     if (id === 'bird') m.ball('#57909d', [s * 0.135, 0.19, -0.019], [0.078, 0.107, 0.17], [0.3, 0, 0])
-    if (id === 'cat' || id === 'squirrel') m.cone(c, [s * 0.102, 0.46, 0.08], [0.058, 0.124, 0.06])
+    if (id === 'cat') m.cone(c, [s * 0.102, 0.46, 0.08], [0.058, 0.124, 0.06])
   }
   if (id === 'bird') m.cone('#edb451', [0, 0.3, 0.275], [0.047, 0.11, 0.046], [Math.PI / 2, 0, 0])
 }

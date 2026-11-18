@@ -531,6 +531,55 @@ function sprout(m: Carving, id: string, stage: 1 | 2, mood: Mood) {
   }
 }
 
+/** One cupped petal, repeated in widening turns around the tight centre of the rose. */
+function roseBloom(m: Carving, h: number, mood: Mood) {
+  const petal = new T.SphereGeometry(1, 16, 10)
+  const points = petal.getAttribute('position')
+  for (let i = 0; i < points.count; i++) {
+    const x = points.getX(i),
+      y = points.getY(i),
+      z = points.getZ(i)
+    const rim = (y + 1) / 2
+    points.setXYZ(
+      i,
+      x * (0.66 + 0.42 * rim),
+      y - 0.16 * x * x,
+      0.16 * z - 0.3 * x * x + 0.48 * rim * rim + 0.2 * x * rim,
+    )
+  }
+  petal.computeVertexNormals()
+  const relief = petal.toNonIndexed()
+  const layers = [
+    { count: 7, radius: 0.167, width: 0.155, height: 0.116, lift: 0, tilt: 0.68, color: '#e97991' },
+    { count: 5, radius: 0.098, width: 0.118, height: 0.103, lift: 0.064, tilt: 0.43, color: '#d75072' },
+    { count: 3, radius: 0.042, width: 0.069, height: 0.073, lift: 0.114, tilt: 0.24, color: '#bb3c60' },
+  ]
+  m.ball('#be526e', [0, h, 0], [0.181, 0.09, 0.174])
+  for (const [tier, layer] of layers.entries()) {
+    for (let i = 0; i < layer.count; i++) {
+      const a = (turn * i) / layer.count + tier * 0.74
+      const normal = a + 0.36
+      const rotation = basis(
+        [Math.sin(normal) * Math.sin(layer.tilt), Math.cos(layer.tilt), Math.cos(normal) * Math.sin(layer.tilt)],
+        [Math.sin(normal) * Math.cos(layer.tilt), -Math.sin(layer.tilt), Math.cos(normal) * Math.cos(layer.tilt)],
+      )
+      m.part(
+        relief,
+        tint(layer.color, i % 2 ? 0.055 : 0),
+        [Math.sin(a) * layer.radius, h + layer.lift, Math.cos(a) * layer.radius],
+        [layer.width, layer.height, layer.height],
+        rotation,
+      )
+    }
+  }
+  m.ball('#b53d60', [0, h + 0.157, 0], [0.034, 0.037, 0.036])
+  relief.dispose()
+  petal.dispose()
+  // The front lip carries the same expression as the other flowering plants.
+  m.ball('#e5748c', [0, h - 0.027, 0.174], [0.123, 0.064, 0.057], [0.2, 0, 0])
+  face(m, [0, h - 0.018, 0.231], 0.094, mood)
+}
+
 export function plant(m: Carving, id: string, stage: number, fruitStage: 0 | 1 | 2 | 3 = 0, mood: Mood = 'happy') {
   if (stage === 0) {
     m.ball('#96623d', [0, 0.04, 0], [0.18, 0.09, 0.15])
@@ -558,7 +607,11 @@ export function plant(m: Carving, id: string, stage: number, fruitStage: 0 | 1 |
     h = tall ? 0.9 : id.includes('lotus') ? 0.29 : 0.63
   leaves(m, h)
   const colors = PETALS[id] ?? ['#f6c98d', '#f2b4c9']
-  if (/tulip|hyacinth|rose|lotus/.test(id)) {
+  if (id === 'seed-rose') {
+    roseBloom(m, h, mood)
+    return
+  }
+  if (/tulip|hyacinth|lotus/.test(id)) {
     const tiers = id.includes('hyacinth') ? 3 : 1
     for (let j = 0; j < tiers; j++)
       for (let i = 0; i < 6; i++) {
