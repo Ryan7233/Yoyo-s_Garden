@@ -20,7 +20,7 @@ npm run preview    # 预览构建结果
 ## 发布
 
 推送到 `main` 分支后，`.github/workflows/deploy.yml` 会自动测试、构建并发布到 GitHub Pages。
-`.github/workflows/e2e.yml` 会在 WebKit 上跑端到端测试（单独的工作流，不挡发布）。
+GitHub 上只跑部署工作流（单元测试 + 构建 + 发布），不再跑端到端测试。
 首次使用需要在仓库 **Settings → Pages → Source** 选择 **GitHub Actions**。
 
 发布地址：`https://<用户名>.github.io/Yoyo-s_Garden/`（`vite.config.ts` 里的 `BASE` 要与仓库名一致）。
