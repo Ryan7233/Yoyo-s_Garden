@@ -139,20 +139,23 @@ export function furniture(m: Carving, id: string) {
 }
 
 export function animal(m: Carving, id: string) {
-  if (id === 'butterfly' || id === 'bee') {
-    m.ball(id === 'bee' ? '#e5aa37' : dark, [0, 0, 0], [0.092, 0.083, 0.19])
+  if (id === 'bee') {
+    honeybee(m)
+    return
+  }
+  if (id === 'butterfly') {
+    m.ball(dark, [0, 0, 0], [0.092, 0.083, 0.19])
     for (const s of [-1, 1])
       for (let i = 0; i < 2; i++) {
         const x = s * (i ? 0.137 : 0.19),
           z = i ? -0.094 : 0.072
         m.ball(
-          id === 'bee' ? '#cde6df' : '#397a96',
+          '#397a96',
           [x, 0.084, z],
           [i ? 0.12 : 0.17, 0.04, i ? 0.125 : 0.15],
           [0, s * 0.24, s * 0.39],
         )
-        if (id === 'butterfly')
-          m.ball(i ? '#87c8c2' : '#70c9db', [x, 0.119, z], [i ? 0.087 : 0.121, 0.014, 0.082], [0, s * 0.24, s * 0.39])
+        m.ball(i ? '#87c8c2' : '#70c9db', [x, 0.119, z], [i ? 0.087 : 0.121, 0.014, 0.082], [0, s * 0.24, s * 0.39])
       }
     return
   }
@@ -179,6 +182,35 @@ export function animal(m: Carving, id: string) {
     if (id === 'cat' || id === 'squirrel') m.cone(c, [s * 0.102, 0.46, 0.08], [0.058, 0.124, 0.06])
   }
   if (id === 'bird') m.cone('#edb451', [0, 0.3, 0.275], [0.047, 0.11, 0.046], [Math.PI / 2, 0, 0])
+}
+
+/** Broad bands wrap the abdomen so they read from above as well as from the side. */
+function honeybee(m: Carving) {
+  const gold = '#f6b737', ink = '#493329', wing = '#d6eff2'
+  m.ball(gold, [0, 0, -0.12], [0.185, 0.17, 0.26])
+  for (const z of [-0.245, -0.085]) {
+    const section = Math.sqrt(1 - ((z + 0.12) / 0.26) ** 2)
+    m.ring(ink, [0, 0, z], [0.176 * section, 0.162 * section, 0.27])
+  }
+  m.ball('#aa6834', [0, 0.012, 0.092], [0.144, 0.147, 0.14])
+  m.ball('#ffd16a', [0, 0.035, 0.236], [0.156, 0.146, 0.13])
+
+  for (const side of [-1, 1]) {
+    m.ball(ink, [side * 0.098, 0.065, 0.327], [0.044, 0.054, 0.033])
+    m.ball('#fff7de', [side * 0.105, 0.087, 0.35], [0.014, 0.015, 0.012])
+    m.beam(ink, [side * 0.064, 0.152, 0.263], [side * 0.115, 0.246, 0.302], 0.013)
+    m.ball(ink, [side * 0.12, 0.249, 0.307], [0.024, 0.022, 0.024])
+
+    // Small hindwings sit underneath the longer forewings, clear of the stripes.
+    m.ball('#afd7dd', [side * 0.19, 0.105, -0.006], [0.15, 0.023, 0.068], [0, side * 0.48, side * 0.30])
+    m.ball(wing, [side * 0.218, 0.158, 0.087], [0.215, 0.027, 0.088], [0, side * 0.20, side * 0.43])
+    m.beam('#9ac7ce', [side * 0.086, 0.124, 0.108], [side * 0.372, 0.245, 0.061], 0.009)
+
+    for (const z of [-0.1, 0.012, 0.115]) {
+      m.beam(ink, [side * 0.088, -0.072, z], [side * 0.146, -0.151, z - 0.035], 0.013)
+    }
+    m.ball('#efa343', [side * 0.15, -0.15, -0.14], [0.036, 0.043, 0.042])
+  }
 }
 
 /** A proper ladybird: glossy red domed shell split down the middle, seven black spots,
