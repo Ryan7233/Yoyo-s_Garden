@@ -11,8 +11,13 @@ export function ReciteSheet({ text, today, onFinish, onClose }: { text: ReciteTe
   const [hide, setHide] = useState(false)
   const [peek, setPeek] = useState<Set<string>>(new Set())
   const [times, setTimes] = useState(0)
+  const read = text.kind === 'read'
+  const goal = text.goal ?? 1
+  const verb = read ? '读' : '背'
   const days = Math.round((Date.parse(text.due) - Date.parse(today)) / 86400000)
-  const when = days <= 0 ? `今天${text.dueLabel}老师查` : days === 1 ? `明天${text.dueLabel}老师查` : `${text.dueLabel}老师查，还有 ${days} 天`
+  const when = read
+    ? days <= 0 ? `今天有${text.dueLabel}` : days === 1 ? `明天有${text.dueLabel}，今天读熟它` : `${text.dueLabel}还有 ${days} 天`
+    : days <= 0 ? `今天${text.dueLabel}老师查` : days === 1 ? `明天${text.dueLabel}老师查` : `${text.dueLabel}老师查，还有 ${days} 天`
 
   const toggle = (key: string) => {
     const next = new Set(peek)
@@ -24,16 +29,17 @@ export function ReciteSheet({ text, today, onFinish, onClose }: { text: ReciteTe
   return (
     <Modal wide onClose={onClose}>
       <div className="recite">
-        <h2 className="modal-title">🎙️ 背课文《{text.title}》</h2>
+        <h2 className="modal-title">{read ? `📖 读熟《${text.title}》` : `🎙️ 背课文《${text.title}》`}</h2>
         <p className="recite-due">⏰ {when}</p>
 
-        <div className="recite-modes" role="group" aria-label="怎么背">
+        {read && <p className="hint recite-hint">大声读，读得慢一点、清楚一点，至少读 {goal} 遍。</p>}
+        {!read && <div className="recite-modes" role="group" aria-label="怎么背">
           <button className={`btn ${hide ? 'btn-ghost' : 'btn-primary'}`} aria-pressed={!hide} onClick={() => { setHide(false); setPeek(new Set()) }}>👀 看着读</button>
           <button className={`btn ${hide ? 'btn-primary' : 'btn-ghost'}`} aria-pressed={hide} onClick={() => { setHide(true); setPeek(new Set()) }}>🙈 遮住背</button>
-        </div>
+        </div>}
         {hide && <p className="hint recite-hint">每句只露出第一个字，想不起来就点那一句看一眼。</p>}
 
-        <div className="recite-text">
+        <div className={`recite-text${read ? " read" : ""}`}>
           {text.paragraphs.map((para, p) => (
             <p key={p} className="recite-para">
               {para.map((line, l) => {
@@ -57,17 +63,20 @@ export function ReciteSheet({ text, today, onFinish, onClose }: { text: ReciteTe
         </div>
 
         <div className="recite-bar">
-          <span>已经背了 <b className="num">{times}</b> 遍</span>
-          <button className="btn btn-big btn-primary" onClick={() => setTimes(times + 1)}>我背完一遍 ＋1</button>
+          <span>
+            已经{verb}了 <b className="num">{times}</b> 遍
+            {goal > 1 && <span className="recite-stars" aria-hidden> {Array.from({ length: goal }, (_, i) => (i < times ? '⭐' : '☆')).join('')}</span>}
+          </span>
+          <button className="btn btn-big btn-primary" onClick={() => setTimes(times + 1)}>我{verb}完一遍 ＋1</button>
         </div>
 
         <div className="modal-actions">
           {onFinish ? (
-            <button className="btn btn-primary btn-big" disabled={!times} onClick={async () => { await onFinish(); onClose() }}>
-              {times ? '✋ 背给爸爸妈妈听' : '先背一遍再交'}
+            <button className="btn btn-primary btn-big" disabled={times < goal} onClick={async () => { await onFinish(); onClose() }}>
+              {times >= goal ? `✋ ${verb}给爸爸妈妈听` : goal > 1 ? `再${verb} ${goal - times} 遍就能交` : `先${verb}一遍再交`}
             </button>
           ) : (
-            <button className="btn btn-primary btn-big" onClick={onClose}>背完了</button>
+            <button className="btn btn-primary btn-big" onClick={onClose}>{verb}完了</button>
           )}
           <button className="btn btn-ghost" onClick={onClose}>关闭</button>
         </div>

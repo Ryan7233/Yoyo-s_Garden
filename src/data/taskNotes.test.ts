@@ -21,6 +21,15 @@ describe('11/17 的作业都放进原来的任务里', () => {
     for (const d of ['2026-11-17', '2026-11-18', '2026-11-19']) expect(reciteFor(d)?.title).toBe('秋天')
     expect(reciteFor('2026-11-20')).toBeUndefined()
   })
+  it('《比尾巴》挂在语文阅读上，11/18 读熟 3 遍，不占课文背诵', () => {
+    const t = reciteFor('2026-11-18', 'read')
+    expect(t?.title).toBe('比尾巴')
+    expect(t?.goal).toBe(3)
+    expect(t?.paragraphs).toHaveLength(4)
+    expect(reciteFor('2026-11-17', 'read')).toBeUndefined()
+    expect(reciteFor('2026-11-20', 'read')).toBeUndefined()
+    expect(reciteFor('2026-11-18')?.title).toBe('秋天')
+  })
   it('看图写拼音第二单元 9 个词都有答案；数学三个办法', () => {
     expect(pinyinCardFor('2026-11-17')?.answers).toHaveLength(9)
     expect(mathHomeworkFor('2026-11-17')?.prompts.map((p) => p.kind)).toEqual(['添加', '移除', '重新分配'])

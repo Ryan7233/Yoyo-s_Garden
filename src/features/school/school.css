@@ -20,3 +20,4 @@
 .recite-line.covered { color: var(--text); }
 .recite-mask { color: #d9c8b0; letter-spacing: 2px; }
 .recite-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; padding: var(--sp-3) var(--sp-4); background: var(--mint-light); border-radius: var(--r-l); font-size: var(--fs-m); }
+.recite-text.read .recite-line { display: block; }

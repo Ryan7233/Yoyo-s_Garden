@@ -31,6 +31,9 @@ export const MATH_TASK_ID = 'math'
 /** 课文背诵：有要背的课文时弹出背诵卡（见 data/reciteTexts.ts） */
 export const RECITE_TASK_ID = 'recite'
 
+/** 语文阅读：有要读熟的课文时弹出朗读卡 */
+export const CHINESE_READING_TASK_ID = 'chinese-reading'
+
 /** 向日葵举手：上课举手就记一次，结果不影响奖励（见 engine/courage.ts） */
 export const RAISE_HAND_TASK_ID = 'raise-hand'
 
