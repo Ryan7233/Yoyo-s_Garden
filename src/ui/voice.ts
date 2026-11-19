@@ -59,7 +59,55 @@ export function cueTick() {
   beep(740, 120)
 }
 
-/** 读英文（默写的纸笔备用模式、伊顿英语课）；填空的下划线不读出来 */
+/** 声线里我们关心的几项（方便测试时造假数据） */
+export type VoiceLike = Pick<SpeechSynthesisVoice, 'name' | 'lang' | 'voiceURI' | 'localService'>
+
+// 想要的声线，靠前的优先：伊顿是美音，默写备用是英音
+const PREFERRED: Record<string, string[]> = {
+  'en-US': ['Ava', 'Samantha', 'Zoe', 'Allison', 'Susan', 'Evan', 'Nathan', 'Tom'],
+  'en-GB': ['Serena', 'Stephanie', 'Kate', 'Daniel', 'Arthur', 'Martha'],
+}
+// iPad 自带的搞怪声线和 Eloquence 老式声线，不适合给孩子做示范
+const NOVELTY = /albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|fred|junior|ralph|kathy|eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley/i
+
+/** 音质档位：优质 2 > 增强 1 > 普通 0（iPad 的 voiceURI 形如 com.apple.voice.enhanced.en-US.Samantha） */
+export function voiceTier(v: VoiceLike): number {
+  const id = `${v.voiceURI} ${v.name}`.toLowerCase()
+  if (id.includes('premium') || id.includes('优质')) return 2
+  if (id.includes('enhanced') || id.includes('增强')) return 1
+  return 0
+}
+
+/**
+ * 从系统声线里挑最好的：同一口音里先比音质档位，再按常用名字排，再优先本地离线的。
+ * 没有这个口音的声线时返回 undefined，交给系统默认。
+ */
+export function pickVoice(voices: VoiceLike[], lang: string): VoiceLike | undefined {
+  const want = lang.toLowerCase().replace('_', '-')
+  const names = PREFERRED[lang] ?? []
+  const rank = (v: VoiceLike) => {
+    const i = names.findIndex((n) => v.name.toLowerCase().startsWith(n.toLowerCase()))
+    return i < 0 ? names.length : i
+  }
+  return voices
+    .filter((v) => v.lang.toLowerCase().replace('_', '-') === want && !NOVELTY.test(v.name))
+    .sort((a, b) => voiceTier(b) - voiceTier(a) || rank(a) - rank(b) || Number(b.localService) - Number(a.localService))[0]
+}
+
+/** 系统声线是异步加载的：第一次可能是空的，等 voiceschanged 再取 */
+export function englishVoice(lang: string): SpeechSynthesisVoice | undefined {
+  const synth = window.speechSynthesis
+  if (!synth) return undefined
+  return pickVoice(synth.getVoices(), lang) as SpeechSynthesisVoice | undefined
+}
+try {
+  window.speechSynthesis?.getVoices()
+  window.speechSynthesis?.addEventListener?.('voiceschanged', () => window.speechSynthesis.getVoices())
+} catch {
+  /* 不支持语音 */
+}
+
+/** 读英文（默写的纸笔备用模式、伊顿英语课）；填空的下划线不读出来。优先用 iPad 上下载的优质/增强声线 */
 export function speakEnglish(text: string, lang = 'en-GB') {
   try {
     const synth = window.speechSynthesis
@@ -67,6 +115,8 @@ export function speakEnglish(text: string, lang = 'en-GB') {
     synth.cancel()
     const u = new SpeechSynthesisUtterance(text.replace(/_+/g, ' '))
     u.lang = lang
+    const voice = englishVoice(lang)
+    if (voice) u.voice = voice
     u.rate = 0.85
     // iPad 上 cancel() 后立刻 speak() 可能没声音，稍等一下
     setTimeout(() => synth.speak(u), 60)

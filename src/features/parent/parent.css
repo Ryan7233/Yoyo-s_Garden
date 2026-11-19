@@ -206,3 +206,4 @@
 .flow-row { display: grid; grid-template-columns: 70px 1fr 60px; gap: 8px; align-items: center; padding: 6px 2px; border-bottom: 1px solid #f1eef2; }
 .flow-what { font-size: 17px; }
 .flow-amount { text-align: right; font-family: var(--font-num); font-weight: 700; font-size: 19px; font-variant-numeric: tabular-nums; }
+.voice-tip { padding: 0 var(--sp-3) var(--sp-2); line-height: 1.6; }

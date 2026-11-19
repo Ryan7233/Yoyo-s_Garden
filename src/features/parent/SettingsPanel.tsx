@@ -5,6 +5,7 @@ import { isValidPin } from '../../engine/pin'
 import { usePwa } from '../../app/pwa'
 import { PinPad } from '../../ui/PinPad'
 import { Modal } from '../../ui/Modal'
+import { EnglishVoicePanel } from './EnglishVoicePanel'
 
 export function SettingsPanel() {
   const { child, settings } = useStore()
@@ -52,6 +53,7 @@ export function SettingsPanel() {
           <button className="btn btn-ghost" onClick={async () => { await check(); setMsg(usePwa.getState().needRefresh ? '发现新版本' : '已经是最新版本') }}>检查</button>
         )}
       </div>
+      <EnglishVoicePanel />
       {msg && <p>{msg}</p>}
       {pinOpen && (
         <Modal onClose={() => setPinOpen(false)}>
