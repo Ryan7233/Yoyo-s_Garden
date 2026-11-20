@@ -11,7 +11,7 @@ import { SpellingSheet } from './SpellingSheet'
 
 const MODE_LABEL: Record<SpellSession['mode'], string> = { daily: '每日拼写', quiz: '周末小听写', baseline: '摸底' }
 
-/** 家长：拼写本。每天按 Words 幼儿词库从易到难自动给 3 个新词，家长可以补充书里的词（优先）；复习和周末听写自动排 */
+/** 家长：拼写本。每天自动给 1 个新词（先伊顿要默写的词，再按 Words 幼儿词库从易到难），家长可以补充书里的词（优先）；复习和周末听写自动排 */
 export function SpellingPanel() {
   const { child, spellWords, spellSessions, today } = useStore()
   const [word, setWord] = useState('')
@@ -54,7 +54,7 @@ export function SpellingPanel() {
       <p className="modal-text">
         新词 <b className="num">{queue.fresh.length}</b> 个{queue.fresh.length ? `（${queue.fresh.map((w) => w.word).join('、')}）` : ''}，
         复习 <b className="num">{queue.review.length}</b> 个{queue.review.length ? `（${queue.review.map((w) => w.word).join('、')}）` : ''}。
-        每天自动从易到难给 3 个新词（Words 幼儿词库，从 cat、dog、red 开始），孩子点“拼 3 个词”会打开 YoYo Words 的手写默写。
+        每天自动给 1 个新词，先用伊顿课最近要默写的词，用完再从 Words 幼儿词库从易到难给；每天最多再复习 3 个，一共不超过 4 个。孩子点“每日拼词”会打开 YoYo Words 的手写默写。
       </p>
 
       <h3 className="panel-day">补充书里的词（可选，你加的优先，会顶替今天自动给的）</h3>
@@ -109,7 +109,7 @@ export function SpellingPanel() {
       )}
 
       <h3 className="panel-day">拼写本（{spellWords.length} 个词）</h3>
-      {words.length === 0 && <p className="empty-state">还没有词。上学日打开花园会自动给今天的 3 个词。</p>}
+      {words.length === 0 && <p className="empty-state">还没有词。上学日打开花园会自动给今天的 1 个新词。</p>}
       {words.map((w) => (
         <div key={w.id} className="row">
           <div className="row-main">

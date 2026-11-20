@@ -207,3 +207,11 @@
 .flow-what { font-size: 17px; }
 .flow-amount { text-align: right; font-family: var(--font-num); font-weight: 700; font-size: 19px; font-variant-numeric: tabular-nums; }
 .voice-tip { padding: 0 var(--sp-3) var(--sp-2); line-height: 1.6; }
+.voice-more { margin: 0 var(--sp-3) var(--sp-2); }
+.voice-list { list-style: none; margin: 0 0 var(--sp-3); padding: 0 var(--sp-3); display: grid; gap: var(--sp-2); }
+.voice-list li { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); border-radius: var(--r-m, 12px); background: var(--surface, #fff); }
+.voice-list li.using { background: var(--mint-light); }
+.voice-name { flex: 1; display: flex; flex-direction: column; }
+.voice-name small { color: var(--text-soft); font-size: var(--fs-s); }
+.voice-uri { opacity: 0.7; word-break: break-all; }
+.voice-using { font-size: var(--fs-s); color: var(--text-soft); padding: 0 var(--sp-2); }

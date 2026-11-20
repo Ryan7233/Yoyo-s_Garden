@@ -1027,3 +1027,21 @@ export const posterUrl = (card: PosterCard) => import.meta.env.BASE_URL + card.i
 export function lessonFor(today: string): EtonLesson | undefined {
   return ETON_LESSONS.find((l) => l.date === today)
 }
+
+/**
+ * 拼词先用伊顿最近要默写的词（标着 Dictation / Spelling 的复习卡）：
+ * 前两周到后一周的课里找，新的单元排前面；一个字母的词（I）不用练。
+ */
+export function etonSpellWords(today: string): { word: string; sentence: string }[] {
+  const day = Date.parse(today)
+  const near = ETON_LESSONS.filter((l) => {
+    const d = (Date.parse(l.date) - day) / 86400000
+    return d >= -13 && d <= 6
+  }).sort((a, b) => b.date.localeCompare(a.date))
+  const units = new Map<string, { word: string; sentence: string }[]>()
+  for (const l of near)
+    for (const c of l.cards)
+      if (c.kind === 'review' && /dictation|spelling/i.test(c.tag) && !units.has(c.tag)) units.set(c.tag, c.words)
+  const seen = new Set<string>()
+  return [...units.values()].flat().filter((w) => /^[a-z]{2,}$/i.test(w.word) && !seen.has(w.word.toLowerCase()) && seen.add(w.word.toLowerCase()))
+}

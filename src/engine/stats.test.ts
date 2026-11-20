@@ -35,9 +35,9 @@ describe('完成率', () => {
   })
   it('任务完成率只算安排了它的日子', () => {
     const days = lastNDays('2026-10-18', 7) // 周一到周日
-    const records = [done('homework', '2026-10-12'), done('homework', '2026-10-13'), done('english-reading', '2026-10-18')]
+    const records = [done('toilet-break', '2026-10-12'), done('toilet-break', '2026-10-13'), done('english-reading', '2026-10-18')]
     const rates = taskRates(livePlan(tasks), records, days)
-    const hw = rates.find((r) => r.task.id === 'homework')!
+    const hw = rates.find((r) => r.task.id === 'toilet-break')!
     expect([hw.done, hw.scheduled]).toEqual([2, 5])
     const reading = rates.find((r) => r.task.id === 'english-reading')!
     expect([reading.done, reading.scheduled]).toEqual([1, 7])

@@ -1,7 +1,9 @@
 import { BACKUP_TABLES, SCHEMA_VERSION, db, type BackupTable } from './schema'
 import { balanceOf } from '../engine/ledger'
-import type { LedgerEntry, PlantInstance, Settings } from '../data/types'
+import type { LedgerEntry, PlantInstance, Settings, SpellWord, TaskDef } from '../data/types'
+import { dropUntouchedAuto } from '../engine/spelling'
 import { moveTreesToOrchard } from '../engine/plots'
+import { applyV10Tasks } from '../data/tasks'
 
 export interface BackupFile {
   app: 'little-garden'
@@ -190,6 +192,11 @@ export function parseBackup(text: string): BackupFile {
   validateTables(f.tables as Record<BackupTable, unknown[]>)
   // 版本 9 之前树种在菜畦里：导入时搬进果园，和数据库升级做的一样（校验过了才动数据）
   if (f.schemaVersion < 9) f.tables.plants = moveTreesToOrchard(f.tables.plants as PlantInstance[])
+  // 版本 10 之前还有“学校作业”：导入时和数据库升级一样换成每日中文阅读
+  if (f.schemaVersion < 10) {
+    f.tables.tasks = applyV10Tasks(f.tables.tasks as TaskDef[])
+    f.tables.spellWords = dropUntouchedAuto(f.tables.spellWords as SpellWord[])
+  }
   return f as BackupFile
 }
 

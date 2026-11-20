@@ -5,13 +5,14 @@ import type {
 } from '../data/types'
 import {
   ENGLISH_CLASS_HINT, ENGLISH_CLASS_NAME, ENGLISH_CLASS_TASK_ID, ENGLISH_CLASS_V6, PINYIN_TASK_ID, RAISE_HAND_TASK_ID, SPELLING_HINT, SPELLING_HINT_V3,
-  SPELLING_TASK_ID, pinyinTask, raiseHandTask, spellingTasks, week7Tasks,
+  SPELLING_TASK_ID, applyV10Tasks, pinyinTask, raiseHandTask, spellingTasks, week7Tasks,
 } from '../data/tasks'
 import { daysToFreeze, freezePlan } from '../engine/plans'
 import { toTaskDay } from '../engine/taskDay'
 import { moveTreesToOrchard } from '../engine/plots'
+import { dropUntouchedAuto } from '../engine/spelling'
 
-export const SCHEMA_VERSION = 9
+export const SCHEMA_VERSION = 10
 
 export interface VideoBlob { id: string; blob: Blob; createdAt: string }
 export interface Snapshot { id: string; schemaVersion: number; at: string; data: string }
@@ -147,6 +148,22 @@ export class GardenDB extends Dexie {
       const plants = await tx.table<PlantInstance>('plants').toArray()
       const moved = moveTreesToOrchard(plants).filter((p, i) => p !== plants[i])
       await tx.table<PlantInstance>('plants').bulkPut(moved)
+    })
+    // 版本 10：学校作业换成每日中文阅读（必做），课文背诵改名“课文朗读和背诵”，拼词减量成每天 1 个新词。先按旧配置冻结过去的日子，过去的全勤不变
+    this.version(10).stores({}).upgrade(async (tx) => {
+      await snapshotBeforeMigration(tx, 9, [...V1_TABLES, 'dayPlans', 'spellWords', 'spellSessions', 'handRaises'])
+      const today = toTaskDay(new Date())
+      for (const child of await tx.table<Child>('children').toArray()) {
+        const tasks = await tx.table<TaskDef>('tasks').where('childId').equals(child.id).toArray()
+        const frozen = await tx.table<DayPlan>('dayPlans').where('childId').equals(child.id).toArray()
+        const days = daysToFreeze(toTaskDay(new Date(child.createdAt)), today, new Set(frozen.map((p) => p.date)))
+        await tx.table<DayPlan>('dayPlans').bulkPut(days.map((d) => freezePlan(tasks, child.id, d)))
+        await tx.table<TaskDef>('tasks').bulkPut(applyV10Tasks(tasks))
+        // 拼词减量：还没开始练的自动新词拿掉，伊顿的词先上
+        const words = await tx.table<SpellWord>('spellWords').where('childId').equals(child.id).toArray()
+        const keep = new Set(dropUntouchedAuto(words).map((w) => w.id))
+        await tx.table<SpellWord>('spellWords').bulkDelete(words.filter((w) => !keep.has(w.id)).map((w) => w.id))
+      }
     })
   }
 }

@@ -1,7 +1,7 @@
 /**
  * 要背的课文：从布置那天到老师检查那天都显示在“课文背诵”上。
  * 先看着读，再“遮住背”：每句只露出第一个字，想不起来点一下那句看一眼。
- * 只要“读熟”的课文（kind: 'read'）挂在“语文阅读”上，读够 goal 遍才能交。
+ * 只要“读熟”的课文（kind: 'read'）也挂在“课文朗读和背诵”上，读够 goal 遍才能交。
  */
 export interface ReciteText {
   title: string
@@ -46,7 +46,12 @@ export const RECITE_TEXTS: ReciteText[] = [
   },
 ]
 
-/** 背诵课文挂在“课文背诵”，读熟课文挂在“语文阅读” */
+/** 今天“课文朗读和背诵”上的全部课文：要背的在前，读熟的在后 */
+export function recitesFor(today: string): ReciteText[] {
+  return [reciteFor(today, 'recite'), ...RECITE_TEXTS.filter((t) => t.kind === 'read' && t.from <= today && today <= t.due)].filter((t): t is ReciteText => !!t)
+}
+
+/** 某一类的第一篇 */
 export function reciteFor(today: string, kind: 'recite' | 'read' = 'recite'): ReciteText | undefined {
   return RECITE_TEXTS.find((t) => (t.kind ?? 'recite') === kind && t.from <= today && today <= t.due)
 }

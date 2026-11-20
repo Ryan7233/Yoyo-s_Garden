@@ -1,5 +1,6 @@
 // 每日拼写的排期：第 1 天学新词（看-读-盖-写-查），第 2、4、7 天各听写一次；
-// 落在周末的顺延到周一。每天最多 12 个词，多出来的往后排。
+// 落在周末的顺延到周一。每天最多 4 个词（1 个新词 + 最多 3 个复习），多出来的往后排。
+// 2026-11-20 起减量：原来每天 3 个新词、最多 12 个，一周就涨到每天 12 个，她越来越抵触。
 // 周六小听写本周的词，写错的放回下周当新词重新学。错了不扣分。
 import type { SpellResult, SpellWord } from '../data/types'
 import { addDays, diffDays, weekdayOf } from './taskDay'
@@ -8,8 +9,10 @@ import { isDecodable } from '../data/spelling'
 /** 第 2、4、7 天：相对第 1 天加 1、3、6 天 */
 export const REVIEW_OFFSETS = [1, 3, 6] as const
 export const SPELL_DONE_STEP = REVIEW_OFFSETS.length + 1
-export const SPELL_DAILY_CAP = 12
-export const SPELL_NEW_PER_DAY = 3
+export const SPELL_DAILY_CAP = 4
+export const SPELL_NEW_PER_DAY = 1
+/** 一天最多几个新词（家长加的词多了也是一天一两个往后排） */
+export const SPELL_FRESH_CAP = 2
 
 /** 周六周日顺延到周一 */
 export function toSchoolDay(day: string): string {
@@ -30,12 +33,12 @@ export interface SpellQueue {
   review: SpellWord[]
 }
 
-/** 今天要练的词：先新词，再按到期先后排复习词，合计不超过 12 个 */
+/** 今天要练的词：先新词（最多 2 个），再按到期先后排复习词，合计不超过 4 个 */
 export function spellQueue(words: SpellWord[], today: string, cap = SPELL_DAILY_CAP): SpellQueue {
   const due = words
     .filter((w) => w.step < SPELL_DONE_STEP && w.due <= today)
     .sort((a, b) => a.due.localeCompare(b.due) || a.addedAt.localeCompare(b.addedAt))
-  const fresh = due.filter((w) => w.step === 0).slice(0, cap)
+  const fresh = due.filter((w) => w.step === 0).slice(0, Math.min(cap, SPELL_FRESH_CAP))
   const review = due.filter((w) => w.step > 0).slice(0, Math.max(0, cap - fresh.length))
   return { fresh, review }
 }
@@ -121,7 +124,7 @@ export function spellPath(kids: readonly PathWord[], sight: readonly string[]): 
 }
 
 /**
- * 今天还要自动补几个新词：今天（下个上学日）的新词凑够 3 个就不补。
+ * 今天还要自动补几个新词：今天（下个上学日）的新词凑够 1 个就不补。
  * 前几天没写的新词还在队里也算，不会越积越多。
  */
 export function autoPick(words: SpellWord[], path: readonly PathWord[], today: string, perDay = SPELL_NEW_PER_DAY): PathWord[] {
@@ -136,4 +139,9 @@ export function autoPick(words: SpellWord[], path: readonly PathWord[], today: s
 /** 她早就会写：直接算学完，以后不再出现，也不进周末听写 */
 export function markKnownWord(word: SpellWord, today: string): SpellWord {
   return { ...word, step: SPELL_DONE_STEP, due: today, known: true }
+}
+
+/** 版本 10 减量时：自动给了、还一次没练的新词拿掉，让伊顿的词先上（学过的、家长加的都不动） */
+export function dropUntouchedAuto(words: SpellWord[]): SpellWord[] {
+  return words.filter((w) => !(w.source === 'auto' && w.step === 0 && w.misses === 0))
 }

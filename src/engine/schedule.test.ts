@@ -7,13 +7,14 @@ const tasks = defaultTasks('c1')
 describe('按频率生成当日任务', () => {
   it('上学日（周一）必做 5 项', () => {
     const { required, more } = tasksForDay(tasks, '2026-10-12')
-    expect(required.map((t) => t.id)).toEqual(['start-on-time', 'homework', 'english-speaking', 'english-reading', 'drink-water'])
+    expect(required.map((t) => t.id)).toEqual(['start-on-time', 'chinese-reading', 'english-speaking', 'english-reading', 'drink-water'])
+    expect(more.some((t) => t.id === 'homework')).toBe(false)
     expect(more.some((t) => t.id === 'toilet-break')).toBe(true)
     expect(more.some((t) => t.id === 'pack-bag')).toBe(true)
   })
-  it('周六没有作业，外教课每天都有，也不用整理书包', () => {
+  it('周六中文阅读和外教课也每天都有，不用整理书包', () => {
     const { required, more } = tasksForDay(tasks, '2026-10-17')
-    expect(required.map((t) => t.id)).toEqual(['start-on-time', 'english-speaking', 'english-reading', 'drink-water'])
+    expect(required.map((t) => t.id)).toEqual(['start-on-time', 'chinese-reading', 'english-speaking', 'english-reading', 'drink-water'])
     expect(more.some((t) => t.id === 'toilet-break')).toBe(false)
     expect(more.some((t) => t.id === 'pack-bag')).toBe(false)
   })
@@ -21,8 +22,8 @@ describe('按频率生成当日任务', () => {
     expect(tasksForDay(tasks, '2026-10-11').more.some((t) => t.id === 'pack-bag')).toBe(true)
   })
   it('停用的任务不出现', () => {
-    const t2 = tasks.map((t) => (t.id === 'homework' ? { ...t, enabled: false } : t))
-    expect(tasksForDay(t2, '2026-10-12').required.some((t) => t.id === 'homework')).toBe(false)
+    const t2 = tasks.map((t) => (t.id === 'chinese-reading' ? { ...t, enabled: false } : t))
+    expect(tasksForDay(t2, '2026-10-12').required.some((t) => t.id === 'chinese-reading')).toBe(false)
   })
   it('必做上限提示', () => {
     expect(exceedsRequiredCap(tasks, 6)).toBe(false)

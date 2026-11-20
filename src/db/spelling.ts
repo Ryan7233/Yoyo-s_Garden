@@ -4,6 +4,7 @@ import type { SpellKind, SpellResult, SpellSession } from '../data/types'
 import { SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../data/tasks'
 import { SIGHT_WORDS, classifySpellWord } from '../data/spelling'
 import { WORDS_KIDS } from '../data/wordsKids'
+import { etonSpellWords } from '../data/etonLessons'
 import {
   SPELL_NEW_PER_DAY, applySpellResult, autoPick, markKnownWord, newSpellWord, regradeSpellResult, requeueWord, spellPath, toSchoolDay,
 } from '../engine/spelling'
@@ -20,9 +21,14 @@ const INK_KEEP_DAYS = 30
 /** 自动给词的顺序：Words 幼儿词库按拼写难度重排 */
 export const SPELL_PATH = spellPath(WORDS_KIDS.map(([word, zh, emoji]) => ({ word, zh, emoji })), SIGHT_WORDS)
 
+/** 今天自动给词的顺序：先伊顿最近要默写的词，再按幼儿词库从易到难 */
+export function spellPathFor(today: string) {
+  return [...etonSpellWords(today).map(({ word }) => ({ word })), ...SPELL_PATH]
+}
+
 /**
  * 家长加词；已经在拼写本里的词跳过，返回实际加上的词。
- * 家长加的词优先：今天的新词超过 3 个时，去掉今天自动给、还没练的词（以后还会按顺序再给）。
+ * 家长加的词优先：今天的新词超过 1 个时，去掉今天自动给、还没练的词（以后还会按顺序再给）。
  */
 export async function addSpellWords(childId: string, list: NewSpellWord[], today: string, now = new Date()): Promise<string[]> {
   return db.transaction('rw', db.spellWords, async () => {
@@ -48,13 +54,13 @@ export async function addSpellWords(childId: string, list: NewSpellWord[], today
   })
 }
 
-/** 上学日打开花园时，今天的新词不够 3 个就按顺序自动补上（“拼 3 个词”关掉或今天没安排时不补） */
+/** 上学日打开花园时，今天还没有新词就按顺序自动补 1 个（“拼 3 个词”关掉或今天没安排时不补） */
 export async function topUpSpellWords(childId: string, today: string, now = new Date()): Promise<string[]> {
   return db.transaction('rw', [db.tasks, db.spellWords], async () => {
     const task = await db.tasks.get(SPELLING_TASK_ID)
     if (!task || task.childId !== childId || !isScheduledOn(task, today)) return []
     const words = await db.spellWords.where('childId').equals(childId).toArray()
-    const picks = autoPick(words, SPELL_PATH, today)
+    const picks = autoPick(words, spellPathFor(today), today)
     // 同一时刻加的几个词，用毫秒错开，保持顺序
     await db.spellWords.bulkAdd(picks.map((p, i) => newSpellWord({
       id: uid(), childId, word: p.word, kind: classifySpellWord(p.word), source: 'auto',

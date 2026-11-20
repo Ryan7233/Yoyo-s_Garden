@@ -10,7 +10,8 @@ export interface TaskNote {
   title: string
   /** 老师的原话 */
   teacher: string
-  steps: { icon: string; text: string; tip?: string }[]
+  /** timer：这一步带一个几分钟的计时器，时间到自动打勾 */
+  steps: { icon: string; text: string; tip?: string; timer?: number }[]
 }
 
 export const TASK_NOTES: TaskNote[] = [
@@ -25,18 +26,23 @@ export const TASK_NOTES: TaskNote[] = [
       { icon: '👂', text: '请爸爸妈妈报，盖住课本写一遍', tip: '错的再写三遍' },
     ],
   },
+]
+
+/** 每天都有的卡：每日中文阅读，读满 15 分钟（可以用计时器），再记到阅读银行 */
+const DAILY_NOTES: Omit<TaskNote, 'date'>[] = [
   {
-    date: '2026-11-17',
     taskId: 'chinese-reading',
     title: '读书 15 分钟',
     teacher: '每日读书 15 分钟并记录在阅读银行。',
     steps: [
-      { icon: '📚', text: '读书 15 分钟' },
+      { icon: '📚', text: '读书 15 分钟', tip: '点「开始计时」，时间到会响；不用计时器读够了也可以直接打勾', timer: 15 },
       { icon: '🏦', text: '在阅读银行里记下今天读的书' },
     ],
   },
 ]
 
+/** 老师当天留的优先，没有就用每天都有的卡 */
 export function taskNoteFor(taskId: string, today: string): TaskNote | undefined {
-  return TASK_NOTES.find((n) => n.taskId === taskId && n.date === today)
+  const daily = DAILY_NOTES.find((n) => n.taskId === taskId)
+  return TASK_NOTES.find((n) => n.taskId === taskId && n.date === today) ?? (daily && { ...daily, date: today })
 }

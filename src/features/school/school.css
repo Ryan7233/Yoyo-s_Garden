@@ -21,3 +21,7 @@
 .recite-mask { color: #d9c8b0; letter-spacing: 2px; }
 .recite-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; padding: var(--sp-3) var(--sp-4); background: var(--mint-light); border-radius: var(--r-l); font-size: var(--fs-m); }
 .recite-text.read .recite-line { display: block; }
+.step-timer { display: flex; align-items: center; justify-content: flex-end; gap: var(--sp-3); padding: var(--sp-2) var(--sp-4) 0; }
+.step-timer .num { font-size: clamp(28px, 4.6vw, 40px); letter-spacing: 1px; }
+.step-timer-done { font-weight: 700; color: var(--mint-dark, #3a9b7a); }
+.recite-tabs { display: flex; gap: var(--sp-2); flex-wrap: wrap; justify-content: center; margin-bottom: var(--sp-3); }

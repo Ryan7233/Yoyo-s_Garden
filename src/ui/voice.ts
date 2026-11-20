@@ -70,6 +70,9 @@ const PREFERRED: Record<string, string[]> = {
 // iPad 自带的搞怪声线和 Eloquence 老式声线，不适合给孩子做示范
 const NOVELTY = /albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|fred|junior|ralph|kathy|eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley/i
 
+/** 搞怪声线和老式声线 */
+export const isNoveltyVoice = (v: Pick<VoiceLike, 'name'>) => NOVELTY.test(v.name)
+
 /** 音质档位：优质 2 > 增强 1 > 普通 0（iPad 的 voiceURI 形如 com.apple.voice.enhanced.en-US.Samantha） */
 export function voiceTier(v: VoiceLike): number {
   const id = `${v.voiceURI} ${v.name}`.toLowerCase()
@@ -94,11 +97,31 @@ export function pickVoice(voices: VoiceLike[], lang: string): VoiceLike | undefi
     .sort((a, b) => voiceTier(b) - voiceTier(a) || rank(a) - rank(b) || Number(b.localService) - Number(a.localService))[0]
 }
 
-/** 系统声线是异步加载的：第一次可能是空的，等 voiceschanged 再取 */
+// 家长在设置里手动选的声线（存在本机）
+const chosenKey = (lang: string) => `english-voice:${lang}`
+export function chosenVoiceURI(lang: string): string | null {
+  try {
+    return localStorage.getItem(chosenKey(lang))
+  } catch {
+    return null
+  }
+}
+export function chooseVoice(lang: string, voiceURI: string | null) {
+  try {
+    if (voiceURI) localStorage.setItem(chosenKey(lang), voiceURI)
+    else localStorage.removeItem(chosenKey(lang))
+  } catch {
+    /* 存不了就用自动挑的 */
+  }
+}
+
+/** 系统声线是异步加载的：第一次可能是空的，等 voiceschanged 再取。家长手动选过的优先 */
 export function englishVoice(lang: string): SpeechSynthesisVoice | undefined {
   const synth = window.speechSynthesis
   if (!synth) return undefined
-  return pickVoice(synth.getVoices(), lang) as SpeechSynthesisVoice | undefined
+  const voices = synth.getVoices()
+  const chosen = chosenVoiceURI(lang)
+  return voices.find((v) => chosen && v.voiceURI === chosen) ?? (pickVoice(voices, lang) as SpeechSynthesisVoice | undefined)
 }
 try {
   window.speechSynthesis?.getVoices()

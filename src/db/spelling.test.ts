@@ -3,7 +3,7 @@ import Dexie from 'dexie'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { GardenDB, db, useDatabase } from './schema'
 import { confirmRecord, setupChild } from './actions'
-import { addSpellWords, correctSpellResult, gradeSpellQuiz, inksOf, markSpellKnown, submitSpellSession, topUpSpellWords } from './spelling'
+import { addSpellWords, correctSpellResult, gradeSpellQuiz, inksOf, markSpellKnown, spellPathFor, submitSpellSession, topUpSpellWords } from './spelling'
 import { updateTask } from './actions'
 import { exportBackup, parseBackup } from './backup'
 import { balanceOf } from '../engine/ledger'
@@ -133,10 +133,10 @@ describe('看笔迹确认和批改', () => {
 describe('自动给词', () => {
   const book = async () => (await db.spellWords.where('childId').equals(childId).sortBy('addedAt'))
 
-  it('上学日补够 3 个，同一天再打开不重复补；周末和关掉任务时不补', async () => {
-    expect(await topUpSpellWords(childId, MON_DAY, MON)).toEqual(['cat', 'dog', 'red'])
+  it('上学日补 1 个，同一天再打开不重复补；周末和关掉任务时不补', async () => {
+    expect(await topUpSpellWords(childId, MON_DAY, MON)).toEqual(['cat'])
     expect(await topUpSpellWords(childId, MON_DAY, MON)).toEqual([])
-    expect((await book()).map((w) => [w.word, w.source, w.zh])).toEqual([['cat', 'auto', '猫'], ['dog', 'auto', '狗'], ['red', 'auto', '红色']])
+    expect((await book()).map((w) => [w.word, w.source, w.zh])).toEqual([['cat', 'auto', '猫']])
     expect(await topUpSpellWords(childId, SAT_DAY, MON)).toEqual([])
     await updateTask(SPELLING_TASK_ID, { enabled: false }, MON)
     await db.spellWords.clear()
@@ -146,18 +146,31 @@ describe('自动给词', () => {
   it('家长加的词优先：顶替今天自动给、还没练的词', async () => {
     await topUpSpellWords(childId, MON_DAY, MON)
     await addSpellWords(childId, [{ word: 'sunny', kind: 'phonics' }], MON_DAY, MON)
-    expect((await book()).map((w) => w.word).sort()).toEqual(['cat', 'dog', 'sunny'])
+    expect((await book()).map((w) => w.word).sort()).toEqual(['sunny'])
     // 已经练过的自动词不会被顶掉
+    await db.spellWords.clear()
+    await topUpSpellWords(childId, MON_DAY, MON)
     await submitSpellSession(childId, 'daily', [{ word: 'cat', kind: 'new', firstTry: true, done: true, attempts: 1 }], MON_DAY, MON)
-    await addSpellWords(childId, [{ word: 'said', kind: 'sight' }, { word: 'jump', kind: 'phonics' }], MON_DAY, MON)
-    expect((await book()).map((w) => w.word).sort()).toEqual(['cat', 'jump', 'said', 'sunny'])
+    await addSpellWords(childId, [{ word: 'said', kind: 'sight' }], MON_DAY, MON)
+    expect((await book()).map((w) => w.word).sort()).toEqual(['cat', 'said'])
   })
 
-  it('会写，跳过以后，下一个上学日照样补够 3 个新词', async () => {
+  it('会写，跳过以后，照样补 1 个新词', async () => {
     await topUpSpellWords(childId, MON_DAY, MON)
     const cat = (await book()).find((w) => w.word === 'cat')!
     await markSpellKnown(cat.id, MON_DAY)
-    expect(await topUpSpellWords(childId, MON_DAY, MON)).toEqual(['six'])
+    expect(await topUpSpellWords(childId, MON_DAY, MON)).toEqual(['dog'])
+  })
+})
+
+describe('跟伊顿走', () => {
+  it('11 月 20 日先给伊顿 Unit 3 要默写的词（I 不用练），再接 Unit 2 的拼写词，最后才是幼儿词库', () => {
+    const path = spellPathFor('2026-11-20').map((w) => w.word)
+    expect(path.slice(0, 7)).toEqual(['am', 'you', 'are', 'we', 'they', 'he', 'she'])
+    expect(path).not.toContain('I')
+    expect(path.indexOf('look')).toBeGreaterThan(6)
+    expect(path.indexOf('look')).toBeLessThan(path.indexOf('cat'))
+    expect(spellPathFor('2026-10-19')[0].word).toBe('cat')
   })
 })
 
@@ -221,6 +234,6 @@ describe('数据库升级到版本 3', () => {
     expect(plans.length).toBeGreaterThanOrEqual(4)
     expect(plans.every((p) => !p.more.some((id) => SPELLING_TASK_IDS.includes(id) || id === RAISE_HAND_TASK_ID || id === PINYIN_TASK_ID || WEEK7_TASK_IDS.includes(id)))).toBe(true)
     expect(plans.some((p) => p.date === addDays(toTaskDay(new Date()), -1))).toBe(true)
-    expect((await next.snapshots.toArray()).map((s) => s.schemaVersion).sort()).toEqual([2, 5, 6, 7, 8])
+    expect((await next.snapshots.toArray()).map((s) => s.schemaVersion).sort()).toEqual([2, 5, 6, 7, 8, 9])
   })
 })

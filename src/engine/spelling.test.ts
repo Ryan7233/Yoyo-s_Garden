@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { SpellResult, SpellWord } from '../data/types'
 import { classifySpellWord, baselineAdvice } from '../data/spelling'
-import { applySpellResult, autoPick, markKnownWord, newSpellWord, requeueWord, spellPath, spellQueue, toSchoolDay, weekQuizWords, SPELL_DONE_STEP } from './spelling'
+import { applySpellResult, autoPick, dropUntouchedAuto, markKnownWord, newSpellWord, requeueWord, spellPath, spellQueue, toSchoolDay, weekQuizWords, SPELL_DONE_STEP } from './spelling'
 import { SIGHT_WORDS } from '../data/spelling'
 import { WORDS_KIDS } from '../data/wordsKids'
 
@@ -69,7 +69,7 @@ describe('复习排期：第 1 天学，第 2、4、7 天听写，周末顺延',
     expect(skipped).toMatchObject({ step: 0, due: TUE })
   })
 
-  it('今天的词：先新词再复习，最多 12 个', () => {
+  it('今天的词：先新词再复习，最多 4 个（新词最多 2 个）', () => {
     const words = [
       ...Array.from({ length: 13 }, (_, i) => word(`r${String.fromCharCode(97 + i)}`, MON, { step: 1, due: TUE })),
       word('new', TUE),
@@ -77,7 +77,9 @@ describe('复习排期：第 1 天学，第 2、4、7 天听写，周末顺延',
     ]
     const q = spellQueue(words, TUE)
     expect(q.fresh.map((w) => w.word)).toEqual(['new'])
-    expect(q.review).toHaveLength(11)
+    expect(q.review).toHaveLength(3)
+    const many = Array.from({ length: 5 }, (_, i) => word(`n${i}`, TUE))
+    expect(spellQueue(many, TUE).fresh).toHaveLength(2)
     expect(q.review.some((w) => w.word === 'later')).toBe(false)
   })
 })
@@ -107,15 +109,15 @@ describe('自动给词：Words 幼儿词库按拼写难度排', () => {
     expect(path.find((w) => w.word === 'cat')).toMatchObject({ zh: '猫', emoji: '🐱' })
   })
 
-  it('今天的新词不够 3 个才补；前几天没写的新词也算', () => {
-    expect(autoPick([], path, MON).map((w) => w.word)).toEqual(['cat', 'dog', 'red'])
+  it('今天还没有新词才补 1 个；前几天没写的新词也算', () => {
+    expect(autoPick([], path, MON).map((w) => w.word)).toEqual(['cat'])
     const parentWord = word('sunny', MON)
-    expect(autoPick([parentWord], path, MON).map((w) => w.word)).toEqual(['cat', 'dog'])
-    const leftover = [word('cat', MON), word('dog', MON), word('red', MON)]
+    expect(autoPick([parentWord], path, MON)).toEqual([])
+    const leftover = [word('cat', MON)]
     expect(autoPick(leftover, path, TUE)).toEqual([])
     // 已经学过的词不再给
     const learned = [word('cat', MON, { step: 1, due: TUE })]
-    expect(autoPick(learned, path, TUE).map((w) => w.word)).toEqual(['dog', 'red', 'six'])
+    expect(autoPick(learned, path, TUE).map((w) => w.word)).toEqual(['dog'])
   })
 
   it('会写，跳过：算学完，不进周末听写；放回下周会恢复', () => {
@@ -124,5 +126,17 @@ describe('自动给词：Words 幼儿词库按拼写难度排', () => {
     expect(spellQueue([w], TUE)).toEqual({ fresh: [], review: [] })
     expect(weekQuizWords([w], SAT)).toEqual([])
     expect(requeueWord(w, SAT)).toMatchObject({ step: 0, known: false })
+  })
+})
+
+describe('版本 10 减量', () => {
+  it('只拿掉自动给了还没练的新词', () => {
+    const ws = [
+      word('cup', MON, { source: 'auto' }),
+      word('cat', MON, { source: 'auto', step: 2 }),
+      word('sunny', MON, { source: 'parent' }),
+      word('dad', MON, { source: 'auto', misses: 1 }),
+    ]
+    expect(dropUntouchedAuto(ws).map((w) => w.word)).toEqual(['cat', 'sunny', 'dad'])
   })
 })
