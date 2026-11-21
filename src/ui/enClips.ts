@@ -1,6 +1,7 @@
 // 提前录好的英文录音（Ava）：按句子一个个接着放。清单 src/data/enAudio.json 由 npm run audio:en 生成。
 import manifest from '../data/enAudio.json'
 import { audioChunks, audioKey } from './enAudioKey'
+import { audioContext } from './sfx'
 
 const HAVE = new Set<string>(manifest.keys)
 const GAP_MS = 180
@@ -13,48 +14,70 @@ export function clipKeys(text: string, have: ReadonlySet<string> = HAVE): string
 
 export const clipUrl = (key: string) => `${import.meta.env.BASE_URL}audio/en/${key}.mp3`
 
-// 一直用同一个 audio：iPad 上它在第一次点按里放过之后，后面接着放下一句才不会被拦
-let el: HTMLAudioElement | null = null
+// 用 Web Audio 放（和音效同一个，点按时已解锁）：整文件 fetch 下来能被离线缓存存住，
+// 不像 <audio> 在 iPad 上按分段请求、走缓存时容易放不出来。解码过的留在内存里，点第二次不用再解。
+const decoded = new Map<string, Promise<AudioBuffer>>()
+let playing: AudioBufferSourceNode[] = []
 let token = 0
-let timer: number | undefined
+
+function load(ctx: AudioContext, key: string): Promise<AudioBuffer> {
+  let p = decoded.get(key)
+  if (!p) {
+    p = fetch(clipUrl(key))
+      .then((r) => {
+        if (!r.ok) throw new Error(String(r.status))
+        return r.arrayBuffer()
+      })
+      .then((b) => ctx.decodeAudioData(b))
+    p.catch(() => decoded.delete(key))
+    decoded.set(key, p)
+  }
+  return p
+}
 
 export function stopClips() {
   token++
-  window.clearTimeout(timer)
-  if (el && !el.paused) el.pause()
+  for (const s of playing) {
+    try {
+      s.stop()
+    } catch {
+      /* 已经停了 */
+    }
+  }
+  playing = []
 }
 
-/** 依次放这几句；第一句就放不出来（离线没缓存到之类）时调用 fallback */
+/** 依次放这几句，句间停一下；有一句取不到或解不开（离线没缓存到之类）就整段交给 fallback */
 export function playClips(keys: string[], fallback: () => void) {
   stopClips()
   const my = token
-  try {
-    el ??= new Audio()
-  } catch {
+  const ctx = audioContext()
+  if (!ctx) {
     fallback()
     return
   }
-  const audio = el
-  let fell = false
-  const fail = () => {
-    if (fell || my !== token) return
-    fell = true
-    fallback()
+  // iPad 静音键打开时 Web Audio 默认不出声；设成 playback 让朗读照样能听到
+  try {
+    const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession
+    if (session) session.type = 'playback'
+  } catch {
+    /* 老系统没有 */
   }
-  const playAt = (i: number) => {
-    if (my !== token) return
-    if (i >= keys.length) return
-    audio.onended = () => {
-      timer = window.setTimeout(() => playAt(i + 1), GAP_MS)
-    }
-    audio.onerror = () => {
-      if (i === 0) fail()
-    }
-    audio.src = clipUrl(keys[i])
-    audio.play().catch((e: unknown) => {
-      // 被下一次点按打断（AbortError）不算失败
-      if (i === 0 && (e as Error)?.name !== 'AbortError') fail()
-    })
-  }
-  playAt(0)
+  Promise.all(keys.map((k) => load(ctx, k))).then(
+    (buffers) => {
+      if (my !== token) return
+      let at = ctx.currentTime + 0.03
+      for (const b of buffers) {
+        const src = ctx.createBufferSource()
+        src.buffer = b
+        src.connect(ctx.destination)
+        src.start(at)
+        playing.push(src)
+        at += b.duration + GAP_MS / 1000
+      }
+    },
+    () => {
+      if (my === token) fallback()
+    },
+  )
 }

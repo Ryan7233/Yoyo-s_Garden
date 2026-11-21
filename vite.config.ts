@@ -38,7 +38,20 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,jpg,woff2,mp3}'],
+        // 英文录音有上千个：不放进更新包（一个下载失败整次更新就作废），点到哪句下哪句，下过的存着离线也能放
+        globIgnores: ['**/audio/en/**'],
         navigateFallback: `${BASE}index.html`,
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => url.pathname.includes('/audio/en/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'en-audio',
+              expiration: { maxEntries: 3000 },
+              cacheableResponse: { statuses: [200] },
+            },
+          },
+        ],
       },
     }),
   ],
