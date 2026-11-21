@@ -1,6 +1,7 @@
 // 计时器的语音提示和提示音：要足够响，家长在隔壁也能听到（SPEC 4.3）
 // 这是功能提示，不受“音效”开关影响。iPad Safari 要求第一次发声发生在点按里，所以“开始”按钮里先调用 unlockAudio()。
 import { audioContext } from './sfx'
+import { clipKeys, playClips, stopClips } from './enClips'
 
 export function unlockAudio() {
   audioContext()
@@ -130,8 +131,28 @@ try {
   /* 不支持语音 */
 }
 
-/** 读英文（默写的纸笔备用模式、伊顿英语课）；填空的下划线不读出来。优先用 iPad 上下载的优质/增强声线 */
+/**
+ * 读英文（伊顿英语课、拼词）。先放提前录好的 Ava 录音（public/audio/en，见 scripts/en-audio.ts）；
+ * 有一句没录到（比如家长自己加的词）就整段交给 iPad 的声音。
+ */
 export function speakEnglish(text: string, lang = 'en-GB') {
+  stopClips()
+  const keys = clipKeys(text)
+  if (keys) {
+    try {
+      window.speechSynthesis?.cancel()
+    } catch {
+      /* 不支持语音 */
+    }
+    playClips(keys, () => speakWithVoice(text, lang))
+    return
+  }
+  speakWithVoice(text, lang)
+}
+
+/** 用 iPad 的系统声音读：优先用下载的优质/增强声线，家长手动选过的最优先 */
+export function speakWithVoice(text: string, lang = 'en-GB') {
+  stopClips()
   try {
     const synth = window.speechSynthesis
     if (!synth) return

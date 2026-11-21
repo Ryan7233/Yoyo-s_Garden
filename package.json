@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "audio:en": "node scripts/en-audio.ts",
     "test:watch": "vitest",
     "e2e": "playwright test --project=ipad-webkit",
     "e2e:chromium": "playwright test --project=ipad-chromium"

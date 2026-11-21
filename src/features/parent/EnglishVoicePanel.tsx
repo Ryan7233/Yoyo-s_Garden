@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
-import { chooseVoice, chosenVoiceURI, englishVoice, isNoveltyVoice, speakEnglish, voiceTier } from '../../ui/voice'
+import manifest from '../../data/enAudio.json'
+import { chooseVoice, chosenVoiceURI, englishVoice, isNoveltyVoice, speakEnglish, speakWithVoice, voiceTier } from '../../ui/voice'
 
 const SLOTS = [
-  { lang: 'en-US', label: '伊顿英语（美音）', sample: 'Hello! I am Yoyo. We are friends.' },
-  { lang: 'en-GB', label: '单词默写（英音）', sample: 'apple, banana, orange' },
+  { lang: 'en-US', label: '没录到的句子（美音）', sample: 'Hello! I am Yoyo. We are friends.' },
+  { lang: 'en-GB', label: '没录到的单词（英音）', sample: 'apple, banana, orange' },
 ]
+const CLIP_SAMPLE = 'I am happy. You are kind. We are friends.'
+const AVA = manifest.voice.replace(/^en-US-|Neural$/g, '')
 const TIER = ['普通', '增强', '优质']
 const norm = (lang: string) => lang.replace('_', '-')
 
@@ -36,6 +39,14 @@ export function EnglishVoicePanel() {
 
   return (
     <div className="voice-panel">
+      <div className="row">
+        <span className="row-icon">🎧</span>
+        <div className="row-main">
+          <div className="row-title">伊顿课和拼词</div>
+          <div className="row-sub">{AVA} 录音 · {manifest.keys.length} 句，不用联网</div>
+        </div>
+        <button className="btn btn-ghost" onClick={() => speakEnglish(CLIP_SAMPLE, 'en-US')}>试听</button>
+      </div>
       {picks.map(({ lang, label, sample, voice, manual }) => (
         <div className="row" key={lang}>
           <span className="row-icon">🔊</span>
@@ -43,12 +54,12 @@ export function EnglishVoicePanel() {
             <div className="row-title">{label}</div>
             <div className="row-sub">{voice ? `${voice.name} · ${TIER[voiceTier(voice)]}${manual ? ' · 手动选的' : ''}` : '系统默认声音'}</div>
           </div>
-          <button className="btn btn-ghost" onClick={() => speakEnglish(sample, lang)}>试听</button>
+          <button className="btn btn-ghost" onClick={() => speakWithVoice(sample, lang)}>试听</button>
         </div>
       ))}
       {plain && (
         <p className="row-sub voice-tip">
-          想让英文更自然：在 iPad 上打开「设置 → 辅助功能 → 朗读内容 → 声音 → 英语」，下载 Ava 或 Samantha 的「增强」版（英音可下 Serena）。下载后把小花园从后台划掉再打开，回来这里会自动换上。
+          iPad 只把系统默认声音给网页用，下载的 Ava 增强版这里选不到，所以课文和拼词都换成了提前录好的录音。只有家长自己加的新词还会用这个声音。
         </p>
       )}
       <button className="btn btn-ghost btn-small voice-more" onClick={() => setOpen(!open)}>
