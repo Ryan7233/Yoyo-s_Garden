@@ -49,6 +49,19 @@ export const MATH_HOMEWORK: MathHomework[] = [
     ],
     button: { todo: '我说了这个办法', done: '✓ 我说过了', left: '个办法' },
   },
+  {
+    date: '2026-11-23',
+    title: '可爱的企鹅',
+    teacher: '复习观察 62 页的图片：说一说发现了哪些数学信息，提一提数学问题，画一画怎么解决这个问题，列一列算式。',
+    where: '翻开数学书第 62 页，看可爱的企鹅那幅图。下面四步一步一步做，每一步都说给爸爸妈妈听。',
+    prompts: [
+      { kind: '说一说', means: '图上能数出来的数', ask: '我发现：有（ ）只企鹅在……，有（ ）只企鹅在……', shape: '先数清楚，再说完整' },
+      { kind: '提一提', means: '用这些数问一个问题', ask: '……一共有多少只企鹅？或者：……还剩多少只企鹅？', shape: '问题最后是“？”' },
+      { kind: '画一画', means: '用圆圈代替企鹅', ask: '在纸上画○，一个○就是一只企鹅，圈一圈、划一划，看看答案是几。', shape: '○○○ ○○' },
+      { kind: '列一列', means: '把画的变成算式', ask: '照着画的写出算式，说出得数，再用一句话回答问题。', shape: '□ ○ □ = □' },
+    ],
+    button: { todo: '这一步做好了', done: '✓ 做好了', left: '步' },
+  },
 ]
 
 export function mathHomeworkFor(today: string): MathHomework | undefined {
