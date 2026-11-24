@@ -326,6 +326,8 @@ function TaskCard({ task, record, sport, spelling, homework, onLesson, onPast, o
         {homework && <div className="task-today">📌 今天：{homework}</div>}
         {spelling && !status && <div className="spell-count">{spelling.count}</div>}
         {status === 'rejected' && record?.note && <div className="task-note">💬 {record.note}</div>}
+        {/* 放在牌子中间的小按钮：右边已经有一个大按钮，两个并排在横屏双列时会挤 */}
+        {onPast && <button className="task-past" onClick={onPast}>↺ 回看前几天</button>}
       </div>
       {(!status || status === 'rejected') && (
         <button className="btn btn-primary btn-big task-btn" disabled={spelling && !spelling.items.length} onClick={onLesson ?? onReport}>
@@ -336,7 +338,6 @@ function TaskCard({ task, record, sport, spelling, homework, onLesson, onPast, o
             : '我完成了'}
         </button>
       )}
-      {onPast && <button className="btn btn-ghost task-btn task-past" onClick={onPast}>↺ 回看前几天</button>}
       {/* 当天的课 / 拼读卡交过以后，同一个位置换成“再做一遍”：小游戏重新开始，不会再交一次、不会重复发奖励 */}
       {onLesson && (status === 'done' || status === 'pending') && (
         <button className="btn btn-ghost btn-big task-btn" onClick={onLesson}>{task.id === PINYIN_TASK_ID ? '↺ 再读一遍' : task.id === RECITE_TASK_ID ? '↺ 再读再背' : task.id === MATH_TASK_ID ? '↺ 再看一遍' : task.id === ENGLISH_CLASS_TASK_ID ? '↺ 再听一遍' : '↺ 再做一遍'}</button>

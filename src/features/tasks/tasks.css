@@ -85,6 +85,7 @@
 .task-meta .badge { font-size: var(--fs-s); padding: 4px 12px; }
 .task-note { color: var(--text-soft); font-size: var(--fs-m); }
 .task-btn { flex: none; min-width: 156px; padding: 0 28px; }
+.task-past { align-self: flex-start; min-height: 36px; padding: 4px 12px; font-size: var(--fs-s); color: var(--text-soft); background: #fff; border: 2px solid var(--cream-edge); border-radius: 999px; cursor: pointer; }
 
 .task-card.done { background: linear-gradient(180deg, #fff, var(--mint-light)); border-color: var(--mint); box-shadow: var(--hl), 0 var(--depth-sub) 0 var(--mint), var(--sh-1); }
 .task-card.done .task-icon { background: #d4f2e4; }
