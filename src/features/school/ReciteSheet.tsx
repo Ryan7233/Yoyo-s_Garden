@@ -54,7 +54,9 @@ function ReciteBody({ text, today, times, onTimes }: { text: ReciteText; today: 
   const goal = text.goal ?? 1
   const verb = read ? '读' : '背'
   const days = Math.round((Date.parse(text.due) - Date.parse(today)) / 86400000)
-  const when = read
+  const when = !text.dueLabel
+    ? read ? '读熟它' : '这几天把它背熟'
+    : read
     ? days <= 0 ? `今天有${text.dueLabel}` : days === 1 ? `明天有${text.dueLabel}，今天读熟它` : `${text.dueLabel}还有 ${days} 天`
     : days <= 0 ? `今天${text.dueLabel}老师查` : days === 1 ? `明天${text.dueLabel}老师查` : `${text.dueLabel}老师查，还有 ${days} 天`
 

@@ -62,6 +62,18 @@ export const MATH_HOMEWORK: MathHomework[] = [
     ],
     button: { todo: '这一步做好了', done: '✓ 做好了', left: '步' },
   },
+  {
+    date: '2026-11-24',
+    title: '做个加法表',
+    teacher: '说一说你在加法表中发现了什么：横着看……竖着看……斜着看……',
+    where: '翻开数学书上的加法表（今天课上讲的《做个加法表》）。用手指沿着一行、一列、一条斜线慢慢看，每看一种就说给爸爸妈妈听。',
+    prompts: [
+      { kind: '横着看', means: '沿着一行从左往右', ask: '这一行的算式，哪个数一样？哪个数一个比一个多 1？得数有什么变化？', shape: '我发现：横着看，……' },
+      { kind: '竖着看', means: '沿着一列从上往下', ask: '这一列的算式，哪个数一样？哪个数在变？得数有什么变化？', shape: '我发现：竖着看，……' },
+      { kind: '斜着看', means: '沿着斜线看', ask: '找一找得数一样的算式在哪儿？比一比，前面的数和后面的数是怎么变的？', shape: '我发现：斜着看，……' },
+    ],
+    button: { todo: '我说了这一个', done: '✓ 说过了', left: '个发现' },
+  },
 ]
 
 export function mathHomeworkFor(today: string): MathHomework | undefined {

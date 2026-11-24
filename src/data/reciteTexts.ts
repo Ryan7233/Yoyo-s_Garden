@@ -12,11 +12,17 @@ export interface ReciteText {
   /** 第一天和老师检查那天（含） */
   from: string
   due: string
-  /** 背诵：“周四”→“明天周四老师查”；读熟：“公开课”→“明天有公开课” */
-  dueLabel: string
+  /** 背诵：“周四”→“明天周四老师查”；读熟：“公开课”→“明天有公开课”。老师没说哪天查就不写 */
+  dueLabel?: string
   /** 一段一组，一句一行 */
   paragraphs: string[][]
 }
+
+/** 《江南》人教版一年级上册，汉乐府。“／”是朗读的停顿：五个字一句，前两个字停一下（二三节奏） */
+const JIANGNAN = [
+  ['江南／可采莲，', '莲叶／何田田。', '鱼戏／莲叶间。'],
+  ['鱼戏／莲叶东，', '鱼戏／莲叶西，', '鱼戏／莲叶南，', '鱼戏／莲叶北。'],
+]
 
 export const RECITE_TEXTS: ReciteText[] = [
   {
@@ -45,17 +51,20 @@ export const RECITE_TEXTS: ReciteText[] = [
     ],
   },
   {
-    // 人教版一年级上册，汉乐府。“／”是朗读的停顿：五个字一句，前两个字停一下（二三节奏）
     title: '江南',
     kind: 'read',
     goal: 3,
     from: '2026-11-23',
-    due: '2026-11-24',
+    due: '2026-11-23',
     dueLabel: '语文课',
-    paragraphs: [
-      ['江南／可采莲，', '莲叶／何田田。', '鱼戏／莲叶间。'],
-      ['鱼戏／莲叶东，', '鱼戏／莲叶西，', '鱼戏／莲叶南，', '鱼戏／莲叶北。'],
-    ],
+    paragraphs: JIANGNAN,
+  },
+  {
+    // 第二课时后（11/24）：背诵。老师没说哪天查，先挂一周
+    title: '江南',
+    from: '2026-11-24',
+    due: '2026-11-30',
+    paragraphs: JIANGNAN,
   },
 ]
 

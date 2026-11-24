@@ -16,6 +16,17 @@ export interface TaskNote {
 
 export const TASK_NOTES: TaskNote[] = [
   {
+    date: '2026-11-24',
+    taskId: 'writing',
+    title: '《江南》听写',
+    teacher: '背诵江南，练习江南听写。',
+    steps: [
+      { icon: '👀', text: '翻到《江南》，把课后要写的字读两遍', tip: '不会读的看拼音' },
+      { icon: '✏️', text: '每个字写两遍', tip: '照着课本，一笔一画' },
+      { icon: '👂', text: '请爸爸妈妈报，盖住课本写一遍', tip: '错的再写三遍' },
+    ],
+  },
+  {
     date: '2026-11-17',
     taskId: 'writing',
     title: '课后字词，准备听写',
