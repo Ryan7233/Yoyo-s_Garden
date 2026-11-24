@@ -2,19 +2,21 @@ import { useState } from 'react'
 import type { MathHomework } from '../../data/mathHomework'
 import { Modal } from '../../ui/Modal'
 import './math.css'
+import { DayChips, type DayPick } from '../../ui/DayChips'
 
 /**
  * 当天的数学作业卡：老师的要求、去课本哪儿找，每一类问题给一句可以照着说的话。
  * 每说出一个问题点一下打勾，全都提过了才能交作业（onFinish 为空时只是再看一遍）。
  */
-export function MathHomeworkSheet({ homework, onFinish, onClose }: { homework: MathHomework; onFinish?: () => Promise<unknown>; onClose: () => void }) {
+export function MathHomeworkSheet({ homework, days, onFinish, onClose }: { homework: MathHomework; days?: DayPick; onFinish?: () => Promise<unknown>; onClose: () => void }) {
   const [said, setSaid] = useState<boolean[]>(() => homework.prompts.map(() => false))
   const left = said.filter((s) => !s).length
 
   return (
     <Modal wide onClose={onClose}>
       <div className="math-hw">
-        <h2 className="modal-title">🔢 今天的数学 · {homework.title}</h2>
+        <h2 className="modal-title">🔢 {!days || days.current === days.today ? '今天的数学' : '数学'} · {homework.title}</h2>
+        {days && <DayChips {...days} />}
         <p className="math-teacher">👩‍🏫 老师说：{homework.teacher}</p>
         <p className="math-where">📖 {homework.where}</p>
 

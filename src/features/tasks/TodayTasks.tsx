@@ -5,15 +5,16 @@ import { countsByWeek } from '../../engine/schedule'
 import { cardRecords, dayProgress } from '../../engine/rewards'
 import { earnedOn } from '../../engine/ledger'
 import { childReportTask } from '../../db/actions'
-import { ENGLISH_CLASS_TASK_ID, ETON_HOMEWORK_TASK_ID, EXERCISE_TASK_ID, MATH_TASK_ID, RECITE_TASK_ID, PINYIN_TASK_ID, RAISE_HAND_TASK_ID, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../../data/tasks'
-import { lessonFor } from '../../data/etonLessons'
-import { puLessonFor } from '../../data/puLessons'
-import { taskNoteFor } from '../../data/taskNotes'
+import { CHINESE_READING_TASK_ID, ENGLISH_CLASS_TASK_ID, ETON_HOMEWORK_TASK_ID, EXERCISE_TASK_ID, MATH_TASK_ID, RECITE_TASK_ID, PINYIN_TASK_ID, RAISE_HAND_TASK_ID, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../../data/tasks'
+import { ETON_LESSONS, etonSpellWords, lessonFor, type EtonLesson } from '../../data/etonLessons'
+import { PU_LESSONS, puLessonFor } from '../../data/puLessons'
+import { recentDates } from '../../data/recent'
+import { datedTaskNoteFor, taskNoteFor } from '../../data/taskNotes'
 import { recitesFor } from '../../data/reciteTexts'
 import { TaskNoteSheet } from '../school/TaskNoteSheet'
 import { ReciteSheet } from '../school/ReciteSheet'
-import { pinyinCardFor } from '../../data/pinyinCards'
-import { mathHomeworkFor } from '../../data/mathHomework'
+import { PINYIN_CARDS, pinyinCardFor } from '../../data/pinyinCards'
+import { MATH_HOMEWORK, mathHomeworkFor } from '../../data/mathHomework'
 import type { TaskDef, TaskRecord } from '../../data/types'
 import { spellQueue, weekQuizWords } from '../../engine/spelling'
 import { submitSpellSession, type SubmittedResult } from '../../db/spelling'
@@ -29,6 +30,14 @@ import './tasks.css'
 import { play } from '../../ui/sfx'
 import { Reward } from '../../ui/Reward'
 
+type SheetKind = 'eton' | 'pu' | 'pinyin' | 'math'
+const SHEET_OF: Record<string, SheetKind> = {
+  [ETON_HOMEWORK_TASK_ID]: 'eton',
+  [ENGLISH_CLASS_TASK_ID]: 'pu',
+  [PINYIN_TASK_ID]: 'pinyin',
+  [MATH_TASK_ID]: 'math',
+}
+
 export function TodayTasks() {
   const { child, tasks, records, ledger, today, exercises, exerciseRecords, spellWords } = useStore()
   const [showMore, setShowMore] = useState(false)
@@ -36,10 +45,8 @@ export function TodayTasks() {
   const [sportOpen, setSportOpen] = useState(false)
   const [dictation, setDictation] = useState<{ taskId: string; items: DictationItem[] } | null>(null)
   const [raising, setRaising] = useState(false)
-  const [lessonOpen, setLessonOpen] = useState(false)
-  const [puOpen, setPuOpen] = useState(false)
-  const [pinyinOpen, setPinyinOpen] = useState(false)
-  const [mathOpen, setMathOpen] = useState(false)
+  // 打开的课程弹窗和在看哪一天（默认今天；没有今天的课时可以回看最近几天的）
+  const [sheet, setSheet] = useState<{ kind: SheetKind; date: string } | null>(null)
   const [noteOf, setNoteOf] = useState<TaskDef | null>(null)
   const [reciteOpen, setReciteOpen] = useState(false)
   if (!child) return null
@@ -50,13 +57,48 @@ export function TodayTasks() {
   const recites = recitesFor(today)
   // 当天有伊顿课 / 拼读卡时，点“我完成了”先弹出来，学完再交
   const lessonOf = (task: TaskDef) => {
-    if (task.id === ETON_HOMEWORK_TASK_ID && lesson) return () => setLessonOpen(true)
-    if (task.id === ENGLISH_CLASS_TASK_ID && pu) return () => setPuOpen(true)
-    if (task.id === PINYIN_TASK_ID && pinyin) return () => setPinyinOpen(true)
-    if (task.id === MATH_TASK_ID && math) return () => setMathOpen(true)
+    if (task.id === ETON_HOMEWORK_TASK_ID && lesson) return () => setSheet({ kind: 'eton', date: today })
+    if (task.id === ENGLISH_CLASS_TASK_ID && pu) return () => setSheet({ kind: 'pu', date: today })
+    if (task.id === PINYIN_TASK_ID && pinyin) return () => setSheet({ kind: 'pinyin', date: today })
+    if (task.id === MATH_TASK_ID && math) return () => setSheet({ kind: 'math', date: today })
     if (task.id === RECITE_TASK_ID && recites.length) return () => setReciteOpen(true)
     if (taskNoteFor(task.id, today)) return () => setNoteOf(task)
     return undefined
+  }
+  // 最近 7 天有内容的日子：今天没有时，任务牌上可以“回看前几天”
+  const recent: Record<SheetKind, string[]> = {
+    eton: recentDates(ETON_LESSONS, today),
+    pu: recentDates(PU_LESSONS, today),
+    pinyin: recentDates(PINYIN_CARDS, today),
+    math: recentDates(MATH_HOMEWORK, today),
+  }
+  const pastOf = (task: TaskDef) => {
+    const kind = SHEET_OF[task.id]
+    if (!kind || recent[kind][0] === today) return undefined
+    const last = recent[kind][0]
+    return last ? () => setSheet({ kind, date: last }) : undefined
+  }
+  const dayPick = (kind: SheetKind, date: string) => ({ dates: recent[kind], current: date, today, onPick: (d: string) => setSheet({ kind, date: d }) })
+  // 只有今天的内容能交；回看的只是看看、练练
+  const finishIf = (taskId: string, date: string, fn: () => Promise<unknown>) =>
+    date === today && !['done', 'pending'].includes(latest.get(taskId)?.status ?? '') ? fn : undefined
+  const shown = {
+    eton: sheet?.kind === 'eton' ? ETON_LESSONS.find((l) => l.date === sheet.date) : undefined,
+    pu: sheet?.kind === 'pu' ? PU_LESSONS.find((l) => l.date === sheet.date) : undefined,
+    pinyin: sheet?.kind === 'pinyin' ? PINYIN_CARDS.find((c) => c.date === sheet.date) : undefined,
+    math: sheet?.kind === 'math' ? MATH_HOMEWORK.find((h) => h.date === sheet.date) : undefined,
+  }
+  const close = () => setSheet(null)
+
+  // 老师 / 课程今天单独布置的内容（每天都有的阅读计时卡不算）：任务牌上写出来，并从“更多任务”里提到上面
+  const homeworkOf = (task: TaskDef): string | undefined => {
+    const first = (l: EtonLesson) => l.cards.map((c) => ('title' in c ? c.title : c.word)).find(Boolean) ?? l.title
+    if (task.id === ETON_HOMEWORK_TASK_ID && lesson) return first(lesson)
+    if (task.id === ENGLISH_CLASS_TASK_ID && pu) return first(pu)
+    if (task.id === PINYIN_TASK_ID && pinyin) return pinyin.title
+    if (task.id === MATH_TASK_ID && math) return math.title
+    if (task.id === RECITE_TASK_ID && recites.length) return recites.map((t) => `《${t.title}》`).join('、')
+    return datedTaskNoteFor(task.id, today)?.title
   }
 
   // 今天始终按当前配置
@@ -71,12 +113,15 @@ export function TodayTasks() {
 
   // 每日拼写：今天的新词 + 到期的复习词；周末小听写：本周学过的词
   const queue = spellQueue(spellWords, today)
+  // 伊顿最近要默写的词带上课里的例句
+  const etonSentence = new Map(etonSpellWords(today).map((w) => [w.word.toLowerCase(), w.sentence]))
+  const withSentence = (word: string) => etonSentence.get(word.toLowerCase())
   const spellItems: Record<string, DictationItem[]> = {
     [SPELLING_TASK_ID]: [
-      ...queue.fresh.map((w) => ({ word: w.word, kind: 'new' as const, zh: w.zh })),
-      ...queue.review.map((w) => ({ word: w.word, kind: 'review' as const, zh: w.zh })),
+      ...queue.fresh.map((w) => ({ word: w.word, kind: 'new' as const, zh: w.zh, sentence: withSentence(w.word) })),
+      ...queue.review.map((w) => ({ word: w.word, kind: 'review' as const, zh: w.zh, sentence: withSentence(w.word) })),
     ],
-    [SPELLING_QUIZ_TASK_ID]: weekQuizWords(spellWords, today).map((w) => ({ word: w.word, kind: 'review' as const, zh: w.zh })),
+    [SPELLING_QUIZ_TASK_ID]: weekQuizWords(spellWords, today).map((w) => ({ word: w.word, kind: 'review' as const, zh: w.zh, sentence: withSentence(w.word) })),
   }
   const spellingOf = (task: TaskDef) => {
     const items = spellItems[task.id]
@@ -118,6 +163,13 @@ export function TodayTasks() {
   }
 
   const pct = progress.requiredTotal ? progress.requiredDone / progress.requiredTotal : 0
+  // 交了、等爸妈确认的必做：进度条上先亮半颗星，奖励还是确认后才发
+  const waiting = required.filter((t) => latest.get(t.id)?.status === 'pending').length
+  const handedIn = progress.requiredDone + waiting
+  const pctIn = progress.requiredTotal ? handedIn / progress.requiredTotal : 0
+  const homeworkMore = more.filter((t) => homeworkOf(t))
+  const restMore = more.filter((t) => !homeworkOf(t))
+  const card = (t: TaskDef) => <TaskCard key={t.id} task={t} record={latest.get(t.id)} sport={sport} spelling={spellingOf(t)} homework={homeworkOf(t)} onLesson={lessonOf(t)} onPast={pastOf(t)} onReport={() => report(t)} />
 
   return (
     <div className="today">
@@ -129,11 +181,13 @@ export function TodayTasks() {
             <span className="num today-count">{progress.requiredDone} / {progress.requiredTotal}</span>
           </div>
           <div className="meter" role="progressbar" aria-valuemin={0} aria-valuemax={progress.requiredTotal} aria-valuenow={progress.requiredDone}>
+            {waiting > 0 && <span className="meter-fill waiting" style={{ width: `${pctIn * 100}%` }} />}
             <span className="meter-fill" style={{ width: `${pct * 100}%` }} />
             {Array.from({ length: progress.requiredTotal }, (_, i) => (
-              <span key={i} className={`meter-star${i < progress.requiredDone ? ' on' : ''}`} style={{ left: `${((i + 1) / progress.requiredTotal) * 100}%` }}>★</span>
+              <span key={i} className={`meter-star${i < progress.requiredDone ? ' on' : i < handedIn ? ' half' : ''}`} style={{ left: `${((i + 1) / progress.requiredTotal) * 100}%` }}>★</span>
             ))}
           </div>
+          {waiting > 0 && <div className="today-waiting hint">{waiting} 项已经交了，等爸爸妈妈盖章</div>}
         </div>
         <div className="today-earned">
           <span className="hint">今天得到</span>
@@ -143,56 +197,66 @@ export function TodayTasks() {
       </div>
 
       {progress.allDone && <div className="all-done pop">🌟 今天的必做任务全部完成啦！</div>}
+      {!progress.allDone && waiting > 0 && handedIn === progress.requiredTotal && (
+        <div className="all-done waiting pop">🎉 必做都交齐啦！等爸爸妈妈盖章，就是今天的全勤</div>
+      )}
 
       <h3 className="section-title">⭐ 今日必做</h3>
-      <div className="task-grid">
-        {required.map((t) => <TaskCard key={t.id} task={t} record={latest.get(t.id)} sport={sport} spelling={spellingOf(t)} onLesson={lessonOf(t)} onReport={() => report(t)} />)}
-      </div>
+      <div className="task-grid">{required.map(card)}</div>
+
+      {homeworkMore.length > 0 && (
+        <>
+          <h3 className="section-title">📌 今天老师的作业</h3>
+          <div className="task-grid">{homeworkMore.map(card)}</div>
+        </>
+      )}
 
       <button className="more-toggle btn btn-ghost" aria-expanded={showMore} onClick={() => setShowMore(!showMore)}>
-        {showMore ? '收起更多任务 ▲' : `更多任务（${more.length}）▼`}
+        {showMore ? '收起更多任务 ▲' : `更多任务（${restMore.length}）▼`}
       </button>
-      {showMore && (
-        <div className="task-grid">
-          {more.map((t) => <TaskCard key={t.id} task={t} record={latest.get(t.id)} sport={sport} spelling={spellingOf(t)} onLesson={lessonOf(t)} onReport={() => report(t)} />)}
-        </div>
-      )}
+      {showMore && <div className="task-grid">{restMore.map(card)}</div>}
 
       {celebrate > 0 && <Celebrate key={celebrate} />}
       {sportOpen && <ExerciseSheet onClose={() => setSportOpen(false)} />}
       {raising && <RaiseHandSheet onClose={() => setRaising(false)} />}
-      {lessonOpen && lesson && (
+      {sheet && shown.eton && (
         <EtonLessonSheet
-          key={lesson.date}
-          lesson={lesson}
-          // 这周的作业还没打卡时，看完最后一张就算交作业（等家长确认）
-          onFinish={['done', 'pending'].includes(latest.get(ETON_HOMEWORK_TASK_ID)?.status ?? '') ? undefined : () => act(() => childReportTask(child.id, ETON_HOMEWORK_TASK_ID, today))}
-          onClose={() => setLessonOpen(false)}
+          key={`eton-${sheet.date}`}
+          lesson={shown.eton}
+          days={dayPick('eton', sheet.date)}
+          // 这周的作业还没打卡时，看完今天的最后一张就算交作业（等家长确认）
+          onFinish={finishIf(ETON_HOMEWORK_TASK_ID, sheet.date, () => act(() => childReportTask(child.id, ETON_HOMEWORK_TASK_ID, today)))}
+          onClose={close}
         />
       )}
-      {puOpen && pu && (
+      {sheet && shown.pu && (
         <EtonLessonSheet
-          key={`pu-${pu.date}`}
-          lesson={pu}
+          key={`pu-${sheet.date}`}
+          lesson={shown.pu}
           heading="🗣️ 美森 PU"
+          days={dayPick('pu', sheet.date)}
           // 上完课复习完就交“美森英语外教课”（等家长确认）；交过再打开只是再看一遍
-          onFinish={['done', 'pending'].includes(latest.get(ENGLISH_CLASS_TASK_ID)?.status ?? '') ? undefined : () => act(() => childReportTask(child.id, ENGLISH_CLASS_TASK_ID, today))}
-          onClose={() => setPuOpen(false)}
+          onFinish={finishIf(ENGLISH_CLASS_TASK_ID, sheet.date, () => act(() => childReportTask(child.id, ENGLISH_CLASS_TASK_ID, today)))}
+          onClose={close}
         />
       )}
-      {pinyinOpen && pinyin && (
+      {sheet && shown.pinyin && (
         <PinyinCardSheet
-          card={pinyin}
-          onFinish={(r) => act(() => childReportTask(child.id, PINYIN_TASK_ID, today, new Date(), r))}
-          onClose={() => setPinyinOpen(false)}
+          key={`pinyin-${sheet.date}`}
+          card={shown.pinyin}
+          days={dayPick('pinyin', sheet.date)}
+          onFinish={sheet.date === today ? (r) => act(() => childReportTask(child.id, PINYIN_TASK_ID, today, new Date(), r)) : undefined}
+          onClose={close}
         />
       )}
-      {mathOpen && math && (
+      {sheet && shown.math && (
         <MathHomeworkSheet
-          homework={math}
+          key={`math-${sheet.date}`}
+          homework={shown.math}
+          days={dayPick('math', sheet.date)}
           // 交过以后再打开只是再看一遍，不会重复交
-          onFinish={['done', 'pending'].includes(latest.get(MATH_TASK_ID)?.status ?? '') ? undefined : () => act(() => childReportTask(child.id, MATH_TASK_ID, today))}
-          onClose={() => setMathOpen(false)}
+          onFinish={finishIf(MATH_TASK_ID, sheet.date, () => act(() => childReportTask(child.id, MATH_TASK_ID, today)))}
+          onClose={close}
         />
       )}
       {noteOf && taskNoteFor(noteOf.id, today) && (
@@ -230,13 +294,17 @@ interface SportProgress { done: number; total: number }
 const STATUS_TEXT = { done: '✓ 已完成', pending: '⏳ 等爸爸妈妈确认', rejected: '↺ 可以再试一次' } as const
 
 /** 任务牌：图标、名字、奖励、状态、按钮。状态都有图标和文字，不只靠颜色 */
-function TaskCard({ task, record, sport, spelling, onLesson, onReport }: {
+function TaskCard({ task, record, sport, spelling, homework, onLesson, onPast, onReport }: {
   task: TaskDef
   record?: TaskRecord
   sport: SportProgress
   spelling?: { count: string; items: DictationItem[] }
   /** 伊顿英语作业、每日拼读：当天有课 / 有卡片时，点“我完成了”先弹出来，学完再交 */
   onLesson?: () => void
+  /** 今天单独布置的内容（课题 / 卡片标题），写在任务牌上 */
+  homework?: string
+  /** 今天没有课 / 卡，但最近几天有：回看 */
+  onPast?: () => void
   onReport: () => void
 }) {
   if (task.id === EXERCISE_TASK_ID) return <SportCard task={task} sport={sport} onOpen={onReport} />
@@ -255,14 +323,20 @@ function TaskCard({ task, record, sport, spelling, onLesson, onReport }: {
           {status && <span className={`badge ${status}`}>{weekly && status === 'done' ? '✓ 这周完成了' : STATUS_TEXT[status]}</span>}
           {weekly && !status && <span className="hint">这周哪天做都行</span>}
         </div>
+        {homework && <div className="task-today">📌 今天：{homework}</div>}
         {spelling && !status && <div className="spell-count">{spelling.count}</div>}
         {status === 'rejected' && record?.note && <div className="task-note">💬 {record.note}</div>}
       </div>
       {(!status || status === 'rejected') && (
         <button className="btn btn-primary btn-big task-btn" disabled={spelling && !spelling.items.length} onClick={onLesson ?? onReport}>
-          {spelling ? (status === 'rejected' ? '再写一次' : '去默写 ✍️') : status === 'rejected' ? '再试一次' : '我完成了'}
+          {spelling ? (status === 'rejected' ? '再写一次' : '去默写 ✍️')
+            : status === 'rejected' ? '再试一次'
+            : onLesson && homework ? '去看作业 📖'
+            : onLesson && task.id === CHINESE_READING_TASK_ID ? '开始阅读 ⏱️'
+            : '我完成了'}
         </button>
       )}
+      {onPast && <button className="btn btn-ghost task-btn task-past" onClick={onPast}>↺ 回看前几天</button>}
       {/* 当天的课 / 拼读卡交过以后，同一个位置换成“再做一遍”：小游戏重新开始，不会再交一次、不会重复发奖励 */}
       {onLesson && (status === 'done' || status === 'pending') && (
         <button className="btn btn-ghost btn-big task-btn" onClick={onLesson}>{task.id === PINYIN_TASK_ID ? '↺ 再读一遍' : task.id === RECITE_TASK_ID ? '↺ 再读再背' : task.id === MATH_TASK_ID ? '↺ 再看一遍' : task.id === ENGLISH_CLASS_TASK_ID ? '↺ 再听一遍' : '↺ 再做一遍'}</button>

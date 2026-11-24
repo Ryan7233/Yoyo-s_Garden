@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { posterUrl } from '../../data/etonLessons'
 import type { BookCard, CompareCard, EtonLesson, LessonCard, PaperCard, PosterCard, ReadCard, ReviewCard, TalkCard, TopicCard, VerbsCard, VocabCard, WordCard } from '../../data/etonLessons'
 import { Modal } from '../../ui/Modal'
-import { Say, speakEn } from './Say'
+import { Answer, Say, speakEn } from './Say'
+import { DayChips, type DayPick } from '../../ui/DayChips'
 import { MatchView, PickView, SortView } from './EtonPractice'
 import './eton.css'
 
@@ -10,7 +11,7 @@ import './eton.css'
  * 伊顿英语课：一张一张翻看当天的单词卡和课本要点，点单词或句子能听发音。
  * onFinish：这周作业还没打卡时，看完最后一张点“学完了”就交作业（等家长确认）
  */
-export function EtonLessonSheet({ lesson, heading = '📒 伊顿英语', onFinish, onClose }: { lesson: EtonLesson; heading?: string; onFinish?: () => Promise<unknown>; onClose: () => void }) {
+export function EtonLessonSheet({ lesson, heading = '📒 伊顿英语', days, onFinish, onClose }: { lesson: EtonLesson; heading?: string; days?: DayPick; onFinish?: () => Promise<unknown>; onClose: () => void }) {
   const [at, setAt] = useState(0)
   const top = useRef<HTMLDivElement>(null)
   // 翻到下一张时回到最上面
@@ -27,6 +28,7 @@ export function EtonLessonSheet({ lesson, heading = '📒 伊顿英语', onFinis
           <h2 className="modal-title">{heading} · {lesson.title}</h2>
           <span className="eton-page num" aria-live="polite">{at + 1} / {lesson.cards.length}</span>
         </div>
+        {days && <DayChips {...days} />}
 
         <CardView card={card} />
 
@@ -76,7 +78,7 @@ function Talk({ talk }: { talk: { q: string; a: string }[] }) {
       {talk.map((t) => (
         <div key={t.q} className="eton-qa">
           <Say text={t.q} className="q" />
-          <Say text={t.a} className="a" />
+          <Answer text={t.a} />
         </div>
       ))}
     </div>
@@ -171,7 +173,7 @@ function TopicView({ card }: { card: TopicCard }) {
           {card.talk.map((t) => (
             <div key={t.q} className="eton-qa">
               <Say text={t.q} className="q" />
-              <Say text={t.a} className="a" />
+              <Answer text={t.a} />
             </div>
           ))}
         </div>
@@ -226,7 +228,7 @@ function BookView({ card }: { card: BookCard }) {
               <Say text={p.lead} />
               <div className="eton-qa">
                 <Say text={p.q} className="q" />
-                <Say text={p.a} className="a" />
+                <Answer text={p.a} />
               </div>
             </div>
           ))}

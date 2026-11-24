@@ -21,7 +21,11 @@ const LOAD_TIMEOUT_MS = 10_000
 /** 默写打开时，家长模式不因“2 分钟没操作”自动退出（在 iframe 里点按，外面收不到） */
 export const useDictationOpen = create<boolean>(() => false)
 
-export interface DictationItem { word: string; kind: 'new' | 'review'; zh?: string }
+/** sentence：伊顿课里这个词的例句（听写时“词 → 句子 → 词”，分清同音词）；YoYo Words 暂时不读它 */
+export interface DictationItem { word: string; kind: 'new' | 'review'; zh?: string; sentence?: string }
+
+/** 纸笔默写时读的内容：有例句就“词. 例句. 词.”，没有就只读词 */
+export const dictationSay = (i: Pick<DictationItem, 'word' | 'sentence'>) => (i.sentence ? `${i.word}. ${i.sentence} ${i.word}.` : i.word)
 
 /** selfCheck=false：周末小听写，孩子只写不对答案，交卷后家长判 */
 export function SpellingSheet({ items, finishLabel = '🌷 回花园', selfCheck = true, onResult, onClose }: {
@@ -118,7 +122,7 @@ function PaperDictation({ items, finishLabel, selfCheck, onResult, onClose }: {
       <div className="spell-paper-list">
         {items.map((i) => (
           <div key={i.word} className="spell-paper-row">
-            <button className="btn btn-soft btn-small" aria-label={`听 ${i.word}`} onClick={() => speakEnglish(i.word)}>🔊</button>
+            <button className="btn btn-soft btn-small" aria-label={`听 ${i.word}`} onClick={() => speakEnglish(dictationSay(i))}>🔊</button>
             <span className="spell-paper-word">
               {selfCheck && (i.kind === 'new' || shown.has(i.word)) ? i.word : '❓❓❓'}
               {i.zh && <span className="hint"> {i.zh}</span>}

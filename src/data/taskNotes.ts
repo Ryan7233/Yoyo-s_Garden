@@ -41,6 +41,11 @@ const DAILY_NOTES: Omit<TaskNote, 'date'>[] = [
   },
 ]
 
+/** 只看老师当天单独留的（不算每天都有的阅读卡） */
+export function datedTaskNoteFor(taskId: string, today: string): TaskNote | undefined {
+  return TASK_NOTES.find((n) => n.taskId === taskId && n.date === today)
+}
+
 /** 老师当天留的优先，没有就用每天都有的卡 */
 export function taskNoteFor(taskId: string, today: string): TaskNote | undefined {
   const daily = DAILY_NOTES.find((n) => n.taskId === taskId)

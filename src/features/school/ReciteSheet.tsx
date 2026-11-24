@@ -88,7 +88,7 @@ function ReciteBody({ text, today, times, onTimes }: { text: ReciteText; today: 
                     {covered ? (
                       <>
                         {line[0]}
-                        <span className="recite-mask">{line.slice(1).replace(/[^，。！？、“”]/g, '〇')}</span>
+                        <span className="recite-mask">{line.slice(1).replace(/[^，。！？、“”／]/g, '〇')}</span>
                       </>
                     ) : (
                       line

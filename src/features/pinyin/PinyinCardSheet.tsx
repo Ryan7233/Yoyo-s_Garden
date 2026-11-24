@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { formatReadTime, pinyinImageUrl, type PinyinCard } from '../../data/pinyinCards'
 import { Modal } from '../../ui/Modal'
+import { DayChips, type DayPick } from '../../ui/DayChips'
 import './pinyin.css'
 
 export interface ReadResult { readTimes: number; readBestSec: number }
@@ -8,8 +9,9 @@ export interface ReadResult { readTimes: number; readBestSec: number }
 /**
  * 每日拼读：看老师的拼读卡读，每读一遍点一下计时（开始 / 读完了），
  * 读了几遍、最快一遍多久随作业交给爸爸妈妈。点图片可以放大。
+ * 带“对答案”的卡（看图写拼音）是纸上写的作业，不用计时也能交。
  */
-export function PinyinCardSheet({ card, onFinish, onClose }: { card: PinyinCard; onFinish: (r: ReadResult) => Promise<unknown>; onClose: () => void }) {
+export function PinyinCardSheet({ card, days, onFinish, onClose }: { card: PinyinCard; days?: DayPick; onFinish?: (r?: ReadResult) => Promise<unknown>; onClose: () => void }) {
   const [laps, setLaps] = useState<number[]>([])
   const [startAt, setStartAt] = useState<number | null>(null)
   const [now, setNow] = useState(Date.now())
@@ -40,6 +42,7 @@ export function PinyinCardSheet({ card, onFinish, onClose }: { card: PinyinCard;
     <Modal wide onClose={onClose}>
       <div className="pinyin">
         <h2 className="modal-title">🔤 每日拼读 · {card.title}</h2>
+        {days && <DayChips {...days} />}
         <button className={`pinyin-img${zoom ? ' zoom' : ''}`} onClick={() => setZoom(!zoom)} aria-label={zoom ? '缩小图片' : '放大图片'}>
           <img src={pinyinImageUrl(card)} alt={`拼读卡：${card.title}`} />
         </button>
@@ -96,13 +99,17 @@ export function PinyinCardSheet({ card, onFinish, onClose }: { card: PinyinCard;
 
         <div className="modal-actions">
           <button className="btn btn-ghost btn-big" onClick={onClose}>先关掉</button>
-          <button
-            className="btn btn-primary btn-big"
-            disabled={!laps.length || running}
-            onClick={async () => { await onFinish({ readTimes: laps.length, readBestSec: best }); onClose() }}
-          >
-            {laps.length ? `读了 ${laps.length} 遍，交作业 ✓` : '读完一遍再交'}
-          </button>
+          {onFinish ? (
+            <button
+              className="btn btn-primary btn-big"
+              disabled={(!laps.length && !card.answers) || running}
+              onClick={async () => { await onFinish(laps.length ? { readTimes: laps.length, readBestSec: best } : undefined); onClose() }}
+            >
+              {laps.length ? `读了 ${laps.length} 遍，交作业 ✓` : card.answers ? '写完对好了，交作业 ✓' : '读完一遍再交'}
+            </button>
+          ) : (
+            <button className="btn btn-primary btn-big" onClick={onClose}>看完啦</button>
+          )}
         </div>
       </div>
     </Modal>

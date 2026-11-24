@@ -1,0 +1,4 @@
+.day-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 12px; }
+.day-chip { min-height: 40px; padding: 6px 14px; border-radius: 999px; border: 2px solid var(--cream-edge); background: #fff; color: var(--text-soft); font-size: var(--fs-s); cursor: pointer; }
+.day-chip.on { background: var(--coin-light); border-color: var(--coin-dark); color: var(--text); font-weight: 700; }
+.day-chips-note { font-size: var(--fs-xs); }
