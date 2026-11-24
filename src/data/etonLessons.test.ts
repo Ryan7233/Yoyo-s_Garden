@@ -85,18 +85,19 @@ describe('Unit 3 We Are Friends（11/17–11/22）', () => {
   })
 })
 
-describe('Room on the Broom 复述作业（11/24–11/28）', () => {
+describe('Room on the Broom 复述作业（11/24–11/29）', () => {
   const kinds = (d: string) => lessonFor(d)?.cards.map((c) => c.kind)
-  it('周二到周六每天一点，周日休息', () => {
-    expect(kinds('2026-11-24')).toEqual(['talk', 'read', 'talk'])
+  it('周二到周日每天一件事，下周一上课那天没有', () => {
+    expect(kinds('2026-11-24')).toEqual(['talk'])
     expect(kinds('2026-11-25')).toEqual(['read', 'talk'])
-    expect(kinds('2026-11-26')).toEqual(['read', 'review', 'talk'])
-    expect(kinds('2026-11-27')).toEqual(['talk', 'read'])
-    expect(kinds('2026-11-28')).toEqual(['talk', 'read'])
-    expect(lessonFor('2026-11-29')).toBeUndefined()
+    expect(kinds('2026-11-26')).toEqual(['read', 'talk'])
+    expect(kinds('2026-11-27')).toEqual(['read', 'review'])
+    expect(kinds('2026-11-28')).toEqual(['read', 'talk'])
+    expect(kinds('2026-11-29')).toEqual(['talk', 'talk'])
+    expect(lessonFor('2026-11-30')).toBeUndefined()
   })
   it('老师的词不进拼词（标签里没有 Dictation / Spelling）', () => {
-    const r = lessonFor('2026-11-26')!.cards.find((c) => c.kind === 'review')
+    const r = lessonFor('2026-11-27')!.cards.find((c) => c.kind === 'review')
     expect(r && /dictation|spelling/i.test(r.tag)).toBe(false)
   })
 })

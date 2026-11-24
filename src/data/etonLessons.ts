@@ -1022,7 +1022,8 @@ export const ETON_LESSONS: EtonLesson[] = [
     ],
   },
   // 11/23（周一）线下课讲完 Room on the Broom。作业：听故事几遍、读简化版、用自己的话复述，下次课前可以发复述视频。
-  // 每天都有美森 PU 课，所以伊顿这周每天只放十分钟左右：周二到周四每天读一两段，周五串起来，周六录视频，周日休息。
+  // 每天还有美森 PU 和牛津树，伊顿每天只做一件事、10 分钟左右，周二到周日每天都有：
+  // 周二看视频 → 周三到周五每天读一两段 → 周六看着提示串起来讲 → 周日再看一遍视频、录复述视频。
   {
     date: '2026-11-24',
     title: '11 月 24 日 · 周二',
@@ -1034,6 +1035,12 @@ export const ETON_LESSONS: EtonLesson[] = [
         tip: 'Watch the video from 0:00 to 7:38. Just listen and enjoy!',
         talk: [{ q: 'Who rides on the broom?', a: 'The witch, the cat, the dog, the bird and the frog.' }],
       },
+    ],
+  },
+  {
+    date: '2026-11-25',
+    title: '11 月 25 日 · 周三',
+    cards: [
       storyCard(1, 2),
       {
         kind: 'talk',
@@ -1052,8 +1059,8 @@ export const ETON_LESSONS: EtonLesson[] = [
     ],
   },
   {
-    date: '2026-11-25',
-    title: '11 月 25 日 · 周三',
+    date: '2026-11-26',
+    title: '11 月 26 日 · 周四',
     cards: [
       storyCard(3, 4),
       {
@@ -1070,8 +1077,8 @@ export const ETON_LESSONS: EtonLesson[] = [
     ],
   },
   {
-    date: '2026-11-26',
-    title: '11 月 26 日 · 周四',
+    date: '2026-11-27',
+    title: '11 月 27 日 · 周五',
     cards: [
       storyCard(5, 5),
       {
@@ -1087,6 +1094,13 @@ export const ETON_LESSONS: EtonLesson[] = [
           { word: 'broomstick', sentence: 'They all fly on the broomstick.' },
         ],
       },
+    ],
+  },
+  {
+    date: '2026-11-28',
+    title: '11 月 28 日 · 周六',
+    cards: [
+      RETELL,
       {
         kind: 'talk',
         title: 'Is There Room?',
@@ -1101,23 +1115,16 @@ export const ETON_LESSONS: EtonLesson[] = [
     ],
   },
   {
-    date: '2026-11-27',
-    title: '11 月 27 日 · 周五',
+    date: '2026-11-29',
+    title: '11 月 29 日 · 周日',
     cards: [
       {
         kind: 'talk',
         title: 'Listen Again',
         tag: BROOM_VIDEO,
-        tip: 'Watch the video from 0:00 to 7:38 one more time.',
+        tip: 'Watch the video from 0:00 to 7:38 one more time. Then tell the story!',
         talk: [{ q: 'What did the witch say at the end?', a: 'She said thank you.' }],
       },
-      RETELL,
-    ],
-  },
-  {
-    date: '2026-11-28',
-    title: '11 月 28 日 · 周六',
-    cards: [
       {
         kind: 'talk',
         title: 'Record Your Story',
@@ -1131,7 +1138,6 @@ export const ETON_LESSONS: EtonLesson[] = [
           { q: 'How does the story end?', a: 'The witch makes a new broom. There is room for every friend.' },
         ],
       },
-      RETELL,
     ],
   },
 ]

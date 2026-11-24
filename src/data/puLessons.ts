@@ -1,6 +1,7 @@
 /**
  * 美森英语外教课（Power Up 课本，简称 PU）的课后复习：挂在“美森英语外教课”任务上。
- * 每天都有一节 PU 课；当天上完课点开复习这一课，第二天上新课前再花几分钟回顾一下。
+ * 每天都有一节 25 分钟的 PU 课，复习要轻：上完课当天听读一遍故事、答课上的问题（8 分钟左右）；
+ * 第二天上新课前花 5 分钟回顾词和故事，再接当天的新课。课上做过的心情、排序题不重复做。
  * 卡片和伊顿课用同一套（点句子能听 Ava 录音）。按日期放，只在那一天显示。
  */
 import type { EtonLesson, ReadCard } from './etonLessons'
@@ -59,20 +60,15 @@ export const PU_LESSONS: EtonLesson[] = [
           { q: 'Who eats the crumbs?', a: 'The birds.' },
         ],
       },
-      {
-        kind: 'talk',
-        title: 'How Do They Feel?',
-        tag: 'Circle the feeling',
-        talk: [
-          { q: 'They can’t cook burgers in the woods. How does Matt feel?', a: 'He feels sad. 🙁' },
-          { q: 'Matt sees the chocolate. How does he feel?', a: 'He feels happy. 😀' },
-          { q: 'The birds arrive. How does Matt feel?', a: 'He feels sad. 🙁' },
-          { q: 'At the end of the story, how do the children feel?', a: 'They feel happy. 😀' },
-        ],
-      },
+    ],
+  },
+  {
+    date: '2026-11-25',
+    title: '11 月 25 日 · 课前回顾 L6',
+    cards: [
       {
         kind: 'review',
-        title: 'Today, I Learned',
+        title: 'Words from Yesterday',
         tag: 'PU1 · Unit 4 · Words',
         words: [
           { word: 'picnic', sentence: 'Let’s have a picnic with our friends!' },
@@ -81,12 +77,6 @@ export const PU_LESSONS: EtonLesson[] = [
           { word: 'watermelon', sentence: 'Would you like a banana or a watermelon?' },
         ],
       },
-    ],
-  },
-  {
-    date: '2026-11-25',
-    title: '11 月 25 日 · 复习昨天的 L6',
-    cards: [
       {
         kind: 'read',
         title: 'Tell the Story',
