@@ -5,8 +5,9 @@ import { countsByWeek } from '../../engine/schedule'
 import { cardRecords, dayProgress } from '../../engine/rewards'
 import { earnedOn } from '../../engine/ledger'
 import { childReportTask } from '../../db/actions'
-import { ETON_HOMEWORK_TASK_ID, EXERCISE_TASK_ID, MATH_TASK_ID, RECITE_TASK_ID, PINYIN_TASK_ID, RAISE_HAND_TASK_ID, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../../data/tasks'
+import { ENGLISH_CLASS_TASK_ID, ETON_HOMEWORK_TASK_ID, EXERCISE_TASK_ID, MATH_TASK_ID, RECITE_TASK_ID, PINYIN_TASK_ID, RAISE_HAND_TASK_ID, SPELLING_QUIZ_TASK_ID, SPELLING_TASK_ID } from '../../data/tasks'
 import { lessonFor } from '../../data/etonLessons'
+import { puLessonFor } from '../../data/puLessons'
 import { taskNoteFor } from '../../data/taskNotes'
 import { recitesFor } from '../../data/reciteTexts'
 import { TaskNoteSheet } from '../school/TaskNoteSheet'
@@ -36,18 +37,21 @@ export function TodayTasks() {
   const [dictation, setDictation] = useState<{ taskId: string; items: DictationItem[] } | null>(null)
   const [raising, setRaising] = useState(false)
   const [lessonOpen, setLessonOpen] = useState(false)
+  const [puOpen, setPuOpen] = useState(false)
   const [pinyinOpen, setPinyinOpen] = useState(false)
   const [mathOpen, setMathOpen] = useState(false)
   const [noteOf, setNoteOf] = useState<TaskDef | null>(null)
   const [reciteOpen, setReciteOpen] = useState(false)
   if (!child) return null
   const lesson = lessonFor(today)
+  const pu = puLessonFor(today)
   const pinyin = pinyinCardFor(today)
   const math = mathHomeworkFor(today)
   const recites = recitesFor(today)
   // 当天有伊顿课 / 拼读卡时，点“我完成了”先弹出来，学完再交
   const lessonOf = (task: TaskDef) => {
     if (task.id === ETON_HOMEWORK_TASK_ID && lesson) return () => setLessonOpen(true)
+    if (task.id === ENGLISH_CLASS_TASK_ID && pu) return () => setPuOpen(true)
     if (task.id === PINYIN_TASK_ID && pinyin) return () => setPinyinOpen(true)
     if (task.id === MATH_TASK_ID && math) return () => setMathOpen(true)
     if (task.id === RECITE_TASK_ID && recites.length) return () => setReciteOpen(true)
@@ -166,6 +170,16 @@ export function TodayTasks() {
           onClose={() => setLessonOpen(false)}
         />
       )}
+      {puOpen && pu && (
+        <EtonLessonSheet
+          key={`pu-${pu.date}`}
+          lesson={pu}
+          heading="🗣️ 美森 PU"
+          // 上完课复习完就交“美森英语外教课”（等家长确认）；交过再打开只是再看一遍
+          onFinish={['done', 'pending'].includes(latest.get(ENGLISH_CLASS_TASK_ID)?.status ?? '') ? undefined : () => act(() => childReportTask(child.id, ENGLISH_CLASS_TASK_ID, today))}
+          onClose={() => setPuOpen(false)}
+        />
+      )}
       {pinyinOpen && pinyin && (
         <PinyinCardSheet
           card={pinyin}
@@ -251,7 +265,7 @@ function TaskCard({ task, record, sport, spelling, onLesson, onReport }: {
       )}
       {/* 当天的课 / 拼读卡交过以后，同一个位置换成“再做一遍”：小游戏重新开始，不会再交一次、不会重复发奖励 */}
       {onLesson && (status === 'done' || status === 'pending') && (
-        <button className="btn btn-ghost btn-big task-btn" onClick={onLesson}>{task.id === PINYIN_TASK_ID ? '↺ 再读一遍' : task.id === RECITE_TASK_ID ? '↺ 再读再背' : task.id === MATH_TASK_ID ? '↺ 再看一遍' : '↺ 再做一遍'}</button>
+        <button className="btn btn-ghost btn-big task-btn" onClick={onLesson}>{task.id === PINYIN_TASK_ID ? '↺ 再读一遍' : task.id === RECITE_TASK_ID ? '↺ 再读再背' : task.id === MATH_TASK_ID ? '↺ 再看一遍' : task.id === ENGLISH_CLASS_TASK_ID ? '↺ 再听一遍' : '↺ 再做一遍'}</button>
       )}
     </div>
   )

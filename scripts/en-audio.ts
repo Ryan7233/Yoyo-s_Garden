@@ -1,4 +1,4 @@
-// 把伊顿课和拼词里会读到的英文，提前用微软 Ava 的声音做成 MP3（iPad 网页拿不到下载的优质声音）。
+// 把伊顿课、美森 PU 课和拼词里会读到的英文，提前用微软 Ava 的声音做成 MP3（iPad 网页拿不到下载的优质声音）。
 // 用法：npm run audio:en
 //   第一次先装朗读工具：python3 -m venv .venv-tts && .venv-tts/bin/pip install edge-tts
 // 只生成新增的句子；课里不再用的录音会删掉。生成完记得提交 public/audio/en 和 src/data/enAudio.json。
@@ -6,6 +6,7 @@ import { execFile } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
 import { promisify } from 'node:util'
 import { ETON_LESSONS } from '../src/data/etonLessons.ts'
+import { PU_LESSONS } from '../src/data/puLessons.ts'
 import { WORDS_KIDS } from '../src/data/wordsKids.ts'
 import { BASELINE_WORDS, SIGHT_WORDS } from '../src/data/spelling.ts'
 import { audioChunks, audioKey } from '../src/ui/enAudioKey.ts'
@@ -29,7 +30,7 @@ function walk(v: unknown, key = '') {
   } else if (Array.isArray(v)) v.forEach((x) => walk(x, key))
   else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) walk(x, k)
 }
-for (const lesson of ETON_LESSONS) {
+for (const lesson of [...ETON_LESSONS, ...PU_LESSONS]) {
   for (const card of lesson.cards) {
     walk(card)
     // 页面上拼出来再读的几种

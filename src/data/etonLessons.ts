@@ -260,6 +260,21 @@ const STORY: ReadCard['sections'] = [
   },
 ]
 
+/** 复述提示：每段一两句，用自己的话说 */
+const RETELL: ReadCard = {
+  kind: 'read',
+  title: 'Tell the Story',
+  tag: 'Retell · Next class',
+  tip: 'Say one or two sentences for each part. Your own words are OK!',
+  sections: [
+    { label: '01 Meet the travellers', lines: ['A witch and her cat fly on a broom.'] },
+    { label: '02 Lost and found', lines: ['The wind blows away her hat, her bow and her wand.', 'A dog, a bird and a frog find them.'] },
+    { label: '03 A crowded ride', lines: ['They all ride on the broom.', 'The broom breaks.'] },
+    { label: '04 Friends to the rescue', lines: ['A dragon wants to eat the witch.', 'The friends scare the dragon away.'] },
+    { label: '05 A better broom', lines: ['The witch makes a new broom.', 'There is room for every friend.'] },
+  ],
+}
+
 const storyCard = (from: number, to: number): ReadCard => ({
   kind: 'read',
   title: 'Room on the Broom',
@@ -706,19 +721,7 @@ export const ETON_LESSONS: EtonLesson[] = [
         ],
       },
       storyCard(3, 5),
-      {
-        kind: 'read',
-        title: 'Tell the Story',
-        tag: 'Retell · Next class',
-        tip: 'Say one or two sentences for each part. Your own words are OK!',
-        sections: [
-          { label: '01 Meet the travellers', lines: ['A witch and her cat fly on a broom.'] },
-          { label: '02 Lost and found', lines: ['The wind blows away her hat, her bow and her wand.', 'A dog, a bird and a frog find them.'] },
-          { label: '03 A crowded ride', lines: ['They all ride on the broom.', 'The broom breaks.'] },
-          { label: '04 Friends to the rescue', lines: ['A dragon wants to eat the witch.', 'The friends scare the dragon away.'] },
-          { label: '05 A better broom', lines: ['The witch makes a new broom.', 'There is room for every friend.'] },
-        ],
-      },
+      RETELL,
     ],
   },
   {
@@ -1016,6 +1019,119 @@ export const ETON_LESSONS: EtonLesson[] = [
           { word: 'not', sentence: 'It is not a dog.' },
         ],
       },
+    ],
+  },
+  // 11/23（周一）线下课讲完 Room on the Broom。作业：听故事几遍、读简化版、用自己的话复述，下次课前可以发复述视频。
+  // 每天都有美森 PU 课，所以伊顿这周每天只放十分钟左右：周二到周四每天读一两段，周五串起来，周六录视频，周日休息。
+  {
+    date: '2026-11-24',
+    title: '11 月 24 日 · 周二',
+    cards: [
+      {
+        kind: 'talk',
+        title: 'Listen to the Story',
+        tag: BROOM_VIDEO,
+        tip: 'Watch the video from 0:00 to 7:38. Just listen and enjoy!',
+        talk: [{ q: 'Who rides on the broom?', a: 'The witch, the cat, the dog, the bird and the frog.' }],
+      },
+      storyCard(1, 2),
+      {
+        kind: 'talk',
+        title: 'What Did She Lose?',
+        tag: 'Retell · Part 1–2',
+        tip: 'Ask and answer with Mum or Dad.',
+        talk: [
+          { q: 'What did the witch lose first?', a: 'She lost her hat.' },
+          { q: 'Who found the hat?', a: 'The dog found it.' },
+          { q: 'What did she lose next?', a: 'She lost her bow.' },
+          { q: 'Who found the bow?', a: 'The bird found it.' },
+          { q: 'What did she lose then?', a: 'She lost her wand.' },
+          { q: 'Who found the wand?', a: 'The frog found it.' },
+        ],
+      },
+    ],
+  },
+  {
+    date: '2026-11-25',
+    title: '11 月 25 日 · 周三',
+    cards: [
+      storyCard(3, 4),
+      {
+        kind: 'talk',
+        title: 'What Happened Next?',
+        tag: 'Retell · Part 3–4',
+        tip: 'Say what happened next. Short sentences are OK!',
+        talk: [
+          { q: 'All the friends got on the broom. What happened next?', a: 'The broom broke. They fell into the mud.' },
+          { q: 'A hungry dragon saw the witch. What happened next?', a: 'The friends hid in the mud. They looked like a big creature.' },
+          { q: 'How did the dragon feel?', a: 'The dragon was scared. It flew away.' },
+        ],
+      },
+    ],
+  },
+  {
+    date: '2026-11-26',
+    title: '11 月 26 日 · 周四',
+    cards: [
+      storyCard(5, 5),
+      {
+        kind: 'review',
+        title: "Teacher's Words",
+        tag: 'Room on the Broom · Words',
+        words: [
+          { word: 'ginger', sentence: 'The witch has long ginger hair.' },
+          { word: 'plait', sentence: 'She wears her hair in a plait.' },
+          { word: 'bow', sentence: 'The bird found her bow.' },
+          { word: 'cauldron', sentence: 'She stirs the cauldron.' },
+          { word: 'potion', sentence: 'She makes a magic potion.' },
+          { word: 'broomstick', sentence: 'They all fly on the broomstick.' },
+        ],
+      },
+      {
+        kind: 'talk',
+        title: 'Is There Room?',
+        tag: 'Act it out',
+        tip: 'You are the animal. Mum or Dad is the witch.',
+        talk: [
+          { q: 'Is there room on the broom for a dog like me?', a: 'Yes!' },
+          { q: 'Is there room on the broom for a bird like me?', a: 'Yes, there is!' },
+          { q: 'Is there room on the broom for a frog like me?', a: 'Yes, climb on!' },
+        ],
+      },
+    ],
+  },
+  {
+    date: '2026-11-27',
+    title: '11 月 27 日 · 周五',
+    cards: [
+      {
+        kind: 'talk',
+        title: 'Listen Again',
+        tag: BROOM_VIDEO,
+        tip: 'Watch the video from 0:00 to 7:38 one more time.',
+        talk: [{ q: 'What did the witch say at the end?', a: 'She said thank you.' }],
+      },
+      RETELL,
+    ],
+  },
+  {
+    date: '2026-11-28',
+    title: '11 月 28 日 · 周六',
+    cards: [
+      {
+        kind: 'talk',
+        title: 'Record Your Story',
+        tag: 'Retell · Video for the teacher',
+        tip: 'Tell the whole story in your own words. You don’t need to know every word! Mum or Dad records a video.',
+        talk: [
+          { q: 'How does the story start?', a: 'A witch and her cat fly on a broom.' },
+          { q: 'What happened next?', a: 'The wind blew away her hat, her bow and her wand.' },
+          { q: 'Who found them?', a: 'A dog, a bird and a frog found them.' },
+          { q: 'Then what happened?', a: 'The broom broke and a dragon came.' },
+          { q: 'How does the story end?', a: 'The witch makes a new broom. There is room for every friend.' },
+        ],
+      },
+      RETELL,
     ],
   },
 ]

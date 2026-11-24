@@ -10,7 +10,7 @@ import './eton.css'
  * 伊顿英语课：一张一张翻看当天的单词卡和课本要点，点单词或句子能听发音。
  * onFinish：这周作业还没打卡时，看完最后一张点“学完了”就交作业（等家长确认）
  */
-export function EtonLessonSheet({ lesson, onFinish, onClose }: { lesson: EtonLesson; onFinish?: () => Promise<unknown>; onClose: () => void }) {
+export function EtonLessonSheet({ lesson, heading = '📒 伊顿英语', onFinish, onClose }: { lesson: EtonLesson; heading?: string; onFinish?: () => Promise<unknown>; onClose: () => void }) {
   const [at, setAt] = useState(0)
   const top = useRef<HTMLDivElement>(null)
   // 翻到下一张时回到最上面
@@ -24,7 +24,7 @@ export function EtonLessonSheet({ lesson, onFinish, onClose }: { lesson: EtonLes
     <Modal wide onClose={onClose}>
       <div className="eton" ref={top}>
         <div className="eton-head">
-          <h2 className="modal-title">📒 伊顿英语 · {lesson.title}</h2>
+          <h2 className="modal-title">{heading} · {lesson.title}</h2>
           <span className="eton-page num" aria-live="polite">{at + 1} / {lesson.cards.length}</span>
         </div>
 
