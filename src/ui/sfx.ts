@@ -4,24 +4,66 @@ import { useStore } from '../app/store'
 
 let ctx: AudioContext | null = null
 
-/** iPad Safari 要求第一次发声发生在点按里：启动时挂一次全局点按，解锁音频 */
+/** 网页音频不在运行：标准的 suspended，加上 iPad 锁屏 / 切后台 / 来电后 Safari 独有的 interrupted */
+export const needsResume = (c: Pick<AudioContext, 'state'>) => (c.state as string) !== 'running'
+
+/**
+ * 拿到（必要时新建）网页音频，并在不运行时唤醒它。
+ * iPad 要求唤醒发生在点按里：在点按的处理函数里同步调用这个就行。
+ */
 export function audioContext(): AudioContext | null {
   try {
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-    if (!ctx && AC) ctx = new AC()
-    if (ctx?.state === 'suspended') void ctx.resume()
+    if ((!ctx || ctx.state === 'closed') && AC) ctx = new AC()
+    if (ctx && needsResume(ctx)) ctx.resume().catch(() => {})
     return ctx
   } catch {
     return null
   }
 }
 
-export function installAudioUnlock() {
-  const unlock = () => {
-    audioContext()
-    window.removeEventListener('pointerdown', unlock)
+/** 等 c 真的跑起来（最多 ms 毫秒）：状态是 running，而且时钟在走 */
+export async function waitRunning(c: Pick<AudioContext, 'state' | 'currentTime' | 'resume'>, ms = 400): Promise<boolean> {
+  const end = Date.now() + ms
+  const t0 = c.currentTime
+  while (Date.now() < end) {
+    if (!needsResume(c) && c.currentTime > t0) return true
+    await new Promise((r) => setTimeout(r, 25))
   }
-  window.addEventListener('pointerdown', unlock)
+  return !needsResume(c) && c.currentTime > t0
+}
+
+/**
+ * 播放前确保网页音频能用：先唤醒；等不到就当旧的已经被 iPad 废掉，关掉换一个新的再等一次。
+ * 还不行返回 null，调用方改用 iPad 声音读（新的那个会在下一次点按时被唤醒）。
+ */
+export async function readyAudioContext(ms = 400): Promise<AudioContext | null> {
+  const c = audioContext()
+  if (!c) return null
+  if (await waitRunning(c, ms)) return c
+  if (ctx === c) {
+    try {
+      void c.close()
+    } catch {
+      /* 已经关了 */
+    }
+    ctx = null
+  }
+  const fresh = audioContext()
+  return fresh && (await waitRunning(fresh, ms)) ? fresh : null
+}
+
+/**
+ * 每次点按都检查一下：锁屏、切后台、屏幕使用时间弹窗以后网页音频会被挂起，
+ * 下一次点任何地方就把它唤醒；回到前台时也试一次（iPad 不一定允许，点按那一下兜底）。
+ */
+export function installAudioUnlock() {
+  window.addEventListener('pointerdown', () => {
+    if (!ctx || needsResume(ctx)) audioContext()
+  }, { capture: true, passive: true })
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && ctx && needsResume(ctx)) ctx.resume().catch(() => {})
+  })
 }
 
 type Wave = OscillatorType

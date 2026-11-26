@@ -1,7 +1,7 @@
 // 提前录好的英文录音（Ava）：按句子一个个接着放。清单 src/data/enAudio.json 由 npm run audio:en 生成。
 import manifest from '../data/enAudio.json'
 import { audioChunks, audioKey } from './enAudioKey'
-import { audioContext } from './sfx'
+import { audioContext, readyAudioContext } from './sfx'
 
 const HAVE = new Set<string>(manifest.keys)
 const GAP_MS = 180
@@ -20,15 +20,29 @@ const decoded = new Map<string, Promise<AudioBuffer>>()
 let playing: AudioBufferSourceNode[] = []
 let token = 0
 
+const DECODE_TIMEOUT_MS = 5000
+
+/** 超时就失败：iPad 上被挂起的网页音频解码可能永远不返回 */
+export function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('timeout')), ms)
+    p.then((v) => { clearTimeout(t); resolve(v) }, (e) => { clearTimeout(t); reject(e) })
+  })
+}
+
 function load(ctx: AudioContext, key: string): Promise<AudioBuffer> {
   let p = decoded.get(key)
   if (!p) {
-    p = fetch(clipUrl(key))
-      .then((r) => {
-        if (!r.ok) throw new Error(String(r.status))
-        return r.arrayBuffer()
-      })
-      .then((b) => ctx.decodeAudioData(b))
+    p = withTimeout(
+      fetch(clipUrl(key))
+        .then((r) => {
+          if (!r.ok) throw new Error(String(r.status))
+          return r.arrayBuffer()
+        })
+        .then((b) => ctx.decodeAudioData(b)),
+      DECODE_TIMEOUT_MS,
+    )
+    // 失败或超时的不留在缓存里，下次重新取
     p.catch(() => decoded.delete(key))
     decoded.set(key, p)
   }
@@ -51,8 +65,9 @@ export function stopClips() {
 export function playClips(keys: string[], fallback: () => void) {
   stopClips()
   const my = token
-  const ctx = audioContext()
-  if (!ctx) {
+  // 在点按里同步唤醒一次（iPad 只认点按里的唤醒），再等它真的跑起来
+  const first = audioContext()
+  if (!first) {
     fallback()
     return
   }
@@ -63,8 +78,12 @@ export function playClips(keys: string[], fallback: () => void) {
   } catch {
     /* 老系统没有 */
   }
-  Promise.all(keys.map((k) => load(ctx, k))).then(
-    (buffers) => {
+  void (async () => {
+    try {
+      const ctx = await readyAudioContext()
+      if (my !== token) return
+      if (!ctx) throw new Error('audio not running')
+      const buffers = await Promise.all(keys.map((k) => load(ctx, k)))
       if (my !== token) return
       let at = ctx.currentTime + 0.03
       for (const b of buffers) {
@@ -75,9 +94,9 @@ export function playClips(keys: string[], fallback: () => void) {
         playing.push(src)
         at += b.duration + GAP_MS / 1000
       }
-    },
-    () => {
+    } catch {
+      // 网页音频用不了、录音取不到或解不开：这一次用 iPad 声音读，不能点了没反应
       if (my === token) fallback()
-    },
-  )
+    }
+  })()
 }
