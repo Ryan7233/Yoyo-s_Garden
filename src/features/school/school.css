@@ -11,6 +11,10 @@
 
 .recite-due { margin: 0 0 var(--sp-3); text-align: center; font-size: var(--fs-m); color: var(--text-soft); }
 .recite-modes { display: flex; justify-content: center; gap: var(--sp-2); }
+.recite-words { margin: var(--sp-3) 0 0; }
+.recite-words-title { margin: 0 0 var(--sp-2); font-weight: 700; color: var(--text-soft); }
+.recite-words-list { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.recite-word { padding: 6px 14px; border-radius: 999px; background: var(--bg); border: 1px solid rgba(0,0,0,.08); font-size: var(--fs-l); }
 .recite-hint { text-align: center; margin: var(--sp-2) 0 0; }
 .recite-text { margin: var(--sp-4) 0; padding: var(--sp-4); background: #fffdf6; border: 2px solid var(--cream-edge); border-radius: var(--r-l); }
 .recite-para { margin: 0 0 var(--sp-3); text-indent: 2em; line-height: 2; }

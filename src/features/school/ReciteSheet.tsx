@@ -102,6 +102,13 @@ function ReciteBody({ text, today, times, onTimes }: { text: ReciteText; today: 
           ))}
         </div>
 
+        {text.words?.map((g) => (
+          <div key={g.title} className="recite-words">
+            <p className="recite-words-title">{g.title}{g.tip && <span className="hint"> · {g.tip}</span>}</p>
+            <div className="recite-words-list">{g.items.map((w) => <span key={w} className="recite-word">{w}</span>)}</div>
+          </div>
+        ))}
+
         <div className="recite-bar">
           <span>
             已经{verb}了 <b className="num">{times}</b> 遍

@@ -74,6 +74,18 @@ export const MATH_HOMEWORK: MathHomework[] = [
     ],
     button: { todo: '我说了这一个', done: '✓ 说过了', left: '个发现' },
   },
+  {
+    date: '2026-11-27',
+    title: '口算练习',
+    teacher: '数学：自主练习口算。',
+    where: '拿口算本，或者请爸爸妈妈出 10 道这阵子学的加减法。',
+    prompts: [
+      { kind: '算一组', means: '10 道口算', ask: '一道一道先说出得数，再写下来。不用急，算对最重要。', shape: '3 + 4 = 7' },
+      { kind: '对一对', means: '请爸爸妈妈对答案', ask: '错的圈出来，想一想再算一遍。', shape: '✗ → ✓' },
+      { kind: '再快一点', means: '错的和难的再说两遍', ask: '把圈出来的题再说两遍，越说越快。', shape: '又对又快' },
+    ],
+    button: { todo: '这一步做好了', done: '✓ 做好了', left: '步' },
+  },
 ]
 
 export function mathHomeworkFor(today: string): MathHomework | undefined {

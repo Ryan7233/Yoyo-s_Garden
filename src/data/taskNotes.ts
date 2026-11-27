@@ -16,6 +16,18 @@ export interface TaskNote {
 
 export const TASK_NOTES: TaskNote[] = [
   {
+    // 周一有《雨点儿》录像课，要穿整套秋季校服；周日晚上整理书包时提醒
+    date: '2026-11-29',
+    taskId: 'pack-bag',
+    title: '明天穿整套秋季校服',
+    teacher: '下周有一节录像课讲授《雨点儿》，需要周一穿整套秋季校服。',
+    steps: [
+      { icon: '👕', text: '把整套秋季校服找出来，放在床头', tip: '上衣、裤子都要' },
+      { icon: '🎒', text: '书包按明天的课整理好' },
+      { icon: '📖', text: '睡前再读一遍《雨点儿》', tip: '录像课要用' },
+    ],
+  },
+  {
     date: '2026-11-24',
     taskId: 'writing',
     title: '《江南》听写',
